@@ -47,14 +47,6 @@ const Hero = () => {
             className="space-y-8"
           >
             <div className="space-y-4">
-              <motion.span
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 }}
-                className="inline-block px-4 py-1.5 rounded-full bg-secondary/60 text-secondary-foreground text-sm font-medium"
-              >
-                ✨ המרקטפלייס הראשון לפרחים בישראל
-              </motion.span>
               <h1 className="text-5xl md:text-6xl lg:text-7xl font-display font-bold leading-tight text-foreground">
                 כל הפרחים,{" "}
                 <span className="text-gradient-sage">במקום אחד</span>
@@ -89,24 +81,6 @@ const Hero = () => {
               </div>
             </motion.div>
 
-            {/* Stats */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.8 }}
-              className="flex gap-8 pt-4"
-            >
-              {[
-                { number: "150+", label: "חנויות פרחים" },
-                { number: "10K+", label: "זרים נשלחו" },
-                { number: "4.9", label: "דירוג ממוצע ⭐" },
-              ].map((stat) => (
-                <div key={stat.label} className="text-center">
-                  <div className="text-2xl font-display font-bold text-foreground">{stat.number}</div>
-                  <div className="text-sm text-muted-foreground font-body">{stat.label}</div>
-                </div>
-              ))}
-            </motion.div>
           </motion.div>
 
           {/* Hero Image */}
