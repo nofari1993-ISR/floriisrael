@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { MapPin, Palette, Sparkles, Truck } from "lucide-react";
+import { MapPin, Palette, Truck } from "lucide-react";
 
 const steps = [
   {
@@ -13,12 +13,6 @@ const steps = [
     title: "בנו את הזר",
     description: "בחרו פרחים בעצמכם בסגנון DIY או בעזרת הצ׳אט החכם שלנו",
     color: "bg-secondary text-secondary-foreground",
-  },
-  {
-    icon: Sparkles,
-    title: "AI מתאים לכם",
-    description: "ספרו לנו על האירוע, התקציב והסגנון - ונמליץ על הזר המושלם",
-    color: "bg-accent/30 text-accent-foreground",
   },
   {
     icon: Truck,
@@ -46,11 +40,11 @@ const HowItWorks = () => {
             איך זה עובד?
           </h2>
           <p className="text-lg text-muted-foreground font-body max-w-2xl mx-auto">
-            ב-4 צעדים פשוטים תקבלו את הזר המושלם ישירות מחנות הפרחים הקרובה אליכם
+            ב-3 צעדים פשוטים תקבלו את הזר המושלם ישירות מחנות הפרחים הקרובה אליכם
           </p>
         </motion.div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid md:grid-cols-3 gap-8">
           {steps.map((step, index) => (
             <motion.div
               key={step.title}
