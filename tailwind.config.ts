@@ -14,8 +14,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        display: ['Playfair Display', 'serif'],
-        body: ['Assistant', 'sans-serif'],
+        display: ['Rubik', 'sans-serif'],
+        body: ['Heebo', 'sans-serif'],
       },
       colors: {
         border: "hsl(var(--border))",
