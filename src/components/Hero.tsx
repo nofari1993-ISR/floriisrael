@@ -25,7 +25,7 @@ const Hero = () => {
         >
           <div className="flex items-center gap-2">
             <span className="text-3xl">🌸</span>
-            <span className="font-display text-2xl font-bold text-foreground">בלום</span>
+            <span className="font-display text-2xl font-bold text-foreground">Nuphar Flowers AI</span>
           </div>
           <div className="hidden md:flex items-center gap-8 font-body text-muted-foreground">
             <a href="#how-it-works" className="hover:text-foreground transition-colors">איך זה עובד</a>

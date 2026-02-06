@@ -8,10 +8,10 @@ const Footer = () => {
           <div className="md:col-span-2">
             <div className="flex items-center gap-2 mb-4">
               <span className="text-3xl">🌸</span>
-              <span className="font-display text-2xl font-bold text-primary-foreground">בלום</span>
+              <span className="font-display text-2xl font-bold text-primary-foreground">Nuphar Flowers AI</span>
             </div>
             <p className="text-primary-foreground/60 font-body max-w-sm leading-relaxed">
-              המרקטפלייס הראשון לפרחים בישראל. מחברים בין לקוחות לחנויות פרחים באמצעות טכנולוגיה חכמה ועיצוב DIY.
+              מרקטפלייס פרחים חכם. מחברים בין לקוחות לחנויות פרחים באמצעות טכנולוגיה חכמה ועיצוב DIY.
             </p>
           </div>
 
