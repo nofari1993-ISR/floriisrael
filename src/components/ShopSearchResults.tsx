@@ -267,7 +267,7 @@ const ShopSearchResults = ({ open, onClose, searchQuery }: ShopSearchResultsProp
                             onClick={() => setSelectedShop(shop)}
                           >
                             <Palette className="w-4 h-4" />
-                            בנה זר DIY
+                            עיצוב זר עצמאי
                           </Button>
                           <Button
                             variant="hero-outline"
