@@ -16,6 +16,7 @@ export default {
       fontFamily: {
         display: ['Rubik', 'sans-serif'],
         body: ['Heebo', 'sans-serif'],
+        brand: ['Playfair Display', 'serif'],
       },
       colors: {
         border: "hsl(var(--border))",

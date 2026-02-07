@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { ArrowRight, Mail, Lock, Sparkles } from "lucide-react";
+import Logo from "@/components/Logo";
 import { z } from "zod";
 
 const emailSchema = z.string().email("כתובת מייל לא תקינה");
@@ -72,9 +73,8 @@ const Auth = () => {
             <ArrowRight className="w-4 h-4" />
             חזרה לדף הבית
           </a>
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <span className="text-3xl">🌸</span>
-            <span className="font-display text-2xl font-bold text-foreground">Nuphar Flowers AI</span>
+          <div className="flex items-center justify-center mb-4">
+            <Logo size="lg" />
           </div>
           <h1 className="text-3xl font-display font-bold text-foreground">
             {isLogin ? "התחברות" : "הרשמה"}

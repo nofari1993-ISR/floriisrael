@@ -6,6 +6,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ShopSearchResults from "@/components/ShopSearchResults";
 import { useAuth } from "@/hooks/useAuth";
+import Logo from "@/components/Logo";
 
 const Hero = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -29,10 +30,7 @@ const Hero = () => {
           transition={{ duration: 0.6 }}
           className="flex items-center justify-between py-4"
         >
-          <div className="flex items-center gap-2">
-            <span className="text-3xl">🌸</span>
-            <span className="font-display text-2xl font-bold text-foreground">Nuphar Flowers AI</span>
-          </div>
+          <Logo size="md" />
           <div className="hidden md:flex items-center gap-8 font-body text-muted-foreground">
             <a href="#how-it-works" className="hover:text-foreground transition-colors">איך זה עובד</a>
             <a href="#bouquet-builder" className="hover:text-foreground transition-colors">בנה זר</a>

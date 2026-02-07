@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { ArrowRight, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import Logo from "@/components/Logo";
 
 const AIChatPage = () => {
   const navigate = useNavigate();
@@ -19,8 +20,7 @@ const AIChatPage = () => {
           </button>
           <div className="flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-primary" />
-            <span className="font-display text-xl font-bold text-foreground">צ׳אט פרחים AI</span>
-            <span className="text-2xl">🌸</span>
+            <Logo size="sm" />
           </div>
         </div>
       </div>
