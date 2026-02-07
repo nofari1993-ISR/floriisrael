@@ -3,9 +3,11 @@ import { Search, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import heroImage from "@/assets/hero-flowers.jpg";
 import { useState } from "react";
+import ShopSearchResults from "@/components/ShopSearchResults";
 
 const Hero = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [showResults, setShowResults] = useState(false);
 
   return (
     <section className="relative min-h-screen overflow-hidden bg-gradient-hero">
@@ -74,7 +76,7 @@ const Hero = () => {
                     className="w-full bg-transparent outline-none font-body text-foreground placeholder:text-muted-foreground"
                   />
                 </div>
-                <Button variant="hero" size="lg" className="rounded-xl gap-2">
+                <Button variant="hero" size="lg" className="rounded-xl gap-2" onClick={() => setShowResults(true)}>
                   <Search className="w-4 h-4" />
                   חיפוש
                 </Button>
@@ -117,6 +119,7 @@ const Hero = () => {
           </motion.div>
         </div>
       </div>
+      <ShopSearchResults open={showResults} onOpenChange={setShowResults} searchQuery={searchQuery} />
     </section>
   );
 };
