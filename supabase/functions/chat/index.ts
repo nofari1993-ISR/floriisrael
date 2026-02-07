@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -12,15 +13,61 @@ serve(async (req) => {
   }
 
   try {
-    const { messages } = await req.json();
+    const { messages, shopId } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
     if (!LOVABLE_API_KEY) {
       console.error("LOVABLE_API_KEY is not configured");
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    console.log("Chat request received with", messages.length, "messages");
+    console.log("Chat request received with", messages.length, "messages", "shopId:", shopId);
+
+    // 1. Fetch inventory from database
+    let inventoryList = "המלאי כרגע לא זמין.";
+
+    if (shopId && SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
+      const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+      const { data: inventory, error } = await supabase
+        .from("flowers")
+        .select("name, color, quantity, price, in_stock")
+        .eq("shop_id", shopId)
+        .eq("in_stock", true);
+
+      if (error) {
+        console.error("Error fetching inventory:", error.message);
+      } else if (inventory && inventory.length > 0) {
+        inventoryList = inventory
+          .map(
+            (item) =>
+              `- ${item.name}${item.color ? ` (${item.color})` : ""}: ${item.quantity} יחידות, מחיר: ${item.price}₪`
+          )
+          .join("\n");
+        console.log(`Loaded ${inventory.length} flowers for shop ${shopId}`);
+      } else {
+        inventoryList = "אין כרגע פרחים זמינים במלאי.";
+        console.log("No flowers found for shop", shopId);
+      }
+    }
+
+    // 2. Build system prompt with inventory
+    const systemPrompt = `אתה יועץ פרחים מומחה של Nuphar Flowers AI. 
+משימה: עזור ללקוח להרכיב זר מהמלאי הזמין בלבד.
+
+המלאי העדכני של החנות כרגע:
+${inventoryList}
+
+כללים:
+- אל תציע פרחים שלא מופיעים במלאי או שהכמות שלהם היא 0
+- תענה תמיד בעברית
+- השתמש באימוג׳ים של פרחים 🌸🌹🌷🌻🌿💐🌺
+- תן המלצות ספציפיות עם מחירים מהמלאי בלבד
+- תהיה חם, ידידותי ומקצועי
+- כשמתאים, הצע שילובי צבעים ופרחים מהמלאי
+- ציין זמינות עונתית כשרלוונטי
+- אם הלקוח מבקש פרח שלא קיים במלאי, הצע חלופות מהמלאי הזמין`;
 
     const response = await fetch(
       "https://ai.gateway.lovable.dev/v1/chat/completions",
@@ -33,19 +80,7 @@ serve(async (req) => {
         body: JSON.stringify({
           model: "google/gemini-3-flash-preview",
           messages: [
-            {
-              role: "system",
-              content: `אתה יועץ פרחים מומחה של Nuphar Flowers AI. 
-אתה עוזר ללקוחות לבחור זרי פרחים, מציע שילובי פרחים, מייעץ על אירועים שונים (חתונות, ימי הולדת, אירועים), ומספק מידע על פרחים.
-
-כללים:
-- תענה תמיד בעברית
-- השתמש באימוג׳ים של פרחים 🌸🌹🌷🌻🌿💐🌺
-- תן המלצות ספציפיות עם מחירים משוערים בשקלים
-- תהיה חם, ידידותי ומקצועי
-- כשמתאים, הצע שילובי צבעים ופרחים
-- ציין זמינות עונתית כשרלוונטי`,
-            },
+            { role: "system", content: systemPrompt },
             ...messages,
           ],
           stream: true,
