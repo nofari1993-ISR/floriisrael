@@ -83,8 +83,8 @@ const AIChatPage = () => {
   }, [navigate, shopId]);
 
   const iframeSrc = shopId
-    ? `https://nupharflowersai.com.base44.app/AIBouquetBuilderEmbed?shopId=${shopId}`
-    : "https://nupharflowersai.com.base44.app/AIBouquetBuilderEmbed";
+    ? `https://nupharflowersai.com/AIBouquetBuilderEmbed?shopId=${shopId}`
+    : "https://nupharflowersai.com/AIBouquetBuilderEmbed";
 
   return (
     <>
