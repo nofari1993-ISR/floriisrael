@@ -26,11 +26,14 @@ const AIChatPage = () => {
       </div>
 
       {/* Iframe Content */}
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 overflow-y-auto">
         <iframe
           src="https://nupharflowersai.base44.app/AIBouquetBuilderEmbed"
           title="AI Bouquet Builder Chat"
-          className="w-full h-full border-0"
+          width="100%"
+          height="100%"
+          style={{ minHeight: "900px", border: "none" }}
+          scrolling="yes"
           allow="clipboard-write"
           loading="lazy"
         />
