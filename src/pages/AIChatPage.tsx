@@ -18,7 +18,7 @@ const AIChatPage = () => {
     return () => window.removeEventListener("message", handleMessage);
   }, []);
   return (
-    <div className="h-screen flex flex-col overflow-hidden">
+    <div className="min-h-screen flex flex-col">
       {/* Header */}
       <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-xl border-b border-border/50 shrink-0">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
@@ -36,20 +36,16 @@ const AIChatPage = () => {
         </div>
       </div>
 
-      {/* Iframe Content */}
-      <div className="flex-1 overflow-y-auto">
-        <iframe
-          ref={iframeRef}
-          src="https://nupharflowersai.base44.app/AIBouquetBuilderEmbed"
-          title="AI Bouquet Builder Chat"
-          width="100%"
-          height="100%"
-          style={{ minHeight: "900px", border: "none" }}
-          scrolling="yes"
-          allow="clipboard-write"
-          loading="lazy"
-        />
-      </div>
+      {/* Iframe Content - takes remaining viewport height */}
+      <iframe
+        ref={iframeRef}
+        src="https://nupharflowersai.base44.app/AIBouquetBuilderEmbed"
+        title="AI Bouquet Builder Chat"
+        className="w-full flex-1"
+        style={{ minHeight: "calc(100vh - 56px)", border: "none" }}
+        allow="clipboard-write"
+        loading="lazy"
+      />
     </div>
   );
 };
