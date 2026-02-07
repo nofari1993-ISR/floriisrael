@@ -1,5 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { Star, MapPin, Clock, Plus, X, Store, Palette, ArrowRight, MessageSquare, Loader2 } from "lucide-react";
+import Logo from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -77,10 +78,7 @@ const ShopSearchResults = ({ open, onClose, searchQuery }: ShopSearchResultsProp
                   <ArrowRight className="w-5 h-5" />
                   חזרה לדף הראשי
                 </button>
-                <div className="flex items-center gap-2">
-                  <span className="text-2xl">🌸</span>
-                  <span className="font-display text-xl font-bold text-foreground">Nuphar Flowers AI</span>
-                </div>
+                <Logo size="sm" />
               </div>
             </div>
 
