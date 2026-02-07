@@ -1,11 +1,22 @@
-import { motion } from "framer-motion";
 import { ArrowRight, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useEffect, useRef } from "react";
 import Logo from "@/components/Logo";
 
 const AIChatPage = () => {
   const navigate = useNavigate();
+  const iframeRef = useRef<HTMLIFrameElement>(null);
 
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data?.type === "resize" && iframeRef.current) {
+        iframeRef.current.style.height = `${event.data.height}px`;
+      }
+    };
+
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
+  }, []);
   return (
     <div className="h-screen flex flex-col overflow-hidden">
       {/* Header */}
@@ -28,6 +39,7 @@ const AIChatPage = () => {
       {/* Iframe Content */}
       <div className="flex-1 overflow-y-auto">
         <iframe
+          ref={iframeRef}
           src="https://nupharflowersai.base44.app/AIBouquetBuilderEmbed"
           title="AI Bouquet Builder Chat"
           width="100%"
