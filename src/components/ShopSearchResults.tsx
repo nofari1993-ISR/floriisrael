@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { Star, MapPin, Clock, Plus, X, Store, Palette, ArrowRight, MessageSquare, Loader2 } from "lucide-react";
+import { Star, MapPin, Clock, Plus, X, Store, Palette, ArrowRight, Loader2 } from "lucide-react";
 import Logo from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -91,25 +91,22 @@ const ShopSearchResults = ({ open, onClose, searchQuery }: ShopSearchResultsProp
                 transition={{ delay: 0.1 }}
                 className="text-center mb-12"
               >
-                <span className="inline-block px-4 py-1.5 rounded-full bg-accent/30 text-accent-foreground text-sm font-medium mb-4">
-                  🏪 תוצאות חיפוש
-                </span>
                 <h1 className="text-4xl md:text-5xl font-display font-bold text-foreground mb-3">
                   {searchQuery ? `חנויות באזור "${searchQuery}"` : "חנויות פרחים"}
                 </h1>
                 <p className="text-lg text-muted-foreground font-body">
-                  {loading ? "טוען חנויות..." : `${shops.length} חנויות נמצאו — בחרו חנות ובנו את הזר שלכם`}
+                  {loading ? "טוען חנויות..." : `${shops.length} חנויות נמצאו`}
                 </p>
               </motion.div>
 
-              {/* Action Buttons */}
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-                className="flex justify-center gap-3 mb-8"
-              >
-                {isAdmin && (
+              {/* Admin Add Button */}
+              {isAdmin && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                  className="flex justify-center mb-8"
+                >
                   <Button
                     variant="hero-outline"
                     size="default"
@@ -119,8 +116,8 @@ const ShopSearchResults = ({ open, onClose, searchQuery }: ShopSearchResultsProp
                     <Plus className="w-4 h-4" />
                     {showAddForm ? "ביטול" : "הוסף חנות"}
                   </Button>
-                )}
-              </motion.div>
+                </motion.div>
+              )}
 
               {/* Add Shop Form */}
               <AnimatePresence>
@@ -131,7 +128,7 @@ const ShopSearchResults = ({ open, onClose, searchQuery }: ShopSearchResultsProp
                     exit={{ opacity: 0, height: 0 }}
                     className="overflow-hidden mb-10 max-w-2xl mx-auto"
                   >
-                    <div className="glass-card rounded-2xl p-6 space-y-4 border border-border/50">
+                    <div className="bg-card rounded-2xl p-6 space-y-4 border border-border/50 shadow-card">
                       <h3 className="font-display text-lg font-semibold text-foreground text-right">חנות חדשה</h3>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <input
@@ -189,9 +186,9 @@ const ShopSearchResults = ({ open, onClose, searchQuery }: ShopSearchResultsProp
                 </div>
               ) : shops.length === 0 ? (
                 <div className="text-center py-20 text-muted-foreground">
-                  <Store className="w-16 h-16 mx-auto mb-4 opacity-30" />
+                  <Store className="w-16 h-16 mx-auto mb-4 opacity-20" />
                   <p className="font-display text-xl font-semibold">לא נמצאו חנויות</p>
-                  <p className="text-sm mt-2 font-body">נסו לחפש כתובת אחרת או הוסיפו חנות חדשה</p>
+                  <p className="text-sm mt-2 font-body">נסו לחפש כתובת אחרת</p>
                 </div>
               ) : (
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
@@ -200,8 +197,8 @@ const ShopSearchResults = ({ open, onClose, searchQuery }: ShopSearchResultsProp
                       key={shop.id}
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.15 + index * 0.07 }}
-                      className="group relative bg-card rounded-2xl overflow-hidden border border-border/50 hover:border-primary/20 shadow-soft hover:shadow-card transition-all duration-300"
+                      transition={{ delay: 0.1 + index * 0.06 }}
+                      className="group relative bg-card rounded-2xl overflow-hidden border border-border/50 hover:border-primary/30 shadow-soft hover:shadow-elevated transition-all duration-300"
                     >
                       {/* Remove Button - Admin only */}
                       {isAdmin && (
@@ -214,43 +211,50 @@ const ShopSearchResults = ({ open, onClose, searchQuery }: ShopSearchResultsProp
                         </button>
                       )}
 
-                      {/* Shop Header */}
-                      <div className="bg-gradient-card p-6 text-center">
-                        <span className="text-5xl block mb-3">{shop.image}</span>
-                        <h3 className="font-display text-xl font-bold text-foreground">{shop.name}</h3>
-                        <p className="text-sm text-muted-foreground mt-1">{shop.speciality}</p>
-                      </div>
+                      {/* Shop Header - gradient bar instead of emoji */}
+                      <div className="h-2 bg-gradient-sage" />
 
-                      {/* Shop Details */}
-                      <div className="p-5 space-y-3">
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <MapPin className="w-4 h-4 shrink-0" />
-                          <span>{shop.location}</span>
+                      <div className="p-6 space-y-4">
+                        {/* Name & Speciality */}
+                        <div className="text-right">
+                          <h3 className="font-display text-xl font-bold text-foreground">{shop.name}</h3>
+                          <p className="text-sm text-primary font-medium mt-0.5">{shop.speciality}</p>
                         </div>
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <Clock className="w-4 h-4 shrink-0" />
-                          <span>{shop.hours}</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Star className="w-4 h-4 fill-gold text-gold" />
-                          <span className="font-semibold text-foreground">{shop.rating}</span>
-                          <span className="text-muted-foreground text-sm">({shop.reviews})</span>
+
+                        {/* Details */}
+                        <div className="space-y-2.5">
+                          <div className="flex items-center gap-2.5 text-sm text-muted-foreground">
+                            <MapPin className="w-4 h-4 shrink-0 text-primary/60" />
+                            <span>{shop.location}</span>
+                          </div>
+                          <div className="flex items-center gap-2.5 text-sm text-muted-foreground">
+                            <Clock className="w-4 h-4 shrink-0 text-primary/60" />
+                            <span>{shop.hours}</span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <Star className="w-4 h-4 fill-gold text-gold" />
+                            <span className="font-semibold text-foreground">{shop.rating}</span>
+                            <span className="text-muted-foreground text-sm">({shop.reviews} ביקורות)</span>
+                          </div>
                         </div>
 
                         {/* Tags */}
-                        <div className="flex flex-wrap gap-2 pt-1">
+                        <div className="flex flex-wrap gap-1.5">
                           {shop.tags.map((tag) => (
                             <span
                               key={tag}
-                              className="text-xs px-2.5 py-1 rounded-full bg-muted text-muted-foreground font-medium"
+                              className="text-xs px-3 py-1 rounded-full bg-muted text-muted-foreground font-medium"
                             >
                               {tag}
                             </span>
                           ))}
                         </div>
 
+                        {/* Separator */}
+                        <div className="border-t border-border/50" />
+
                         {/* Action Buttons */}
-                        <div className="flex gap-2 mt-3 justify-center">
+                        <div className="flex gap-2 justify-center">
                           <Button
                             variant="hero"
                             size="sm"
