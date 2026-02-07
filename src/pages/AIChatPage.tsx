@@ -50,7 +50,7 @@ const AIChatPage = () => {
           title="AI Bouquet Builder Chat"
           className="w-full"
           style={{ 
-            height: "2000px",
+            minHeight: "1800px",
             border: "none",
           }}
           allow="clipboard-write"
