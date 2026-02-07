@@ -11,19 +11,21 @@ export interface OwnedShop {
 }
 
 export const useShopOwner = () => {
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, loading: authLoading } = useAuth();
   const [shops, setShops] = useState<OwnedShop[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [shopsLoading, setShopsLoading] = useState(true);
 
   useEffect(() => {
+    if (authLoading) return;
+
     if (!user) {
       setShops([]);
-      setLoading(false);
+      setShopsLoading(false);
       return;
     }
 
     const fetchOwnedShops = async () => {
-      setLoading(true);
+      setShopsLoading(true);
       const { data, error } = await supabase
         .from("shops")
         .select("id, name, location, speciality, hours")
@@ -34,13 +36,14 @@ export const useShopOwner = () => {
       } else {
         setShops([]);
       }
-      setLoading(false);
+      setShopsLoading(false);
     };
 
     fetchOwnedShops();
-  }, [user]);
+  }, [user, authLoading]);
 
   const isShopOwner = shops.length > 0;
+  const loading = authLoading || shopsLoading;
 
   return { shops, isShopOwner, isAdmin, loading, user };
 };
