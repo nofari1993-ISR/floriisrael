@@ -174,6 +174,7 @@ export type Database = {
           location: string
           name: string
           owner_id: string | null
+          phone: string | null
           rating: number | null
           reviews: number | null
           speciality: string | null
@@ -188,6 +189,7 @@ export type Database = {
           location: string
           name: string
           owner_id?: string | null
+          phone?: string | null
           rating?: number | null
           reviews?: number | null
           speciality?: string | null
@@ -202,6 +204,7 @@ export type Database = {
           location?: string
           name?: string
           owner_id?: string | null
+          phone?: string | null
           rating?: number | null
           reviews?: number | null
           speciality?: string | null

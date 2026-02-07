@@ -72,13 +72,15 @@ const AIChatPage = () => {
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       if (event.data?.action === "CHECKOUT") {
-        navigate("/checkout");
+        const params = new URLSearchParams();
+        if (shopId) params.set("shopId", shopId);
+        navigate(`/checkout?${params.toString()}`);
       }
     };
 
     window.addEventListener("message", handleMessage);
     return () => window.removeEventListener("message", handleMessage);
-  }, [navigate]);
+  }, [navigate, shopId]);
 
   const iframeSrc = shopId
     ? `https://nupharflowersai.base44.app/AIBouquetBuilderEmbed?shopId=${shopId}`
