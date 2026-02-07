@@ -276,7 +276,7 @@ const ShopSearchResults = ({ open, onClose, searchQuery }: ShopSearchResultsProp
                             onClick={() => navigate("/ai-chat")}
                           >
                             <Palette className="w-3.5 h-3.5" />
-                            זר AI
+                            בניית זר עם AI
                           </Button>
                         </div>
                       </div>
