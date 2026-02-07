@@ -12,6 +12,9 @@ const AIChatPage = () => {
       if (event.data?.type === "resize" && iframeRef.current) {
         iframeRef.current.style.height = `${event.data.height}px`;
       }
+      if (event.data?.action === "CHECKOUT" && event.data?.url) {
+        window.location.href = event.data.url;
+      }
     };
 
     window.addEventListener("message", handleMessage);
