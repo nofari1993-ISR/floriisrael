@@ -90,23 +90,23 @@ const AIChatPage = () => {
     <>
       {/* Fixed Header */}
       <div className="fixed top-0 left-0 right-0 z-10 bg-background/80 backdrop-blur-xl border-b border-border/50">
-        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
+        <div className="container mx-auto px-4 py-2 flex items-center justify-between">
           <button
             onClick={() => navigate(-1)}
-            className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors font-body"
+            className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors font-body text-sm"
           >
-            <ArrowRight className="w-5 h-5" />
+            <ArrowRight className="w-4 h-4" />
             חזרה
           </button>
           <div className="flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-primary" />
+            <Sparkles className="w-4 h-4 text-primary" />
             <Logo size="sm" />
           </div>
         </div>
       </div>
 
       {/* Page content */}
-      <div style={{ paddingTop: "56px" }}>
+      <div style={{ paddingTop: "44px" }}>
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
