@@ -4,7 +4,7 @@ import Logo from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import ShopDIYBuilder from "@/components/ShopDIYBuilder";
+
 import { useShops, type Shop } from "@/hooks/useShops";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -27,7 +27,7 @@ const ShopSearchResults = ({ open, onClose, searchQuery }: ShopSearchResultsProp
   const { isAdmin } = useAuth();
   const navigate = useNavigate();
   const [showAddForm, setShowAddForm] = useState(false);
-  const [selectedShop, setSelectedShop] = useState<Shop | null>(null);
+  
   const [formData, setFormData] = useState<AddShopFormData>({
     name: "",
     location: "",
@@ -255,11 +255,11 @@ const ShopSearchResults = ({ open, onClose, searchQuery }: ShopSearchResultsProp
 
                         {/* Action Buttons */}
                         <div className="flex gap-2 justify-center">
-                          <Button
+          <Button
                             variant="hero"
                             size="sm"
                             className="flex-1 rounded-xl gap-2"
-                            onClick={() => setSelectedShop(shop)}
+                            onClick={() => navigate(`/diy-builder?shopId=${shop.id}`)}
                           >
                             <Palette className="w-4 h-4" />
                             עיצוב זר עצמאי
@@ -284,14 +284,6 @@ const ShopSearchResults = ({ open, onClose, searchQuery }: ShopSearchResultsProp
         )}
       </AnimatePresence>
 
-      {/* DIY Builder Dialog */}
-      <ShopDIYBuilder
-        open={!!selectedShop}
-        onOpenChange={(val) => { if (!val) setSelectedShop(null); }}
-        shopName={selectedShop?.name || ""}
-        shopImage={selectedShop?.image || ""}
-        onBack={() => setSelectedShop(null)}
-      />
     </>
   );
 };
