@@ -10,13 +10,13 @@ interface LogoProps {
 const sizeMap = {
   sm: "w-10 h-10",
   md: "w-14 h-14",
-  lg: "w-24 h-24",
+  lg: "w-36 h-36",
 };
 
 const textSizeMap = {
   sm: "text-sm",
   md: "text-lg",
-  lg: "text-2xl",
+  lg: "text-3xl",
 };
 
 const Logo = ({ size = "md", showText = true, className = "", layout = "horizontal" }: LogoProps) => {
