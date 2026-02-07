@@ -101,11 +101,11 @@ const Hero = () => {
             transition={{ duration: 1, delay: 0.3 }}
             className="relative hidden lg:block"
           >
-            <div className="relative rounded-3xl overflow-hidden shadow-elevated">
+            <div className="relative rounded-3xl overflow-hidden shadow-elevated max-w-md mx-auto">
               <img
                 src={heroImage}
                 alt="זרי פרחים יפהפיים"
-                className="w-full h-[550px] object-cover"
+                className="w-full h-[400px] object-cover"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-foreground/10 to-transparent" />
             </div>
