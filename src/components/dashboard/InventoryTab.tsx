@@ -4,6 +4,14 @@ import { Plus, Trash2, Edit2, Package, Flower2, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { useInventory, type Flower } from "@/hooks/useInventory";
 
 interface InventoryTabProps {
@@ -137,7 +145,7 @@ const InventoryTab = ({ shopId }: InventoryTabProps) => {
         )}
       </AnimatePresence>
 
-      {/* Flowers List */}
+      {/* Flowers Table */}
       {loading ? (
         <div className="text-center py-16 text-muted-foreground font-body">טוען מלאי...</div>
       ) : flowers.length === 0 ? (
@@ -147,65 +155,99 @@ const InventoryTab = ({ shopId }: InventoryTabProps) => {
           <p className="text-sm mt-2 text-muted-foreground font-body">הוסיפי פרחים כדי להתחיל</p>
         </div>
       ) : (
-        <div className="grid gap-3">
-          {/* Table Header */}
-          <div className="hidden md:grid grid-cols-[2fr_1fr_1fr_1fr_1fr_auto] gap-4 px-5 py-3 bg-muted/50 rounded-xl text-sm font-semibold text-muted-foreground font-body">
-            <span>שם</span>
-            <span>צבע</span>
-            <span>מחיר</span>
-            <span>כמות</span>
-            <span>סטטוס</span>
-            <span>פעולות</span>
-          </div>
-
-          {flowers.map((flower) => (
-            <motion.div
-              key={flower.id}
-              layout
-              className="bg-card rounded-xl border border-border/50 p-4 md:p-5 hover:shadow-soft transition-shadow"
-            >
-              {editingId === flower.id ? (
-                /* Edit Mode */
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-[2fr_1fr_1fr_1fr_1fr_auto] gap-3 items-center">
-                  <Input value={editData.name} onChange={(e) => setEditData((p) => ({ ...p, name: e.target.value }))} className="rounded-lg" />
-                  <Input value={editData.color} onChange={(e) => setEditData((p) => ({ ...p, color: e.target.value }))} className="rounded-lg" />
-                  <Input type="number" value={editData.price} onChange={(e) => setEditData((p) => ({ ...p, price: e.target.value }))} className="rounded-lg" min="0" />
-                  <Input type="number" value={editData.quantity} onChange={(e) => setEditData((p) => ({ ...p, quantity: e.target.value }))} className="rounded-lg" min="0" />
-                  <div />
-                  <div className="flex gap-1">
-                    <Button size="icon" variant="ghost" onClick={handleEdit} className="text-primary hover:text-primary">
-                      <Check className="w-4 h-4" />
-                    </Button>
-                    <Button size="icon" variant="ghost" onClick={() => setEditingId(null)} className="text-muted-foreground">
-                      <X className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                /* View Mode */
-                <div className="grid grid-cols-2 md:grid-cols-[2fr_1fr_1fr_1fr_1fr_auto] gap-3 items-center">
-                  <div className="font-display font-semibold text-foreground flex items-center gap-2">
-                    <Flower2 className="w-4 h-4 text-primary/60 shrink-0" />
-                    {flower.name}
-                  </div>
-                  <span className="text-sm text-muted-foreground font-body">{flower.color || "—"}</span>
-                  <span className="font-semibold text-foreground">₪{flower.price}</span>
-                  <span className="text-sm text-muted-foreground font-body">{flower.quantity}</span>
-                  <span className={`text-xs px-3 py-1 rounded-full font-medium w-fit ${flower.in_stock ? "bg-sage-light text-sage" : "bg-destructive/10 text-destructive"}`}>
-                    {flower.in_stock ? "במלאי" : "אזל"}
-                  </span>
-                  <div className="flex gap-1 justify-end col-span-2 md:col-span-1">
-                    <Button size="icon" variant="ghost" onClick={() => startEdit(flower)} className="text-muted-foreground hover:text-primary">
-                      <Edit2 className="w-4 h-4" />
-                    </Button>
-                    <Button size="icon" variant="ghost" onClick={() => removeFlower(flower.id)} className="text-muted-foreground hover:text-destructive">
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </motion.div>
-          ))}
+        <div className="bg-card rounded-2xl border border-border/50 shadow-card overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/50 hover:bg-muted/50">
+                <TableHead className="text-right font-display font-semibold">שם</TableHead>
+                <TableHead className="text-right font-display font-semibold">צבע</TableHead>
+                <TableHead className="text-right font-display font-semibold">מחיר</TableHead>
+                <TableHead className="text-right font-display font-semibold">כמות</TableHead>
+                <TableHead className="text-right font-display font-semibold">סטטוס</TableHead>
+                <TableHead className="text-right font-display font-semibold w-[100px]">פעולות</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {flowers.map((flower) => (
+                <TableRow key={flower.id} className="group">
+                  {editingId === flower.id ? (
+                    <>
+                      <TableCell>
+                        <Input
+                          value={editData.name}
+                          onChange={(e) => setEditData((p) => ({ ...p, name: e.target.value }))}
+                          className="rounded-lg h-8"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          value={editData.color}
+                          onChange={(e) => setEditData((p) => ({ ...p, color: e.target.value }))}
+                          className="rounded-lg h-8"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          type="number"
+                          value={editData.price}
+                          onChange={(e) => setEditData((p) => ({ ...p, price: e.target.value }))}
+                          className="rounded-lg h-8"
+                          min="0"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Input
+                          type="number"
+                          value={editData.quantity}
+                          onChange={(e) => setEditData((p) => ({ ...p, quantity: e.target.value }))}
+                          className="rounded-lg h-8"
+                          min="0"
+                        />
+                      </TableCell>
+                      <TableCell />
+                      <TableCell>
+                        <div className="flex gap-1">
+                          <Button size="icon" variant="ghost" onClick={handleEdit} className="h-7 w-7 text-primary hover:text-primary">
+                            <Check className="w-4 h-4" />
+                          </Button>
+                          <Button size="icon" variant="ghost" onClick={() => setEditingId(null)} className="h-7 w-7 text-muted-foreground">
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </>
+                  ) : (
+                    <>
+                      <TableCell className="font-display font-semibold text-foreground">
+                        <div className="flex items-center gap-2">
+                          <Flower2 className="w-4 h-4 text-primary/60 shrink-0" />
+                          {flower.name}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground font-body">{flower.color || "—"}</TableCell>
+                      <TableCell className="font-semibold text-foreground">₪{flower.price}</TableCell>
+                      <TableCell className="text-muted-foreground font-body">{flower.quantity}</TableCell>
+                      <TableCell>
+                        <span className={`text-xs px-3 py-1 rounded-full font-medium ${flower.in_stock ? "bg-sage-light text-sage" : "bg-destructive/10 text-destructive"}`}>
+                          {flower.in_stock ? "במלאי" : "אזל"}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Button size="icon" variant="ghost" onClick={() => startEdit(flower)} className="h-7 w-7 text-muted-foreground hover:text-primary">
+                            <Edit2 className="w-4 h-4" />
+                          </Button>
+                          <Button size="icon" variant="ghost" onClick={() => removeFlower(flower.id)} className="h-7 w-7 text-muted-foreground hover:text-destructive">
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </>
+                  )}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </div>
       )}
     </div>
