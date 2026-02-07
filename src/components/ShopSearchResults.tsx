@@ -1,8 +1,9 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { Star, MapPin, Clock, Plus, X, Store } from "lucide-react";
+import { Star, MapPin, Clock, Plus, X, Store, Palette } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useState } from "react";
+import ShopDIYBuilder from "@/components/ShopDIYBuilder";
 
 interface Shop {
   id: number;
@@ -80,6 +81,7 @@ interface ShopSearchResultsProps {
 const ShopSearchResults = ({ open, onOpenChange, searchQuery }: ShopSearchResultsProps) => {
   const [shops, setShops] = useState<Shop[]>(initialShops);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [selectedShop, setSelectedShop] = useState<Shop | null>(null);
   const [formData, setFormData] = useState<AddShopFormData>({
     name: "",
     location: "",
@@ -266,6 +268,19 @@ const ShopSearchResults = ({ open, onOpenChange, searchQuery }: ShopSearchResult
                         {shop.speciality}
                       </span>
                     </div>
+
+                    {/* DIY Button */}
+                    <div className="mt-3">
+                      <Button
+                        variant="hero"
+                        size="sm"
+                        className="rounded-xl gap-2"
+                        onClick={() => setSelectedShop(shop)}
+                      >
+                        <Palette className="w-4 h-4" />
+                        בנה זר DIY
+                      </Button>
+                    </div>
                   </div>
                 </motion.div>
               ))
@@ -273,6 +288,14 @@ const ShopSearchResults = ({ open, onOpenChange, searchQuery }: ShopSearchResult
           </div>
         </div>
       </DialogContent>
+      {/* DIY Builder Dialog */}
+      <ShopDIYBuilder
+        open={!!selectedShop}
+        onOpenChange={(open) => { if (!open) setSelectedShop(null); }}
+        shopName={selectedShop?.name || ""}
+        shopImage={selectedShop?.image || ""}
+        onBack={() => setSelectedShop(null)}
+      />
     </Dialog>
   );
 };
