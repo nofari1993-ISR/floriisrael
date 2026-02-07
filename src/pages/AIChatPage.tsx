@@ -7,10 +7,10 @@ const AIChatPage = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-gradient-hero flex flex-col">
+    <div className="h-screen flex flex-col overflow-hidden">
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-xl border-b border-border/50">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+      <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-xl border-b border-border/50 shrink-0">
+        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <button
             onClick={() => navigate(-1)}
             className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors font-body"
@@ -26,21 +26,14 @@ const AIChatPage = () => {
       </div>
 
       {/* Iframe Content */}
-      <div className="flex-1 container mx-auto px-4 py-6 max-w-5xl flex flex-col">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="rounded-2xl overflow-hidden shadow-elevated border border-border/50 flex-1"
-        >
-          <iframe
-            src="https://nupharflowersai.base44.app/AIBouquetBuilderEmbed"
-            title="AI Bouquet Builder Chat"
-            className="w-full h-full border-0"
-            style={{ minHeight: "calc(100vh - 100px)" }}
-            allow="clipboard-write"
-            loading="lazy"
-          />
-        </motion.div>
+      <div className="flex-1 overflow-hidden">
+        <iframe
+          src="https://nupharflowersai.base44.app/AIBouquetBuilderEmbed"
+          title="AI Bouquet Builder Chat"
+          className="w-full h-full border-0"
+          allow="clipboard-write"
+          loading="lazy"
+        />
       </div>
     </div>
   );
