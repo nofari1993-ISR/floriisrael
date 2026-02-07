@@ -26,17 +26,17 @@ const AIChatPage = () => {
       </div>
 
       {/* Iframe Content */}
-      <div className="flex-1 container mx-auto px-4 py-6 max-w-5xl">
+      <div className="flex-1 container mx-auto px-4 py-6 max-w-5xl flex flex-col">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="rounded-2xl overflow-hidden shadow-elevated border border-border/50 h-full"
+          className="rounded-2xl overflow-hidden shadow-elevated border border-border/50 flex-1"
         >
           <iframe
             src="https://nupharflowersai.base44.app/AIBouquetBuilderEmbed"
             title="AI Bouquet Builder Chat"
-            className="w-full border-0"
-            style={{ height: "min(800px, 80vh)" }}
+            className="w-full h-full border-0"
+            style={{ minHeight: "calc(100vh - 100px)" }}
             allow="clipboard-write"
             loading="lazy"
           />
