@@ -2,17 +2,31 @@ import { motion } from "framer-motion";
 import { Search, MapPin, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import heroImage from "@/assets/hero-flowers.jpg";
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import ShopSearchResults from "@/components/ShopSearchResults";
 import { useAuth } from "@/hooks/useAuth";
 import Logo from "@/components/Logo";
 
 const Hero = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [showResults, setShowResults] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const showResults = searchParams.get("shops") === "open";
   const { user, isAdmin, signOut } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const q = searchParams.get("q");
+    if (q) setSearchQuery(q);
+  }, []);
+
+  const openResults = () => {
+    setSearchParams({ shops: "open", q: searchQuery });
+  };
+
+  const closeResults = () => {
+    setSearchParams({});
+  };
 
   return (
     <section className="relative min-h-screen overflow-hidden bg-gradient-hero">
@@ -85,7 +99,7 @@ const Hero = () => {
                     className="w-full bg-transparent outline-none font-body text-foreground placeholder:text-muted-foreground"
                   />
                 </div>
-                <Button variant="hero" size="lg" className="rounded-xl gap-2" onClick={() => setShowResults(true)}>
+                <Button variant="hero" size="lg" className="rounded-xl gap-2" onClick={openResults}>
                   <Search className="w-4 h-4" />
                   חיפוש
                 </Button>
@@ -128,7 +142,7 @@ const Hero = () => {
           </motion.div>
         </div>
       </div>
-      <ShopSearchResults open={showResults} onClose={() => setShowResults(false)} searchQuery={searchQuery} />
+      <ShopSearchResults open={showResults} onClose={closeResults} searchQuery={searchQuery} />
     </section>
   );
 };
