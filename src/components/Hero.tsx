@@ -33,9 +33,9 @@ const Hero = () => {
           <Logo size="md" />
           <div className="hidden md:flex items-center gap-8 font-body text-muted-foreground">
             <a href="#how-it-works" className="hover:text-foreground transition-colors">איך זה עובד</a>
-            <a href="#bouquet-builder" className="hover:text-foreground transition-colors">בנה זר</a>
+            <a href="#bouquet-builder" className="hover:text-foreground transition-colors">עיצוב זר עצמאי</a>
             <a href="#shops" className="hover:text-foreground transition-colors">חנויות</a>
-            <a href="#ai-chat" className="hover:text-foreground transition-colors">צ׳אט חכם</a>
+            <a href="#ai-chat" className="hover:text-foreground transition-colors">בניית זר AI</a>
           </div>
           {user ? (
             <div className="flex items-center gap-2">
