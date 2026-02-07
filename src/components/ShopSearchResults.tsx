@@ -120,15 +120,6 @@ const ShopSearchResults = ({ open, onClose, searchQuery }: ShopSearchResultsProp
                     {showAddForm ? "ביטול" : "הוסף חנות"}
                   </Button>
                 )}
-                <Button
-                  variant="hero"
-                  size="default"
-                  className="rounded-xl gap-2"
-                  onClick={() => navigate("/ai-chat")}
-                >
-                  <Palette className="w-4 h-4" />
-                  בניית זר עם AI
-                </Button>
               </motion.div>
 
               {/* Add Shop Form */}
