@@ -8,8 +8,8 @@ const AIChatPage = () => {
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
-      if (event.data?.action === "CHECKOUT" && event.data?.url) {
-        window.location.href = event.data.url;
+      if (event.data?.action === "CHECKOUT") {
+        navigate("/checkout");
       }
     };
 
