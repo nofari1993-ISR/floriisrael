@@ -1,8 +1,19 @@
-import { ArrowRight, Sparkles, Loader2 } from "lucide-react";
+import { ArrowRight, Sparkles, Loader2, CheckCircle2 } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useEffect, useRef, useState, useCallback } from "react";
+import { motion } from "framer-motion";
 import Logo from "@/components/Logo";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
+
+interface OrderSuccess {
+  orderId: string;
+  shopPhone: string | null;
+  shopName: string;
+  recipientName: string;
+  deliveryDate: string;
+}
 
 const AIChatPage = () => {
   const navigate = useNavigate();
@@ -11,6 +22,7 @@ const AIChatPage = () => {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [inventoryReady, setInventoryReady] = useState(false);
   const [loading, setLoading] = useState(!!shopId);
+  const [orderSuccess, setOrderSuccess] = useState<OrderSuccess | null>(null);
 
   // Send inventory to Base44 iframe via postMessage
   const sendInventoryToIframe = useCallback(async () => {
@@ -68,16 +80,61 @@ const AIChatPage = () => {
     sendInventoryToIframe();
   }, [sendInventoryToIframe]);
 
+  // Save order via edge function
+  const saveOrder = async (orderData: any) => {
+    try {
+      console.log("Saving order from Base44:", orderData);
+      const { data, error } = await supabase.functions.invoke("create-order", {
+        body: {
+          shop_id: shopId,
+          ...orderData,
+        },
+      });
+
+      if (error) throw error;
+
+      console.log("Order saved successfully:", data);
+
+      setOrderSuccess({
+        orderId: data.order_id,
+        shopPhone: data.shop_phone,
+        shopName: data.shop_name,
+        recipientName: orderData.recipient_name || "",
+        deliveryDate: orderData.delivery_date || "",
+      });
+
+      toast({
+        title: "ההזמנה נשמרה בהצלחה! 🎉",
+        description: `מספר הזמנה: ${data.order_id?.slice(0, 8)}`,
+      });
+    } catch (err: any) {
+      console.error("Error saving order:", err);
+      toast({
+        title: "שגיאה בשמירת ההזמנה",
+        description: err.message || "נסו שוב",
+        variant: "destructive",
+      });
+    }
+  };
+
   // Listen for messages from Base44
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
-      if (event.data?.action === "CHECKOUT") {
+      const { action } = event.data || {};
+
+      if (action === "CHECKOUT") {
         const params = new URLSearchParams();
         if (shopId) params.set("shopId", shopId);
         navigate(`/checkout?${params.toString()}`);
       }
+
+      // Save order directly from Base44
+      if (action === "SAVE_ORDER" || action === "ORDER_COMPLETE") {
+        saveOrder(event.data.orderData || event.data);
+      }
+
       // Handle "go home" from Base44
-      if (event.data?.action === "GO_HOME" || event.data?.action === "HOME") {
+      if (action === "GO_HOME" || action === "HOME") {
         navigate("/");
       }
     };
@@ -89,6 +146,67 @@ const AIChatPage = () => {
   const iframeSrc = shopId
     ? `https://nupharflowersai.com/AIBouquetBuilderEmbed?shopId=${shopId}`
     : "https://nupharflowersai.com/AIBouquetBuilderEmbed";
+
+  const getWhatsAppUrl = () => {
+    if (!orderSuccess?.shopPhone) return null;
+    const phone = orderSuccess.shopPhone.replace(/[^0-9]/g, "");
+    const phoneFormatted = phone.startsWith("0") ? `972${phone.slice(1)}` : phone;
+    const message = encodeURIComponent(
+      `שלום! 🌸\nביצעתי הזמנת זר דרך האתר.\nשם מקבל/ת: ${orderSuccess.recipientName}\nתאריך משלוח: ${orderSuccess.deliveryDate}\nמספר הזמנה: ${orderSuccess.orderId?.slice(0, 8)}`
+    );
+    return `https://wa.me/${phoneFormatted}?text=${message}`;
+  };
+
+  // Success screen after order saved
+  if (orderSuccess) {
+    const waUrl = getWhatsAppUrl();
+    return (
+      <div className="h-screen flex flex-col bg-gradient-hero">
+        <div className="flex-shrink-0 bg-background/80 backdrop-blur-xl border-b border-border/50">
+          <div className="container mx-auto px-4 py-2 flex items-center justify-center">
+            <Logo size="sm" />
+          </div>
+        </div>
+        <div className="flex-1 flex items-center justify-center px-4">
+          <div className="max-w-md w-full text-center">
+            <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring" }}>
+              <CheckCircle2 className="w-20 h-20 text-primary mx-auto mb-6" />
+            </motion.div>
+            <h1 className="text-2xl font-display font-bold text-foreground mb-2">ההזמנה התקבלה!</h1>
+            <p className="text-muted-foreground font-body mb-2">
+              {orderSuccess.recipientName && `הזר ל${orderSuccess.recipientName} `}
+              {orderSuccess.deliveryDate && `ישלח בתאריך ${orderSuccess.deliveryDate}`}
+            </p>
+            <p className="text-xs text-muted-foreground font-body mb-8">
+              מספר הזמנה: {orderSuccess.orderId?.slice(0, 8)}
+            </p>
+            <div className="space-y-3">
+              {waUrl && (
+                <a
+                  href={waUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-2 w-full bg-[#25D366] hover:bg-[#20BD5A] text-white font-body font-medium py-3 px-4 rounded-xl transition-colors"
+                >
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                  </svg>
+                  שלחו הודעה לחנות בוואטסאפ
+                </a>
+              )}
+              <Button
+                variant="hero-outline"
+                className="w-full rounded-xl"
+                onClick={() => navigate("/")}
+              >
+                חזרה לדף הבית
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-screen flex flex-col bg-gradient-hero">
