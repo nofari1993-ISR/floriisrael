@@ -119,7 +119,7 @@ const Hero = () => {
           </motion.div>
         </div>
       </div>
-      <ShopSearchResults open={showResults} onOpenChange={setShowResults} searchQuery={searchQuery} />
+      <ShopSearchResults open={showResults} onClose={() => setShowResults(false)} searchQuery={searchQuery} />
     </section>
   );
 };
