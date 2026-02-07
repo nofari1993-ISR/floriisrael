@@ -14,6 +14,157 @@ export type Database = {
   }
   public: {
     Tables: {
+      flowers: {
+        Row: {
+          color: string | null
+          created_at: string | null
+          id: string
+          image: string | null
+          in_stock: boolean
+          name: string
+          price: number
+          quantity: number
+          shop_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string | null
+          id?: string
+          image?: string | null
+          in_stock?: boolean
+          name: string
+          price?: number
+          quantity?: number
+          shop_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          color?: string | null
+          created_at?: string | null
+          id?: string
+          image?: string | null
+          in_stock?: boolean
+          name?: string
+          price?: number
+          quantity?: number
+          shop_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "flowers_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      order_items: {
+        Row: {
+          created_at: string | null
+          flower_id: string | null
+          flower_name: string
+          id: string
+          order_id: string
+          quantity: number
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string | null
+          flower_id?: string | null
+          flower_name: string
+          id?: string
+          order_id: string
+          quantity?: number
+          unit_price?: number
+        }
+        Update: {
+          created_at?: string | null
+          flower_id?: string | null
+          flower_name?: string
+          id?: string
+          order_id?: string
+          quantity?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_items_flower_id_fkey"
+            columns: ["flower_id"]
+            isOneToOne: false
+            referencedRelation: "flowers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          created_at: string | null
+          customer_email: string | null
+          customer_name: string
+          customer_phone: string | null
+          delivery_address: string
+          delivery_date: string
+          greeting: string | null
+          id: string
+          notes: string | null
+          recipient_name: string
+          shop_id: string
+          status: string
+          total_price: number
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          customer_email?: string | null
+          customer_name: string
+          customer_phone?: string | null
+          delivery_address: string
+          delivery_date: string
+          greeting?: string | null
+          id?: string
+          notes?: string | null
+          recipient_name: string
+          shop_id: string
+          status?: string
+          total_price?: number
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          customer_email?: string | null
+          customer_name?: string
+          customer_phone?: string | null
+          delivery_address?: string
+          delivery_date?: string
+          greeting?: string | null
+          id?: string
+          notes?: string | null
+          recipient_name?: string
+          shop_id?: string
+          status?: string
+          total_price?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       shops: {
         Row: {
           created_at: string | null
@@ -22,6 +173,7 @@ export type Database = {
           image: string | null
           location: string
           name: string
+          owner_id: string | null
           rating: number | null
           reviews: number | null
           speciality: string | null
@@ -35,6 +187,7 @@ export type Database = {
           image?: string | null
           location: string
           name: string
+          owner_id?: string | null
           rating?: number | null
           reviews?: number | null
           speciality?: string | null
@@ -48,6 +201,7 @@ export type Database = {
           image?: string | null
           location?: string
           name?: string
+          owner_id?: string | null
           rating?: number | null
           reviews?: number | null
           speciality?: string | null
@@ -79,11 +233,16 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_owner_shop_id: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
+        Returns: boolean
+      }
+      owns_shop: {
+        Args: { _shop_id: string; _user_id: string }
         Returns: boolean
       }
     }
