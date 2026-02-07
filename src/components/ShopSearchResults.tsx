@@ -259,7 +259,7 @@ const ShopSearchResults = ({ open, onClose, searchQuery }: ShopSearchResultsProp
                         </div>
 
                         {/* Action Buttons */}
-                        <div className="flex gap-2 mt-3">
+                        <div className="flex gap-2 mt-3 justify-center">
                           <Button
                             variant="hero"
                             size="sm"
