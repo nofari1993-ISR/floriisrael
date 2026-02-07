@@ -268,7 +268,7 @@ const ShopSearchResults = ({ open, onClose, searchQuery }: ShopSearchResultsProp
                             variant="hero-outline"
                             size="sm"
                             className="rounded-xl gap-1"
-                            onClick={() => navigate("/ai-chat")}
+                            onClick={() => navigate(`/ai-chat?shopId=${shop.id}`)}
                           >
                             <Palette className="w-3.5 h-3.5" />
                             בניית זר עם AI
