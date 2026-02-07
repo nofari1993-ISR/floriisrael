@@ -18,9 +18,9 @@ const AIChatPage = () => {
   }, []);
 
   return (
-    <div style={{ height: "100vh", display: "flex", flexDirection: "column", overflow: "hidden" }}>
+    <div>
       {/* Header */}
-      <div className="z-10 bg-background/80 backdrop-blur-xl border-b border-border/50" style={{ flexShrink: 0 }}>
+      <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-xl border-b border-border/50">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <button
             onClick={() => navigate(-1)}
@@ -36,15 +36,15 @@ const AIChatPage = () => {
         </div>
       </div>
 
-      {/* Iframe - fills all remaining space, scrolls internally */}
+      {/* Iframe - scrollable page with large iframe */}
       <iframe
         src="https://nupharflowersai.base44.app/AIBouquetBuilderEmbed"
         title="AI Bouquet Builder Chat"
         style={{
-          flex: 1,
           width: "100%",
+          height: "calc(100vh - 56px)",
           border: "none",
-          overflow: "auto",
+          display: "block",
         }}
         allow="clipboard-write"
         loading="lazy"
