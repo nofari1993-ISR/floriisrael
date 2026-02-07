@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import logoImage from "@/assets/logo.png";
 
 interface LogoProps {
@@ -21,9 +22,13 @@ const textSizeMap = {
 
 const Logo = ({ size = "md", showText = true, className = "", layout = "horizontal" }: LogoProps) => {
   const isVertical = layout === "vertical";
+  const navigate = useNavigate();
 
   return (
-    <div className={`flex ${isVertical ? "flex-col items-center gap-2" : "items-center gap-3"} ${className}`}>
+    <div
+      className={`flex ${isVertical ? "flex-col items-center gap-2" : "items-center gap-3"} cursor-pointer ${className}`}
+      onClick={() => navigate("/")}
+    >
       <img src={logoImage} alt="Nuphar Flowers AI" className={`${sizeMap[size]} object-contain mix-blend-multiply`} />
       {showText && (
         <span className={`font-brand ${textSizeMap[size]} text-foreground tracking-wide ${isVertical ? "text-center" : ""}`}>
