@@ -36,16 +36,29 @@ const AIChatPage = () => {
         </div>
       </div>
 
-      {/* Iframe Content - takes remaining viewport height */}
-      <iframe
-        ref={iframeRef}
-        src="https://nupharflowersai.base44.app/AIBouquetBuilderEmbed"
-        title="AI Bouquet Builder Chat"
-        className="w-full flex-1"
-        style={{ minHeight: "calc(100vh - 56px)", border: "none" }}
-        allow="clipboard-write"
-        loading="lazy"
-      />
+      {/* Iframe Content */}
+      <div 
+        className="flex-1"
+        style={{ 
+          overflowY: "auto", 
+          WebkitOverflowScrolling: "touch",
+        }}
+      >
+        <iframe
+          ref={iframeRef}
+          src="https://nupharflowersai.base44.app/AIBouquetBuilderEmbed"
+          title="AI Bouquet Builder Chat"
+          className="w-full"
+          style={{ 
+            minHeight: "calc(100vh - 56px)",
+            height: "100%",
+            border: "none",
+            overflowY: "auto",
+          }}
+          allow="clipboard-write"
+          loading="lazy"
+        />
+      </div>
     </div>
   );
 };
