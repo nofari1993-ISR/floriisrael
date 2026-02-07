@@ -87,9 +87,9 @@ const AIChatPage = () => {
     : "https://nupharflowersai.com/AIBouquetBuilderEmbed";
 
   return (
-    <>
-      {/* Fixed Header */}
-      <div className="fixed top-0 left-0 right-0 z-10 bg-background/80 backdrop-blur-xl border-b border-border/50">
+    <div className="h-screen flex flex-col bg-gradient-hero">
+      {/* Header */}
+      <div className="flex-shrink-0 bg-background/80 backdrop-blur-xl border-b border-border/50">
         <div className="container mx-auto px-4 py-2 flex items-center justify-between">
           <button
             onClick={() => navigate(-1)}
@@ -105,8 +105,8 @@ const AIChatPage = () => {
         </div>
       </div>
 
-      {/* Page content */}
-      <div style={{ paddingTop: "44px" }}>
+      {/* Page content - fills remaining height */}
+      <div className="flex-1 min-h-0">
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -119,16 +119,15 @@ const AIChatPage = () => {
             title="AI Bouquet Builder Chat"
             style={{
               width: "100%",
-              height: "1800px",
+              height: "100%",
               border: "none",
               display: "block",
             }}
             allow="clipboard-write"
-            loading="lazy"
           />
         )}
       </div>
-    </>
+    </div>
   );
 };
 
