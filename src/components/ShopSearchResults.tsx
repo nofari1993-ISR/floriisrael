@@ -126,8 +126,8 @@ const ShopSearchResults = ({ open, onClose, searchQuery }: ShopSearchResultsProp
                   className="rounded-xl gap-2"
                   onClick={() => navigate("/ai-chat")}
                 >
-                  <MessageSquare className="w-4 h-4" />
-                  שיחה עם יועץ AI
+                  <Palette className="w-4 h-4" />
+                  בניית זר עם AI
                 </Button>
               </motion.div>
 
@@ -275,8 +275,8 @@ const ShopSearchResults = ({ open, onClose, searchQuery }: ShopSearchResultsProp
                             className="rounded-xl gap-1"
                             onClick={() => navigate("/ai-chat")}
                           >
-                            <MessageSquare className="w-3.5 h-3.5" />
-                            AI
+                            <Palette className="w-3.5 h-3.5" />
+                            זר AI
                           </Button>
                         </div>
                       </div>
