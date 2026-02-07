@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Package, ClipboardList, Store, ArrowRight, LogOut } from "lucide-react";
+import { Package, ClipboardList, Store, ArrowRight, LogOut, ChevronDown } from "lucide-react";
 import Logo from "@/components/Logo";
 import { Button } from "@/components/ui/button";
-import { useShopOwner } from "@/hooks/useShopOwner";
+import { useShopOwner, type OwnedShop } from "@/hooks/useShopOwner";
 import { useAuth } from "@/hooks/useAuth";
 import InventoryTab from "@/components/dashboard/InventoryTab";
 import OrdersTab from "@/components/dashboard/OrdersTab";
@@ -13,15 +13,24 @@ type Tab = "inventory" | "orders";
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const { shop, isShopOwner, isAdmin, loading, user } = useShopOwner();
+  const { shops, isShopOwner, isAdmin, loading, user } = useShopOwner();
   const { signOut } = useAuth();
   const [activeTab, setActiveTab] = useState<Tab>("orders");
+  const [selectedShop, setSelectedShop] = useState<OwnedShop | null>(null);
+  const [showShopPicker, setShowShopPicker] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
       navigate("/auth");
     }
   }, [loading, user, navigate]);
+
+  // Auto-select first shop
+  useEffect(() => {
+    if (shops.length > 0 && !selectedShop) {
+      setSelectedShop(shops[0]);
+    }
+  }, [shops, selectedShop]);
 
   if (loading) {
     return (
@@ -71,11 +80,36 @@ const Dashboard = () => {
               <span className="hidden sm:inline">חזרה</span>
             </button>
             <div className="h-5 w-px bg-border/50" />
-            <div className="flex items-center gap-2">
-              <Store className="w-4 h-4 text-primary" />
-              <span className="font-display font-bold text-foreground text-sm">
-                {shop?.name || "ממשק ניהול"}
-              </span>
+
+            {/* Shop Selector */}
+            <div className="relative">
+              <button
+                onClick={() => shops.length > 1 && setShowShopPicker(!showShopPicker)}
+                className={`flex items-center gap-2 ${shops.length > 1 ? "cursor-pointer hover:text-primary" : ""}`}
+              >
+                <Store className="w-4 h-4 text-primary" />
+                <span className="font-display font-bold text-foreground text-sm">
+                  {selectedShop?.name || "בחר חנות"}
+                </span>
+                {shops.length > 1 && <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />}
+              </button>
+
+              {showShopPicker && shops.length > 1 && (
+                <div className="absolute top-full mt-2 right-0 bg-card border border-border/50 rounded-xl shadow-elevated z-20 min-w-[200px] overflow-hidden">
+                  {shops.map((shop) => (
+                    <button
+                      key={shop.id}
+                      onClick={() => {
+                        setSelectedShop(shop);
+                        setShowShopPicker(false);
+                      }}
+                      className={`w-full text-right px-4 py-3 text-sm font-body hover:bg-muted transition-colors ${selectedShop?.id === shop.id ? "bg-muted text-primary font-semibold" : "text-foreground"}`}
+                    >
+                      {shop.name}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -116,13 +150,13 @@ const Dashboard = () => {
       {/* Tab Content */}
       <div className="container mx-auto px-4 py-8">
         <motion.div
-          key={activeTab}
+          key={`${activeTab}-${selectedShop?.id}`}
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.2 }}
         >
-          {activeTab === "inventory" && shop && <InventoryTab shopId={shop.id} />}
-          {activeTab === "orders" && shop && <OrdersTab shopId={shop.id} />}
+          {activeTab === "inventory" && selectedShop && <InventoryTab shopId={selectedShop.id} />}
+          {activeTab === "orders" && selectedShop && <OrdersTab shopId={selectedShop.id} />}
         </motion.div>
       </div>
     </div>
