@@ -1,13 +1,17 @@
 import { motion } from "framer-motion";
-import { Search, MapPin } from "lucide-react";
+import { Search, MapPin, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import heroImage from "@/assets/hero-flowers.jpg";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import ShopSearchResults from "@/components/ShopSearchResults";
+import { useAuth } from "@/hooks/useAuth";
 
 const Hero = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [showResults, setShowResults] = useState(false);
+  const { user, isAdmin, signOut } = useAuth();
+  const navigate = useNavigate();
 
   return (
     <section className="relative min-h-screen overflow-hidden bg-gradient-hero">
@@ -35,9 +39,19 @@ const Hero = () => {
             <a href="#shops" className="hover:text-foreground transition-colors">חנויות</a>
             <a href="#ai-chat" className="hover:text-foreground transition-colors">צ׳אט חכם</a>
           </div>
-          <Button variant="hero-outline" size="sm">
-            התחברות
-          </Button>
+          {user ? (
+            <div className="flex items-center gap-2">
+              {isAdmin && <span className="text-xs text-primary font-medium bg-primary/10 px-2 py-1 rounded-full">מנהלת</span>}
+              <Button variant="hero-outline" size="sm" onClick={signOut}>
+                <LogOut className="w-4 h-4 ml-1" />
+                התנתקות
+              </Button>
+            </div>
+          ) : (
+            <Button variant="hero-outline" size="sm" onClick={() => navigate("/auth")}>
+              התחברות
+            </Button>
+          )}
         </motion.nav>
 
         {/* Hero Content */}
