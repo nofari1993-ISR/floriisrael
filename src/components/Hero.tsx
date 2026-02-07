@@ -60,11 +60,8 @@ const Hero = () => {
             transition={{ duration: 0.8, delay: 0.2 }}
             className="space-y-8"
           >
-            <div className="space-y-4">
-              <h1 className="text-5xl md:text-6xl lg:text-7xl font-display font-bold leading-tight text-foreground">
-                כל הפרחים,{" "}
-                <span className="text-gradient-sage">במקום אחד</span>
-              </h1>
+            <div className="space-y-6">
+              <Logo size="lg" layout="vertical" className="mb-4" />
               <p className="text-xl text-muted-foreground font-body max-w-lg leading-relaxed">
                 גלו חנויות פרחים באזור שלכם, בנו את הזר המושלם בעצמכם או תנו ל-AI החכם שלנו לעזור לכם
               </p>
