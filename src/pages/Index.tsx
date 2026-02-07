@@ -1,8 +1,5 @@
 import Hero from "@/components/Hero";
 import HowItWorks from "@/components/HowItWorks";
-import AIBouquetEmbed from "@/components/AIBouquetEmbed";
-import FeaturedShops from "@/components/FeaturedShops";
-import AIChat from "@/components/AIChat";
 import Footer from "@/components/Footer";
 
 const Index = () => {
@@ -10,9 +7,6 @@ const Index = () => {
     <div className="min-h-screen">
       <Hero />
       <HowItWorks />
-      <AIBouquetEmbed />
-      <FeaturedShops />
-      <AIChat />
       <Footer />
     </div>
   );
