@@ -7,6 +7,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
 import AIChatPage from "./pages/AIChatPage";
+import DIYBuilderPage from "./pages/DIYBuilderPage";
 import Checkout from "./pages/Checkout";
 import Dashboard from "./pages/Dashboard";
 
@@ -22,6 +23,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/ai-chat" element={<AIChatPage />} />
+          <Route path="/diy-builder" element={<DIYBuilderPage />} />
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/dashboard" element={<Dashboard />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
