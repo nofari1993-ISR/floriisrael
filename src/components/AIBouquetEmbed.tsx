@@ -10,7 +10,7 @@ const AIBouquetEmbed = () => {
         </p>
         <div className="rounded-2xl overflow-hidden shadow-lg border border-border/50">
           <iframe
-            src="https://nupharflowersai.com.base44.app/AIBouquetBuilderEmbed"
+            src="https://nupharflowersai.base44.app/AIBouquetBuilderEmbed"
             title="AI Bouquet Builder"
             className="w-full border-0"
             style={{ height: "min(800px, 80vh)" }}
