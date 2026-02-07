@@ -1,67 +1,11 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { Star, MapPin, Clock, Plus, X, Store, Palette, ArrowRight } from "lucide-react";
+import { Star, MapPin, Clock, Plus, X, Store, Palette, ArrowRight, MessageSquare, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import ShopDIYBuilder from "@/components/ShopDIYBuilder";
-
-interface Shop {
-  id: number;
-  name: string;
-  location: string;
-  rating: number;
-  reviews: number;
-  speciality: string;
-  image: string;
-  hours: string;
-  tags: string[];
-}
-
-const initialShops: Shop[] = [
-  {
-    id: 1,
-    name: "פרחי הגן",
-    location: "תל אביב, רוטשילד 42",
-    rating: 4.9,
-    reviews: 234,
-    speciality: "זרים רומנטיים",
-    image: "🌹",
-    hours: "08:00 - 20:00",
-    tags: ["משלוח מהיר", "DIY"],
-  },
-  {
-    id: 2,
-    name: "בלום בוטיק",
-    location: "ירושלים, אמילי זולא 15",
-    rating: 4.8,
-    reviews: 189,
-    speciality: "עיצוב מודרני",
-    image: "🌸",
-    hours: "09:00 - 21:00",
-    tags: ["פרימיום", "אירועים"],
-  },
-  {
-    id: 3,
-    name: "הפרח הירוק",
-    location: "חיפה, הנביאים 8",
-    rating: 4.7,
-    reviews: 156,
-    speciality: "פרחי שדה",
-    image: "🌿",
-    hours: "07:30 - 19:00",
-    tags: ["אורגני", "מקומי"],
-  },
-  {
-    id: 4,
-    name: "סחלב פרחים",
-    location: "הרצליה, סוקולוב 22",
-    rating: 4.9,
-    reviews: 312,
-    speciality: "סידורי יוקרה",
-    image: "🌺",
-    hours: "08:00 - 22:00",
-    tags: ["יוקרה", "24/7 משלוח"],
-  },
-];
+import { useShops, type Shop } from "@/hooks/useShops";
+import { useAuth } from "@/hooks/useAuth";
 
 interface AddShopFormData {
   name: string;
@@ -78,7 +22,9 @@ interface ShopSearchResultsProps {
 }
 
 const ShopSearchResults = ({ open, onClose, searchQuery }: ShopSearchResultsProps) => {
-  const [shops, setShops] = useState<Shop[]>(initialShops);
+  const { shops, loading, addShop, removeShop } = useShops(searchQuery);
+  const { isAdmin } = useAuth();
+  const navigate = useNavigate();
   const [showAddForm, setShowAddForm] = useState(false);
   const [selectedShop, setSelectedShop] = useState<Shop | null>(null);
   const [formData, setFormData] = useState<AddShopFormData>({
@@ -89,38 +35,26 @@ const ShopSearchResults = ({ open, onClose, searchQuery }: ShopSearchResultsProp
     tags: "",
   });
 
-  const handleAddShop = () => {
+  const handleAddShop = async () => {
     if (!formData.name || !formData.location) return;
 
-    const newShop: Shop = {
-      id: Date.now(),
+    const success = await addShop({
       name: formData.name,
       location: formData.location,
-      rating: 5.0,
-      reviews: 0,
-      speciality: formData.speciality || "כללי",
-      image: "🌼",
-      hours: formData.hours || "09:00 - 18:00",
-      tags: formData.tags ? formData.tags.split(",").map((t) => t.trim()) : [],
-    };
+      speciality: formData.speciality || undefined,
+      hours: formData.hours || undefined,
+      tags: formData.tags ? formData.tags.split(",").map((t) => t.trim()) : undefined,
+    });
 
-    setShops((prev) => [...prev, newShop]);
-    setFormData({ name: "", location: "", speciality: "", hours: "", tags: "" });
-    setShowAddForm(false);
+    if (success) {
+      setFormData({ name: "", location: "", speciality: "", hours: "", tags: "" });
+      setShowAddForm(false);
+    }
   };
 
-  const handleRemoveShop = (id: number) => {
-    setShops((prev) => prev.filter((shop) => shop.id !== id));
+  const handleRemoveShop = async (id: string) => {
+    await removeShop(id);
   };
-
-  const filteredShops = searchQuery
-    ? shops.filter(
-        (shop) =>
-          shop.name.includes(searchQuery) ||
-          shop.location.includes(searchQuery) ||
-          shop.speciality.includes(searchQuery)
-      )
-    : shops;
 
   return (
     <>
@@ -166,31 +100,42 @@ const ShopSearchResults = ({ open, onClose, searchQuery }: ShopSearchResultsProp
                   {searchQuery ? `חנויות באזור "${searchQuery}"` : "חנויות פרחים"}
                 </h1>
                 <p className="text-lg text-muted-foreground font-body">
-                  {filteredShops.length} חנויות נמצאו — בחרו חנות ובנו את הזר שלכם
+                  {loading ? "טוען חנויות..." : `${shops.length} חנויות נמצאו — בחרו חנות ובנו את הזר שלכם`}
                 </p>
               </motion.div>
 
-              {/* Add Shop Button */}
+              {/* Action Buttons */}
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
-                className="flex justify-center mb-8"
+                className="flex justify-center gap-3 mb-8"
               >
+                {isAdmin && (
+                  <Button
+                    variant="hero-outline"
+                    size="default"
+                    className="rounded-xl gap-2"
+                    onClick={() => setShowAddForm(!showAddForm)}
+                  >
+                    <Plus className="w-4 h-4" />
+                    {showAddForm ? "ביטול" : "הוסף חנות"}
+                  </Button>
+                )}
                 <Button
-                  variant="hero-outline"
+                  variant="hero"
                   size="default"
                   className="rounded-xl gap-2"
-                  onClick={() => setShowAddForm(!showAddForm)}
+                  onClick={() => navigate("/ai-chat")}
                 >
-                  <Plus className="w-4 h-4" />
-                  {showAddForm ? "ביטול" : "הוסף חנות"}
+                  <MessageSquare className="w-4 h-4" />
+                  שיחה עם יועץ AI
                 </Button>
               </motion.div>
 
               {/* Add Shop Form */}
               <AnimatePresence>
-                {showAddForm && (
+                {showAddForm && isAdmin && (
                   <motion.div
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: "auto" }}
@@ -248,7 +193,12 @@ const ShopSearchResults = ({ open, onClose, searchQuery }: ShopSearchResultsProp
               </AnimatePresence>
 
               {/* Shop Grid */}
-              {filteredShops.length === 0 ? (
+              {loading ? (
+                <div className="text-center py-20">
+                  <Loader2 className="w-10 h-10 mx-auto mb-4 animate-spin text-primary" />
+                  <p className="text-muted-foreground font-body">טוען חנויות...</p>
+                </div>
+              ) : shops.length === 0 ? (
                 <div className="text-center py-20 text-muted-foreground">
                   <Store className="w-16 h-16 mx-auto mb-4 opacity-30" />
                   <p className="font-display text-xl font-semibold">לא נמצאו חנויות</p>
@@ -256,7 +206,7 @@ const ShopSearchResults = ({ open, onClose, searchQuery }: ShopSearchResultsProp
                 </div>
               ) : (
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
-                  {filteredShops.map((shop, index) => (
+                  {shops.map((shop, index) => (
                     <motion.div
                       key={shop.id}
                       initial={{ opacity: 0, y: 20 }}
@@ -264,14 +214,16 @@ const ShopSearchResults = ({ open, onClose, searchQuery }: ShopSearchResultsProp
                       transition={{ delay: 0.15 + index * 0.07 }}
                       className="group relative bg-card rounded-2xl overflow-hidden border border-border/50 hover:border-primary/20 shadow-soft hover:shadow-card transition-all duration-300"
                     >
-                      {/* Remove Button */}
-                      <button
-                        onClick={() => handleRemoveShop(shop.id)}
-                        className="absolute top-3 left-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-full bg-background/80 hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
-                        title="הסר חנות"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
+                      {/* Remove Button - Admin only */}
+                      {isAdmin && (
+                        <button
+                          onClick={() => handleRemoveShop(shop.id)}
+                          className="absolute top-3 left-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-full bg-background/80 hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
+                          title="הסר חנות"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      )}
 
                       {/* Shop Header */}
                       <div className="bg-gradient-card p-6 text-center">
@@ -308,16 +260,27 @@ const ShopSearchResults = ({ open, onClose, searchQuery }: ShopSearchResultsProp
                           ))}
                         </div>
 
-                        {/* DIY Button */}
-                        <Button
-                          variant="hero"
-                          size="sm"
-                          className="w-full mt-3 rounded-xl gap-2"
-                          onClick={() => setSelectedShop(shop)}
-                        >
-                          <Palette className="w-4 h-4" />
-                          בנה זר DIY
-                        </Button>
+                        {/* Action Buttons */}
+                        <div className="flex gap-2 mt-3">
+                          <Button
+                            variant="hero"
+                            size="sm"
+                            className="flex-1 rounded-xl gap-2"
+                            onClick={() => setSelectedShop(shop)}
+                          >
+                            <Palette className="w-4 h-4" />
+                            בנה זר DIY
+                          </Button>
+                          <Button
+                            variant="hero-outline"
+                            size="sm"
+                            className="rounded-xl gap-1"
+                            onClick={() => navigate("/ai-chat")}
+                          >
+                            <MessageSquare className="w-3.5 h-3.5" />
+                            AI
+                          </Button>
+                        </div>
                       </div>
                     </motion.div>
                   ))}
