@@ -68,13 +68,17 @@ const AIChatPage = () => {
     sendInventoryToIframe();
   }, [sendInventoryToIframe]);
 
-  // Listen for CHECKOUT message from Base44
+  // Listen for messages from Base44
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       if (event.data?.action === "CHECKOUT") {
         const params = new URLSearchParams();
         if (shopId) params.set("shopId", shopId);
         navigate(`/checkout?${params.toString()}`);
+      }
+      // Handle "go home" from Base44
+      if (event.data?.action === "GO_HOME" || event.data?.action === "HOME") {
+        navigate("/");
       }
     };
 
