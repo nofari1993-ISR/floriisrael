@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.bouquet-ai]
 verify_jwt = false
+
+[functions.geocode-shops]
+verify_jwt = false

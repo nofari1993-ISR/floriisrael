@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { Star, MapPin, Clock, Plus, X, Store, Palette, ArrowRight, Loader2 } from "lucide-react";
+import { Star, MapPin, Clock, Plus, X, Store, Palette, ArrowRight, Loader2, Navigation, AlertCircle } from "lucide-react";
 import Logo from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -23,7 +23,16 @@ interface ShopSearchResultsProps {
 }
 
 const ShopSearchResults = ({ open, onClose, searchQuery }: ShopSearchResultsProps) => {
-  const { shops, loading, addShop, removeShop } = useShops(searchQuery);
+  const {
+    shops,
+    loading,
+    addShop,
+    removeShop,
+    userLocation,
+    locationLoading,
+    locationError,
+    requestLocation,
+  } = useShops(searchQuery);
   const { isAdmin } = useAuth();
   const navigate = useNavigate();
   const [showAddForm, setShowAddForm] = useState(false);
@@ -55,6 +64,12 @@ const ShopSearchResults = ({ open, onClose, searchQuery }: ShopSearchResultsProp
 
   const handleRemoveShop = async (id: string) => {
     await removeShop(id);
+  };
+
+  const formatDistance = (distance?: number) => {
+    if (distance === undefined) return null;
+    if (distance < 1) return `${Math.round(distance * 1000)} מ'`;
+    return `${distance} ק"מ`;
   };
 
   return (
@@ -89,7 +104,7 @@ const ShopSearchResults = ({ open, onClose, searchQuery }: ShopSearchResultsProp
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
-                className="text-center mb-12"
+                className="text-center mb-8"
               >
                 <h1 className="text-4xl md:text-5xl font-display font-bold text-foreground mb-3">
                   {searchQuery ? `חנויות באזור "${searchQuery}"` : "חנויות פרחים"}
@@ -97,6 +112,47 @@ const ShopSearchResults = ({ open, onClose, searchQuery }: ShopSearchResultsProp
                 <p className="text-lg text-muted-foreground font-body">
                   {loading ? "טוען חנויות..." : `${shops.length} חנויות נמצאו`}
                 </p>
+              </motion.div>
+
+              {/* Location Button */}
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.15 }}
+                className="flex flex-col items-center gap-2 mb-8"
+              >
+                {!userLocation && (
+                  <Button
+                    variant="hero-outline"
+                    className="rounded-xl gap-2"
+                    onClick={requestLocation}
+                    disabled={locationLoading}
+                  >
+                    {locationLoading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        מאתר מיקום...
+                      </>
+                    ) : (
+                      <>
+                        <Navigation className="w-4 h-4" />
+                        מצא חנויות קרובות אליי
+                      </>
+                    )}
+                  </Button>
+                )}
+                {userLocation && (
+                  <p className="text-sm text-primary font-body flex items-center gap-1.5">
+                    <Navigation className="w-3.5 h-3.5" />
+                    החנויות ממוינות לפי מרחק ממיקומך
+                  </p>
+                )}
+                {locationError && (
+                  <p className="text-sm text-destructive font-body flex items-center gap-1.5">
+                    <AlertCircle className="w-3.5 h-3.5" />
+                    {locationError}
+                  </p>
+                )}
               </motion.div>
 
               {/* Admin Add Button */}
@@ -140,7 +196,7 @@ const ShopSearchResults = ({ open, onClose, searchQuery }: ShopSearchResultsProp
                         />
                         <input
                           type="text"
-                          placeholder="כתובת *"
+                          placeholder="כתובת (עיר, רחוב) *"
                           value={formData.location}
                           onChange={(e) => setFormData((prev) => ({ ...prev, location: e.target.value }))}
                           className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm font-body text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-ring"
@@ -211,7 +267,15 @@ const ShopSearchResults = ({ open, onClose, searchQuery }: ShopSearchResultsProp
                         </button>
                       )}
 
-                      {/* Shop Header - gradient bar instead of emoji */}
+                      {/* Distance Badge */}
+                      {shop.distance !== undefined && (
+                        <div className="absolute top-3 right-3 z-10 bg-primary/90 text-primary-foreground text-xs font-body font-semibold px-2.5 py-1 rounded-full shadow-sm flex items-center gap-1">
+                          <Navigation className="w-3 h-3" />
+                          {formatDistance(shop.distance)}
+                        </div>
+                      )}
+
+                      {/* Shop Header - gradient bar */}
                       <div className="h-2 bg-gradient-sage" />
 
                       <div className="p-6 space-y-4">
@@ -255,7 +319,7 @@ const ShopSearchResults = ({ open, onClose, searchQuery }: ShopSearchResultsProp
 
                         {/* Action Buttons */}
                         <div className="flex gap-2 justify-center">
-          <Button
+                          <Button
                             variant="hero"
                             size="sm"
                             className="flex-1 rounded-xl gap-2"
@@ -283,7 +347,6 @@ const ShopSearchResults = ({ open, onClose, searchQuery }: ShopSearchResultsProp
           </motion.div>
         )}
       </AnimatePresence>
-
     </>
   );
 };

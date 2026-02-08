@@ -171,7 +171,9 @@ export type Database = {
           hours: string | null
           id: string
           image: string | null
+          latitude: number | null
           location: string
+          longitude: number | null
           name: string
           owner_id: string | null
           phone: string | null
@@ -186,7 +188,9 @@ export type Database = {
           hours?: string | null
           id?: string
           image?: string | null
+          latitude?: number | null
           location: string
+          longitude?: number | null
           name: string
           owner_id?: string | null
           phone?: string | null
@@ -201,7 +205,9 @@ export type Database = {
           hours?: string | null
           id?: string
           image?: string | null
+          latitude?: number | null
           location?: string
+          longitude?: number | null
           name?: string
           owner_id?: string | null
           phone?: string | null
