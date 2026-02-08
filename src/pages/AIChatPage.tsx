@@ -1,36 +1,115 @@
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useRef, useEffect, useState } from "react";
+import { Loader2, RotateCcw, Send } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
+
 import BouquetChatHeader from "@/components/bouquet-chat/BouquetChatHeader";
 import BouquetChatMessage from "@/components/bouquet-chat/BouquetChatMessage";
-import BouquetChatInput from "@/components/bouquet-chat/BouquetChatInput";
-import QuickSuggestions from "@/components/bouquet-chat/QuickSuggestions";
+import BouquetCard from "@/components/bouquet-chat/BouquetCard";
+import BudgetModal from "@/components/bouquet-chat/BudgetModal";
+import StepOptionButtons from "@/components/bouquet-chat/StepOptionButtons";
 import OrderSuccessScreen, { type OrderSuccessData } from "@/components/bouquet-chat/OrderSuccessScreen";
-import { useBouquetChat } from "@/hooks/useBouquetChat";
+import {
+  useBouquetWizard,
+  STEPS,
+  RECIPIENT_OPTIONS,
+  OCCASION_OPTIONS,
+  COLOR_OPTIONS,
+} from "@/hooks/useBouquetWizard";
 
 const AIChatPage = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const shopId = searchParams.get("shopId");
 
-  const { messages, isStreaming, sendMessage } = useBouquetChat(shopId);
+  const {
+    messages,
+    currentStep,
+    answers,
+    isLoading,
+    recommendation,
+    pendingBouquet,
+    handleStepAnswer,
+    handleModify,
+    handleModifyRequest,
+    handleApproveBudgetIncrease,
+    handleRejectBudgetIncrease,
+    reset,
+  } = useBouquetWizard(shopId);
+
   const [input, setInput] = useState("");
   const [orderSuccess, setOrderSuccess] = useState<OrderSuccessData | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const showSuggestions = messages.length <= 1 && !isStreaming;
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  // Auto-scroll to bottom on new messages
+  // Auto-scroll
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, 100);
+  }, [messages, isLoading]);
 
   const handleSend = () => {
-    if (!input.trim() || isStreaming) return;
-    sendMessage(input);
+    if (!input.trim() || isLoading) return;
+
+    if (recommendation) {
+      handleModify(input.trim());
+    } else {
+      handleStepAnswer(input.trim());
+    }
     setInput("");
   };
 
-  const handleSuggestionSelect = (prompt: string) => {
-    sendMessage(prompt);
+  const handleAcceptBouquet = async () => {
+    if (!recommendation) return;
+
+    // Navigate to checkout with bouquet data
+    const params = new URLSearchParams();
+    if (shopId) params.set("shopId", shopId);
+
+    // Save bouquet to order via edge function
+    try {
+      const { data, error } = await supabase.functions.invoke("create-order", {
+        body: {
+          shop_id: shopId,
+          customer_name: "לקוח מהאתר",
+          recipient_name: answers.recipient || "לא צוין",
+          delivery_address: "ייקבע בהמשך",
+          delivery_date: new Date().toISOString().split("T")[0],
+          total_price: recommendation.total_price,
+          notes: `אירוע: ${answers.occasion || "לא צוין"}, צבעים: ${answers.colors || "לא צוין"}`,
+          items: recommendation.flowers.map((f) => ({
+            flower_name: f.name,
+            quantity: f.quantity,
+            unit_price: f.unit_price,
+          })),
+        },
+      });
+
+      if (error) throw error;
+
+      setOrderSuccess({
+        orderId: data.order_id,
+        shopPhone: data.shop_phone,
+        shopName: data.shop_name,
+        recipientName: answers.recipient || "",
+        deliveryDate: "",
+      });
+
+      toast({
+        title: "ההזמנה נשמרה בהצלחה! 🎉",
+        description: `מספר הזמנה: ${data.order_id?.slice(0, 8)}`,
+      });
+    } catch (err: any) {
+      console.error("Order error:", err);
+      toast({
+        title: "שגיאה בשמירת ההזמנה",
+        description: err.message || "נסו שוב",
+        variant: "destructive",
+      });
+    }
   };
 
   if (orderSuccess) {
@@ -42,36 +121,125 @@ const AIChatPage = () => {
     );
   }
 
+  // Determine which step options to show
+  const showRecipientOptions = currentStep === STEPS.RECIPIENT && !recommendation;
+  const showOccasionOptions = currentStep === STEPS.OCCASION && !recommendation;
+  const showColorOptions = currentStep === STEPS.COLORS && !recommendation;
+  const showNotesSkip = currentStep === STEPS.NOTES && !recommendation;
+
   return (
     <div className="h-screen flex flex-col bg-gradient-hero">
       <BouquetChatHeader onBack={() => navigate(-1)} />
 
-      {/* Chat area */}
-      <div className="flex-1 min-h-0 flex flex-col">
-        {/* Messages */}
-        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
-          {messages.map((msg, i) => (
-            <BouquetChatMessage
-              key={i}
-              role={msg.role}
-              content={msg.content}
-              isStreaming={isStreaming && i === messages.length - 1 && msg.role === "assistant"}
+      <div className="flex-1 min-h-0 flex flex-col max-w-3xl mx-auto w-full">
+        {/* Bouquet recommendation card (sticky top) */}
+        {recommendation && (
+          <div className="px-4 pt-3 flex-shrink-0">
+            <BouquetCard
+              recommendation={recommendation}
+              onAccept={handleAcceptBouquet}
+              onModify={handleModifyRequest}
+              onReset={reset}
             />
+          </div>
+        )}
+
+        {/* Messages */}
+        <div className={`flex-1 overflow-y-auto px-4 py-4 space-y-3 ${recommendation ? "max-h-[35vh]" : ""}`}>
+          {messages.map((msg, i) => (
+            <BouquetChatMessage key={i} role={msg.role} content={msg.content} />
           ))}
+          {isLoading && (
+            <div className="flex gap-2.5">
+              <div className="w-8 h-8 rounded-full bg-sage-light flex items-center justify-center">
+                <Loader2 className="w-4 h-4 text-primary animate-spin" />
+              </div>
+              <div className="bg-muted rounded-2xl px-4 py-3">
+                <div className="flex gap-1.5">
+                  <span className="w-2 h-2 bg-muted-foreground/30 rounded-full animate-bounce" />
+                  <span className="w-2 h-2 bg-muted-foreground/30 rounded-full animate-bounce [animation-delay:150ms]" />
+                  <span className="w-2 h-2 bg-muted-foreground/30 rounded-full animate-bounce [animation-delay:300ms]" />
+                </div>
+              </div>
+            </div>
+          )}
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Quick suggestions */}
-        {showSuggestions && <QuickSuggestions onSelect={handleSuggestionSelect} />}
+        {/* Bottom controls */}
+        <div className="flex-shrink-0 p-3 border-t border-border/50 bg-card/80 backdrop-blur-sm space-y-2">
+          {/* Step option buttons */}
+          {showRecipientOptions && (
+            <StepOptionButtons options={RECIPIENT_OPTIONS} onSelect={handleStepAnswer} disabled={isLoading} />
+          )}
+          {showOccasionOptions && (
+            <StepOptionButtons options={OCCASION_OPTIONS} onSelect={handleStepAnswer} disabled={isLoading} />
+          )}
+          {showColorOptions && (
+            <div className="grid grid-cols-3 gap-1.5 mb-2">
+              {COLOR_OPTIONS.map((color) => (
+                <button
+                  key={color}
+                  onClick={() => handleStepAnswer(color)}
+                  disabled={isLoading}
+                  className="bg-card border border-border hover:border-primary/40 rounded-lg py-2 text-xs font-body font-medium text-foreground transition-all disabled:opacity-50 hover:shadow-soft"
+                >
+                  {color}
+                </button>
+              ))}
+            </div>
+          )}
+          {showNotesSkip && (
+            <Button
+              onClick={() => handleStepAnswer("המשך")}
+              disabled={isLoading}
+              variant="hero"
+              className="w-full rounded-xl mb-2"
+            >
+              המשך ליצירת הזר ✨
+            </Button>
+          )}
 
-        {/* Input */}
-        <BouquetChatInput
-          value={input}
-          onChange={setInput}
-          onSend={handleSend}
-          disabled={isStreaming}
-        />
+          {/* Text input */}
+          <div className="flex gap-2">
+            {!recommendation && (
+              <Button variant="ghost" size="icon" onClick={reset} className="shrink-0 rounded-xl">
+                <RotateCcw className="w-4 h-4" />
+              </Button>
+            )}
+            <input
+              ref={inputRef}
+              type="text"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSend()}
+              placeholder={recommendation ? "תארו את השינוי..." : "או כתבו תשובה..."}
+              disabled={isLoading}
+              className="flex-1 bg-muted rounded-xl px-4 py-3 outline-none font-body text-foreground text-sm placeholder:text-muted-foreground focus:ring-2 focus:ring-primary/20 transition-shadow disabled:opacity-50"
+            />
+            <Button
+              variant="hero"
+              size="icon"
+              className="rounded-xl w-11 h-11 shrink-0"
+              onClick={handleSend}
+              disabled={isLoading || !input.trim()}
+            >
+              <Send className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
       </div>
+
+      {/* Budget increase modal */}
+      <BudgetModal
+        open={!!pendingBouquet}
+        onOpenChange={() => {}}
+        originalBudget={parseFloat(answers.budget || "0")}
+        newPrice={pendingBouquet?.recommendation.total_price || 0}
+        difference={pendingBouquet?.priceDifference || 0}
+        onApprove={handleApproveBudgetIncrease}
+        onReject={handleRejectBudgetIncrease}
+      />
     </div>
   );
 };
