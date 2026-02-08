@@ -99,7 +99,7 @@ const Hero = () => {
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.9, delay: 0.2, ease: "easeOut" }}
-            className="space-y-6 lg:space-y-8 text-center lg:text-right"
+            className="space-y-6 lg:space-y-8 text-center"
           >
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -107,7 +107,7 @@ const Hero = () => {
               transition={{ duration: 0.7, delay: 0.3 }}
               className="space-y-4 lg:space-y-6"
             >
-              <Logo size="lg" layout="vertical" className="mb-2 lg:mb-4 lg:items-start" />
+              <Logo size="lg" layout="vertical" className="mb-2 lg:mb-4 items-center" />
               <p className="text-base md:text-lg lg:text-xl text-muted-foreground font-body max-w-lg leading-relaxed mx-auto lg:mx-0">
                 גלו חנויות פרחים באזור שלכם וקבלו את הזר המושלם ישירות עד הבית 🌷
               </p>
