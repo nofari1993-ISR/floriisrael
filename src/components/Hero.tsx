@@ -128,6 +128,7 @@ const Hero = () => {
                     placeholder="הזינו כתובת או עיר..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter") openResults(); }}
                     className="w-full bg-transparent outline-none font-body text-foreground placeholder:text-muted-foreground"
                   />
                 </div>
