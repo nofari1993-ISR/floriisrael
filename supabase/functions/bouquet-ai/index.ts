@@ -61,6 +61,12 @@ Deno.serve(async (req) => {
         ? `\n# ⭐ פרחים מקודמים (עדיפות גבוהה - בעל החנות מבקש לתעדף אותם!):\n${boostedFlowers.map((f: any) => `- ${f.name}${f.color ? ` (${f.color})` : ""}: ${f.quantity} יח', ₪${f.price}`).join("\n")}\nחובה לשלב לפחות פרח מקודם אחד בזר אם הוא מתאים לבקשה!\n`
         : "";
 
+      const colorsRequested = answers.colors || "לא צוין";
+      const isColorful = colorsRequested === "צבעוני" || colorsRequested.includes("צבעוני");
+      const colorInstruction = isColorful
+        ? `הלקוח ביקש זר צבעוני! חובה לשלב לפחות 3-4 צבעים שונים ומגוונים (למשל: אדום, צהוב, כתום, סגול, ורוד, לבן). אל תשתמש רק בגוונים דומים!`
+        : `צבעים מועדפים: ${colorsRequested}`;
+
       prompt = `אתה מעצב זרי פרחים מקצועי. בנה זר מגוון עם מספר סוגי פרחים שונים.
 
 # פרחים זמינים במלאי:
@@ -69,7 +75,7 @@ ${boostedInstruction}
 # בקשת הלקוח:
 - למי: ${answers.recipient || "לא צוין"}
 - אירוע: ${answers.occasion || "לא צוין"}
-- צבעים: ${answers.colors || "לא צוין"}
+- ${colorInstruction}
 - תקציב לפרחים: ₪${Math.floor(budgetForFlowers)}
 - הערות: ${answers.notes && answers.notes !== "המשך" ? answers.notes : "אין"}
 
@@ -80,6 +86,7 @@ ${boostedInstruction}
 4. אם פרח לא זמין, הצע חלופה
 5. כל רשומה בזר = צבע אחד בלבד של הפרח
 6. ${boostedFlowers.length > 0 ? "תעדף את הפרחים המקודמים (⭐) ותן להם כמות גבוהה יותר בזר" : "בחר פרחים שמתאימים לבקשה"}
+${isColorful ? "7. **קריטי**: הזר חייב להיות צבעוני באמת — שלב פרחים מצבעים שונים לחלוטין (אדום + צהוב + סגול + כתום וכו'). לא רק ורוד ואדום!" : ""}
 
 # ההודעה שלך (message):
 כתוב הודעה חמה ואישית (2-3 משפטים) שמסבירה למה בחרת בפרחים האלה ואיך הם מתאימים לאירוע.
