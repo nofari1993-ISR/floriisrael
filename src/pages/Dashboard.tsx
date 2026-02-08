@@ -1,15 +1,16 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Package, ClipboardList, Store, ArrowRight, LogOut, ChevronDown } from "lucide-react";
+import { Package, ClipboardList, Store, ArrowRight, LogOut, ChevronDown, Truck } from "lucide-react";
 import Logo from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { useShopOwner, type OwnedShop } from "@/hooks/useShopOwner";
 import { useAuth } from "@/hooks/useAuth";
 import InventoryTab from "@/components/dashboard/InventoryTab";
 import OrdersTab from "@/components/dashboard/OrdersTab";
+import RestockTab from "@/components/dashboard/RestockTab";
 
-type Tab = "inventory" | "orders";
+type Tab = "inventory" | "orders" | "restock";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -64,6 +65,7 @@ const Dashboard = () => {
   const tabs: { key: Tab; label: string; icon: React.ReactNode }[] = [
     { key: "orders", label: "הזמנות", icon: <ClipboardList className="w-4 h-4" /> },
     { key: "inventory", label: "מלאי", icon: <Package className="w-4 h-4" /> },
+    { key: "restock", label: "הזמנה מספק", icon: <Truck className="w-4 h-4" /> },
   ];
 
   return (
@@ -157,6 +159,7 @@ const Dashboard = () => {
         >
           {activeTab === "inventory" && selectedShop && <InventoryTab shopId={selectedShop.id} />}
           {activeTab === "orders" && selectedShop && <OrdersTab shopId={selectedShop.id} />}
+          {activeTab === "restock" && selectedShop && <RestockTab shopId={selectedShop.id} />}
         </motion.div>
       </div>
     </div>
