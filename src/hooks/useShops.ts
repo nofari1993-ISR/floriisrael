@@ -137,6 +137,7 @@ export const useShops = (searchQuery?: string) => {
     speciality?: string;
     hours?: string;
     tags?: string[];
+    owner_id?: string;
   }) => {
     const { error } = await supabase.from("shops").insert({
       name: shopData.name,
@@ -144,6 +145,7 @@ export const useShops = (searchQuery?: string) => {
       speciality: shopData.speciality || "כללי",
       hours: shopData.hours || "09:00 - 18:00",
       tags: shopData.tags || [],
+      owner_id: shopData.owner_id || null,
     });
 
     if (error) {
