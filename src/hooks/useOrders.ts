@@ -72,6 +72,31 @@ export const useOrders = (shopId: string | undefined) => {
     fetchOrders();
   }, [fetchOrders]);
 
+  // Real-time: auto-refetch when orders change
+  useEffect(() => {
+    if (!shopId) return;
+
+    const channel = supabase
+      .channel(`orders-realtime-${shopId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "orders",
+          filter: `shop_id=eq.${shopId}`,
+        },
+        () => {
+          fetchOrders();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [shopId, fetchOrders]);
+
   const updateOrderStatus = async (orderId: string, status: string) => {
     const { error } = await supabase
       .from("orders")

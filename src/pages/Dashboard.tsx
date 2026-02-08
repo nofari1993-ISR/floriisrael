@@ -6,6 +6,8 @@ import Logo from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { useShopOwner, type OwnedShop } from "@/hooks/useShopOwner";
 import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import InventoryTab from "@/components/dashboard/InventoryTab";
 import OrdersTab from "@/components/dashboard/OrdersTab";
 import RestockTab from "@/components/dashboard/RestockTab";
@@ -16,9 +18,12 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { shops, isShopOwner, isAdmin, loading, user } = useShopOwner();
   const { signOut } = useAuth();
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<Tab>("orders");
   const [selectedShop, setSelectedShop] = useState<OwnedShop | null>(null);
   const [showShopPicker, setShowShopPicker] = useState(false);
+  const [newOrderCount, setNewOrderCount] = useState(0);
+  
 
   useEffect(() => {
     if (!loading && !user) {
@@ -32,6 +37,43 @@ const Dashboard = () => {
       setSelectedShop(shops[0]);
     }
   }, [shops, selectedShop]);
+
+  // Real-time subscription for new orders
+  useEffect(() => {
+    if (!selectedShop) return;
+
+    const channel = supabase
+      .channel("dashboard-new-orders")
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "orders",
+          filter: `shop_id=eq.${selectedShop.id}`,
+        },
+        (payload) => {
+          const newOrder = payload.new as any;
+          console.log("New order received:", newOrder.id);
+
+          // Show toast notification
+          toast({
+            title: "🌸 הזמנה חדשה!",
+            description: `${newOrder.customer_name} הזמין/ה זר ל${newOrder.recipient_name}`,
+          });
+
+          // Increment badge if not on orders tab
+          if (activeTab !== "orders") {
+            setNewOrderCount((prev) => prev + 1);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [selectedShop, activeTab, toast]);
 
   if (loading) {
     return (
@@ -135,7 +177,10 @@ const Dashboard = () => {
           {tabs.map((tab) => (
             <button
               key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
+              onClick={() => {
+                setActiveTab(tab.key);
+                if (tab.key === "orders") setNewOrderCount(0);
+              }}
               className={`flex items-center gap-2 px-5 py-3 text-sm font-semibold font-body rounded-t-xl transition-colors relative ${
                 activeTab === tab.key
                   ? "text-primary bg-card border border-border/50 border-b-transparent -mb-px"
@@ -144,6 +189,12 @@ const Dashboard = () => {
             >
               {tab.icon}
               {tab.label}
+              {/* New order badge */}
+              {tab.key === "orders" && newOrderCount > 0 && (
+                <span className="absolute -top-1 -left-1 min-w-[20px] h-5 px-1.5 rounded-full bg-destructive text-destructive-foreground text-xs font-bold flex items-center justify-center animate-pulse">
+                  {newOrderCount}
+                </span>
+              )}
             </button>
           ))}
         </div>
