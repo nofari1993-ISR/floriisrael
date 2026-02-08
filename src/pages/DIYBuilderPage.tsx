@@ -77,6 +77,10 @@ const DIYBuilderPage = () => {
     return groups;
   }, [flowers]);
 
+  // Categorize flowers
+  const GREENERY = new Set(["אקליפטוס", "רוסקוס", "שרך"]);
+  const FILLER = new Set(["רקפת", "לבנדר", "גיבסנית"]);
+
   // Deduplicate flowers by name – show one card per name with color variants
   const uniqueFlowers = useMemo(() => {
     const seen = new Set<string>();
@@ -95,6 +99,18 @@ const DIYBuilderPage = () => {
       (flowerColorVariants[flower.name] || []).some((v) => v.color === selectedColor);
     return matchesSearch && matchesColor;
   });
+
+  // Group into categories
+  const categorizedFlowers = useMemo(() => {
+    const main = filteredFlowers.filter((f) => !GREENERY.has(f.name) && !FILLER.has(f.name));
+    const filler = filteredFlowers.filter((f) => FILLER.has(f.name));
+    const greenery = filteredFlowers.filter((f) => GREENERY.has(f.name));
+    return [
+      { label: "פרחים עיקריים 🌸", flowers: main },
+      { label: "פרחי מילוי 🌿", flowers: filler },
+      { label: "ירק ועלווה 🍃", flowers: greenery },
+    ].filter((cat) => cat.flowers.length > 0);
+  }, [filteredFlowers]);
 
 
   // Handle checkout
@@ -243,32 +259,41 @@ const DIYBuilderPage = () => {
                 <p className="text-sm text-muted-foreground font-body">נסו לשנות את הסינון</p>
               </div>
             ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
-                {filteredFlowers.map((flower) => {
-                  const variants = flowerColorVariants[flower.name] || [];
-                  const colorVars = variants.length > 1
-                    ? variants.map((f) => ({
-                        id: f.id,
-                        color: f.color || "ללא צבע",
-                        price: f.price,
-                        quantity: f.quantity,
-                      }))
-                    : undefined;
-                  return (
-                    <FlowerCard
-                      key={flower.id}
-                      flower={flower}
-                      selectedQuantity={
-                        variants.length > 1
-                          ? variants.reduce((sum, v) => sum + getQuantity(v.id), 0)
-                          : getQuantity(flower.id)
-                      }
-                      onAdd={handleAddFlower}
-                      onRemove={handleRemoveFlower}
-                      colorVariants={colorVars}
-                    />
-                  );
-                })}
+              <div className="space-y-6">
+                {categorizedFlowers.map((category) => (
+                  <div key={category.label}>
+                    <h2 className="text-base md:text-lg font-display font-bold text-foreground mb-3">
+                      {category.label}
+                    </h2>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
+                      {category.flowers.map((flower) => {
+                        const variants = flowerColorVariants[flower.name] || [];
+                        const colorVars = variants.length > 1
+                          ? variants.map((f) => ({
+                              id: f.id,
+                              color: f.color || "ללא צבע",
+                              price: f.price,
+                              quantity: f.quantity,
+                            }))
+                          : undefined;
+                        return (
+                          <FlowerCard
+                            key={flower.id}
+                            flower={flower}
+                            selectedQuantity={
+                              variants.length > 1
+                                ? variants.reduce((sum, v) => sum + getQuantity(v.id), 0)
+                                : getQuantity(flower.id)
+                            }
+                            onAdd={handleAddFlower}
+                            onRemove={handleRemoveFlower}
+                            colorVariants={colorVars}
+                          />
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </div>
