@@ -39,11 +39,11 @@ const AIBouquetGallery = () => {
   const navigate = useNavigate();
 
   return (
-    <section className="py-24 relative overflow-hidden">
+    <section className="py-16 md:py-24 relative overflow-hidden">
       {/* Vivid background */}
       <div className="absolute inset-0 bg-gradient-to-b from-background via-secondary/20 to-background pointer-events-none" />
-      <div className="absolute top-10 left-10 w-72 h-72 rounded-full bg-accent/20 blur-3xl pointer-events-none" />
-      <div className="absolute bottom-10 right-10 w-80 h-80 rounded-full bg-secondary/30 blur-3xl pointer-events-none" />
+      <div className="absolute top-10 left-10 w-48 md:w-72 h-48 md:h-72 rounded-full bg-accent/20 blur-3xl pointer-events-none" />
+      <div className="absolute bottom-10 right-10 w-56 md:w-80 h-56 md:h-80 rounded-full bg-secondary/30 blur-3xl pointer-events-none" />
 
       <div className="container mx-auto px-4 relative z-10">
         <motion.div
@@ -51,16 +51,16 @@ const AIBouquetGallery = () => {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-16"
+          className="text-center mb-10 md:mb-16"
         >
-          <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-sage text-primary-foreground text-sm font-medium mb-4">
+          <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-sage text-primary-foreground text-sm font-medium mb-3 md:mb-4">
             <Sparkles className="w-4 h-4" />
             נוצר על ידי AI
           </span>
-          <h2 className="text-4xl md:text-5xl font-display font-bold text-foreground mb-4">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-display font-bold text-foreground mb-3 md:mb-4">
             הזרים שה-AI שלנו יצר 💐
           </h2>
-          <p className="text-lg text-muted-foreground font-body max-w-2xl mx-auto">
+          <p className="text-base md:text-lg text-muted-foreground font-body max-w-2xl mx-auto">
             כל זר מעוצב בהתאמה אישית על ידי הבינה המלאכותית שלנו — בחרו סגנון, תקציב ואירוע, וקבלו זר חלומי
           </p>
         </motion.div>
@@ -121,12 +121,12 @@ const AIBouquetGallery = () => {
           <Button
             variant="hero"
             size="lg"
-            className="rounded-2xl gap-2 text-lg px-10 py-6"
+            className="rounded-2xl gap-2 text-base md:text-lg px-8 md:px-10 py-5 md:py-6"
             onClick={() => navigate("/ai-chat")}
           >
-            <Sparkles className="w-5 h-5" />
+            <Sparkles className="w-4 h-4 md:w-5 md:h-5" />
             בנו את הזר שלכם עם AI
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="w-4 h-4 md:w-5 md:h-5" />
           </Button>
         </motion.div>
       </div>

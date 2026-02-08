@@ -76,16 +76,16 @@ const Hero = () => {
         </motion.nav>
 
         {/* Hero Content */}
-        <div className="grid lg:grid-cols-2 gap-12 items-center min-h-[calc(100vh-120px)]">
+        <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center min-h-[calc(100vh-120px)] py-8 lg:py-0">
           <motion.div
             initial={{ opacity: 0, x: 30 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
-            className="space-y-8"
+            className="space-y-6 lg:space-y-8"
           >
-            <div className="space-y-6">
-              <Logo size="lg" layout="vertical" className="mb-4" />
-              <p className="text-xl text-muted-foreground font-body max-w-lg leading-relaxed">
+            <div className="space-y-4 lg:space-y-6">
+              <Logo size="lg" layout="vertical" className="mb-2 lg:mb-4" />
+              <p className="text-base md:text-lg lg:text-xl text-muted-foreground font-body max-w-lg leading-relaxed">
                 גלו חנויות פרחים באזור שלכם, בנו את הזר המושלם בעצמכם או תנו ל-AI החכם שלנו ליצור עבורכם 🌷✨
               </p>
             </div>
