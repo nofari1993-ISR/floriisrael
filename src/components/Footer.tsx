@@ -19,9 +19,7 @@ const Footer = () => {
             <h4 className="font-display font-semibold text-primary-foreground mb-4">קישורים</h4>
             <ul className="space-y-2 font-body">
               <li><a href="#how-it-works" className="text-primary-foreground/60 hover:text-primary-foreground transition-colors">איך זה עובד</a></li>
-              <li><a href="#bouquet-builder" className="text-primary-foreground/60 hover:text-primary-foreground transition-colors">בנה זר</a></li>
               <li><a href="#shops" className="text-primary-foreground/60 hover:text-primary-foreground transition-colors">חנויות</a></li>
-              <li><a href="#ai-chat" className="text-primary-foreground/60 hover:text-primary-foreground transition-colors">צ׳אט AI</a></li>
             </ul>
           </div>
 
