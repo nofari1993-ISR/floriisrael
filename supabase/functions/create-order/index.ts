@@ -14,7 +14,7 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json();
-    console.log("Received order request:", JSON.stringify(body));
+    console.log("Received order request");
 
     const {
       shop_id,
@@ -29,13 +29,64 @@ Deno.serve(async (req) => {
       total_price,
     } = body;
 
-    // Validate required fields
-    if (!shop_id || !customer_name || !recipient_name || !delivery_address || !delivery_date) {
-      console.error("Missing required fields");
+    // ── Input Validation ──
+    const errors: string[] = [];
+
+    // Required fields
+    if (!shop_id || typeof shop_id !== "string") errors.push("shop_id is required");
+    if (!customer_name || typeof customer_name !== "string") errors.push("customer_name is required");
+    if (!recipient_name || typeof recipient_name !== "string") errors.push("recipient_name is required");
+    if (!delivery_address || typeof delivery_address !== "string") errors.push("delivery_address is required");
+    if (!delivery_date || typeof delivery_date !== "string") errors.push("delivery_date is required");
+
+    // String length limits
+    if (typeof customer_name === "string" && customer_name.length > 100) errors.push("customer_name too long (max 100)");
+    if (typeof recipient_name === "string" && recipient_name.length > 100) errors.push("recipient_name too long (max 100)");
+    if (typeof delivery_address === "string" && delivery_address.length > 300) errors.push("delivery_address too long (max 300)");
+    if (typeof greeting === "string" && greeting.length > 500) errors.push("greeting too long (max 500)");
+
+    // Email format (if provided)
+    if (customer_email && typeof customer_email === "string" && customer_email.length > 0) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(customer_email)) errors.push("Invalid email format");
+      if (customer_email.length > 255) errors.push("customer_email too long (max 255)");
+    }
+
+    // Phone format (if provided)
+    if (customer_phone && typeof customer_phone === "string" && customer_phone.length > 0) {
+      const phoneRegex = /^[0-9\-+() ]{9,15}$/;
+      if (!phoneRegex.test(customer_phone)) errors.push("Invalid phone format");
+    }
+
+    // Date format
+    if (typeof delivery_date === "string" && !/^\d{4}-\d{2}-\d{2}$/.test(delivery_date)) {
+      errors.push("Invalid delivery_date format (expected YYYY-MM-DD)");
+    }
+
+    // Price validation
+    if (total_price !== undefined && (typeof total_price !== "number" || total_price < 0 || total_price > 50000)) {
+      errors.push("total_price must be a positive number up to 50000");
+    }
+
+    // Items validation
+    if (items !== undefined && items !== null) {
+      if (!Array.isArray(items) || items.length > 50) {
+        errors.push("items must be an array with max 50 entries");
+      } else {
+        for (let i = 0; i < items.length; i++) {
+          const item = items[i];
+          if (!item.flower_name && !item.name) errors.push(`items[${i}]: flower_name is required`);
+          if (item.quantity !== undefined && (typeof item.quantity !== "number" || item.quantity < 1 || item.quantity > 1000)) {
+            errors.push(`items[${i}]: quantity must be 1-1000`);
+          }
+        }
+      }
+    }
+
+    if (errors.length > 0) {
+      console.error("Validation errors:", errors);
       return new Response(
-        JSON.stringify({
-          error: "Missing required fields: shop_id, customer_name, recipient_name, delivery_address, delivery_date",
-        }),
+        JSON.stringify({ error: "Validation failed", details: errors }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
