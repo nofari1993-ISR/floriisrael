@@ -13,7 +13,7 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json();
-    const { action, shopId, answers, currentBouquet, userMessage } = body;
+    const { action, shopId, answers, currentBouquet, userMessage, flowerName, flowerColor } = body;
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
@@ -134,6 +134,32 @@ ${flowersContext}
 3. שלב גם ירק/עלווה אם זמין
 4. תקציב: עד ₪250 לפרחים
 5. הודעה: כתוב הודעה שמסבירה שהזר הזה מכיל פרחים טריים שיש מהם מלאי מלא - פרחים באיכות הכי טובה
+
+# פורמט JSON בלבד:
+{"message": "הודעה אישית", "flowers": [{"name": "שם מדויק מהמלאי", "quantity": מספר, "color": "צבע"}]}`;
+    } else if (action === "promote-flower") {
+      // Create a bouquet that prominently features a specific flower
+      if (!flowerName) {
+        return new Response(
+          JSON.stringify({ error: "Missing flowerName parameter" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const colorText = flowerColor ? ` בצבע ${flowerColor}` : "";
+      console.log(`[bouquet-ai] Promoting flower: ${flowerName}${colorText}`);
+
+      prompt = `אתה מעצב זרי פרחים מקצועי. בעל החנות מבקש ממך ליצור זר מיוחד שישתמש בעיקר ב**${flowerName}${colorText}**.
+
+# פרחים זמינים במלאי:
+${flowersContext}
+
+# הנחיות:
+1. **הפרח המרכזי של הזר חייב להיות ${flowerName}${colorText}** - תן לו את הכמות הגבוהה ביותר בזר
+2. השלם עם 2-3 פרחים נוספים מהמלאי שמתאימים בצבעים ובסגנון
+3. שלב ירק/עלווה אם זמין (אקליפטוס, רוסקוס, שרך)
+4. תקציב: עד ₪250 לפרחים
+5. הודעה: הסבר למה בחרת את השילוב הזה ואיך ${flowerName} נותן לזר את האופי המרכזי שלו
 
 # פורמט JSON בלבד:
 {"message": "הודעה אישית", "flowers": [{"name": "שם מדויק מהמלאי", "quantity": מספר, "color": "צבע"}]}`;
