@@ -13,6 +13,8 @@ import { toast } from "@/hooks/use-toast";
 import Logo from "@/components/Logo";
 import { supabase } from "@/integrations/supabase/client";
 
+const DELIVERY_FEE = 30;
+
 const TIME_SLOTS = [
   { id: "morning", label: "בוקר", hours: "08:00 - 13:00" },
   { id: "afternoon", label: "אחה״צ - ערב", hours: "13:00 - 19:00" },
@@ -114,6 +116,7 @@ const Checkout = () => {
 
     try {
       const isPickup = deliveryMethod === "pickup";
+      const deliveryFee = isPickup ? 0 : DELIVERY_FEE;
       const selectedSlot = TIME_SLOTS.find(s => s.id === timeSlot);
       const timeSlotNote = selectedSlot ? `שעות ${isPickup ? "איסוף" : "משלוח"}: ${selectedSlot.hours}` : "";
       const diyNote = isDIY ? "זר מעוצב אישית (DIY)" : "";
@@ -128,7 +131,7 @@ const Checkout = () => {
         delivery_address: isPickup ? "איסוף עצמי" : formData.address,
         delivery_date: deliveryDateStr,
         greeting: formData.greeting || null,
-        total_price: isDIY ? diyTotalPrice : 0,
+        total_price: isDIY ? diyTotalPrice + deliveryFee : deliveryFee,
         items: isDIY ? diyItems.map((item) => ({
           flower_name: item.flower_name,
           flower_id: item.flower_id || null,
@@ -166,7 +169,7 @@ const Checkout = () => {
             delivery_date: deliveryDateStr,
             greeting: formData.greeting || null,
             notes: noteParts || null,
-            total_price: 0,
+            total_price: deliveryFee,
           })
           .select("id")
           .single();
@@ -329,9 +332,17 @@ const Checkout = () => {
                     <span className="text-muted-foreground">₪{item.unit_price * item.quantity}</span>
                   </div>
                 ))}
+                {deliveryMethod === "delivery" && (
+                  <div className="flex items-center justify-between text-sm font-body">
+                    <span className="text-foreground flex items-center gap-1">
+                      <Truck className="w-3.5 h-3.5" /> דמי משלוח
+                    </span>
+                    <span className="text-muted-foreground">₪{DELIVERY_FEE}</span>
+                  </div>
+                )}
                 <div className="flex items-center justify-between pt-2 border-t border-border/30 font-display font-bold text-sm">
                   <span>סה״כ</span>
-                  <span className="text-primary">₪{diyTotalPrice}</span>
+                  <span className="text-primary">₪{diyTotalPrice + (deliveryMethod === "delivery" ? DELIVERY_FEE : 0)}</span>
                 </div>
               </div>
             </div>
