@@ -48,10 +48,10 @@ const HowItWorks = () => {
           {steps.map((step, index) => (
             <motion.div
               key={step.title}
-              initial={{ opacity: 0, y: 30 }}
+              initial={{ opacity: 0, y: 40 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: index * 0.15 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ duration: 0.6, delay: index * 0.2, ease: "easeOut" }}
               className="relative group"
             >
               <div className="glass-card rounded-2xl p-6 md:p-8 shadow-soft hover:shadow-card transition-all duration-300 h-full hover:border-primary/20">
