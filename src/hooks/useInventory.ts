@@ -93,12 +93,10 @@ export const useInventory = (shopId: string | undefined) => {
   };
 
   const updateFlower = async (id: string, updates: Partial<Flower>) => {
-    const updatePayload: any = {
-      ...updates,
-      in_stock: (updates.quantity ?? 0) > 0,
-    };
-    // If quantity increased, reset the restock date
+    const updatePayload: any = { ...updates };
+    // Only update in_stock and restock date when quantity is explicitly provided
     if (updates.quantity !== undefined) {
+      updatePayload.in_stock = updates.quantity > 0;
       updatePayload.last_restocked_at = new Date().toISOString();
     }
     const { error } = await supabase
