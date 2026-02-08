@@ -198,7 +198,13 @@ const RestockTab = ({ shopId }: RestockTabProps) => {
             </TableHeader>
             <TableBody>
               {flowers
-                .sort((a, b) => a.quantity - b.quantity) // Low stock first
+                .sort((a, b) => {
+                  // Low stock first, then alphabetical by name, then by color
+                  if (a.quantity !== b.quantity) return a.quantity - b.quantity;
+                  const nameCompare = a.name.localeCompare(b.name, "he");
+                  if (nameCompare !== 0) return nameCompare;
+                  return (a.color || "").localeCompare(b.color || "", "he");
+                })
                 .map((flower) => {
                   const isLowStock =
                     flower.quantity > 0 &&
