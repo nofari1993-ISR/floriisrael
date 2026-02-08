@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight, Send, User, MapPin, Calendar, MessageSquare, CheckCircle2, Store, Truck, Clock, ShoppingBag } from "lucide-react";
+import { ArrowRight, Send, User, MapPin, Calendar, MessageSquare, CheckCircle2, Store, Truck, Clock, ShoppingBag, CreditCard } from "lucide-react";
 import { format } from "date-fns";
 import { he } from "date-fns/locale";
 import { z } from "zod";
@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
 import Logo from "@/components/Logo";
 import { supabase } from "@/integrations/supabase/client";
+import PayPalButton from "@/components/checkout/PayPalButton";
 
 const DELIVERY_FEE = 30;
 
@@ -84,8 +85,14 @@ const Checkout = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderSuccess, setOrderSuccess] = useState<OrderSuccess | null>(null);
+  const [showPayment, setShowPayment] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const calculateTotal = () => {
+    const deliveryFee = deliveryMethod === "delivery" ? DELIVERY_FEE : 0;
+    return isDIY ? diyTotalPrice + deliveryFee : deliveryFee;
+  };
+
+  const handleProceedToPayment = (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
 
@@ -112,6 +119,10 @@ const Checkout = () => {
       return;
     }
 
+    setShowPayment(true);
+  };
+
+  const createOrder = async (paypalOrderId: string) => {
     setIsSubmitting(true);
 
     try {
@@ -120,11 +131,12 @@ const Checkout = () => {
       const selectedSlot = TIME_SLOTS.find(s => s.id === timeSlot);
       const timeSlotNote = selectedSlot ? `שעות ${isPickup ? "איסוף" : "משלוח"}: ${selectedSlot.hours}` : "";
       const diyNote = isDIY ? "זר מעוצב אישית (DIY)" : "";
-      const noteParts = [diyNote, timeSlotNote].filter(Boolean).join(" | ");
+      const paypalNote = `PayPal: ${paypalOrderId}`;
+      const noteParts = [diyNote, timeSlotNote, paypalNote].filter(Boolean).join(" | ");
 
       const deliveryDateStr = format(deliveryDate!, "yyyy-MM-dd");
       const orderPayload = {
-        shop_id: shopId,
+        shop_id: shopId!,
         customer_name: formData.customerName,
         customer_phone: formData.customerPhone || null,
         recipient_name: formData.recipientName,
@@ -132,6 +144,7 @@ const Checkout = () => {
         delivery_date: deliveryDateStr,
         greeting: formData.greeting || null,
         total_price: isDIY ? diyTotalPrice + deliveryFee : deliveryFee,
+        notes: noteParts || null,
         items: isDIY ? diyItems.map((item) => ({
           flower_name: item.flower_name,
           flower_id: item.flower_id || null,
@@ -140,8 +153,6 @@ const Checkout = () => {
         })) : undefined,
       };
 
-      // Use edge function for DIY orders (handles inventory deduction with service role)
-      // Use direct insert for non-DIY orders
       let orderId: string;
       let shopName = "החנות";
       let shopPhone: string | null = null;
@@ -161,7 +172,7 @@ const Checkout = () => {
         const { data: order, error: orderError } = await supabase
           .from("orders")
           .insert({
-            shop_id: shopId,
+            shop_id: shopId!,
             customer_name: formData.customerName,
             customer_phone: formData.customerPhone || null,
             recipient_name: formData.recipientName,
@@ -180,7 +191,7 @@ const Checkout = () => {
         const { data: shop } = await supabase
           .from("shops")
           .select("name, phone")
-          .eq("id", shopId)
+          .eq("id", shopId!)
           .single();
 
         shopName = shop?.name || shopName;
@@ -212,6 +223,19 @@ const Checkout = () => {
       setIsSubmitting(false);
     }
   };
+
+  const handlePayPalApprove = useCallback((paypalOrderId: string, _details: any) => {
+    createOrder(paypalOrderId);
+  }, [formData, deliveryDate, timeSlot, deliveryMethod, shopId, isDIY, diyItems, diyTotalPrice]);
+
+  const handlePayPalError = useCallback((error: any) => {
+    console.error("PayPal payment error:", error);
+    toast({
+      title: "שגיאה בתשלום",
+      description: "אירעה שגיאה בעיבוד התשלום. נסו שוב.",
+      variant: "destructive",
+    });
+  }, []);
 
   const getWhatsAppUrl = () => {
     if (!orderSuccess?.shopPhone) return null;
@@ -313,7 +337,7 @@ const Checkout = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          onSubmit={handleSubmit}
+          onSubmit={handleProceedToPayment}
           className="bg-card rounded-2xl border border-border/50 shadow-card p-6 md:p-8 space-y-6"
         >
           {/* DIY Items Summary */}
@@ -541,23 +565,50 @@ const Checkout = () => {
             <p className="text-xs text-muted-foreground text-left">{formData.greeting.length}/500</p>
           </div>
 
-          {/* Submit */}
-          <Button
-            type="submit"
-            variant="hero"
-            size="lg"
-            className="w-full rounded-xl gap-2"
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? (
-              "שולח הזמנה..."
-            ) : (
-              <>
-                <Send className="w-4 h-4" />
-                שליחת הזמנה
-              </>
-            )}
-          </Button>
+          {/* Payment Section */}
+          {showPayment ? (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 text-sm font-medium text-foreground font-body">
+                <CreditCard className="w-4 h-4 text-primary/60" />
+                תשלום מאובטח
+              </div>
+              <div className="bg-muted/20 rounded-xl p-4 border border-border/30">
+                <PayPalButton
+                  amount={calculateTotal()}
+                  onApprove={handlePayPalApprove}
+                  onError={handlePayPalError}
+                  disabled={isSubmitting}
+                />
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="w-full rounded-xl"
+                onClick={() => setShowPayment(false)}
+              >
+                <ArrowRight className="w-4 h-4 ml-1" />
+                חזרה לעריכת הפרטים
+              </Button>
+            </div>
+          ) : (
+            <Button
+              type="submit"
+              variant="hero"
+              size="lg"
+              className="w-full rounded-xl gap-2"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                "שולח הזמנה..."
+              ) : (
+                <>
+                  <CreditCard className="w-4 h-4" />
+                  המשך לתשלום
+                </>
+              )}
+            </Button>
+          )}
         </motion.form>
       </div>
     </div>
