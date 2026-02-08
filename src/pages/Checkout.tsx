@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight, Send, User, MapPin, Calendar, MessageSquare, CheckCircle2, Store, Truck } from "lucide-react";
+import { ArrowRight, Send, User, MapPin, Calendar, MessageSquare, CheckCircle2, Store, Truck, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { he } from "date-fns/locale";
 import { z } from "zod";
@@ -13,10 +13,18 @@ import { toast } from "@/hooks/use-toast";
 import Logo from "@/components/Logo";
 import { supabase } from "@/integrations/supabase/client";
 
+const TIME_SLOTS = [
+  { id: "morning", label: "בוקר", hours: "08:00 - 13:00" },
+  { id: "afternoon", label: "אחה״צ - ערב", hours: "13:00 - 19:00" },
+] as const;
+
+type TimeSlotId = typeof TIME_SLOTS[number]["id"];
+
 const checkoutSchema = z.object({
   recipientName: z.string().trim().min(2, "שם חייב להכיל לפחות 2 תווים").max(100),
   address: z.string().max(300).optional(),
   deliveryDate: z.date({ required_error: "יש לבחור תאריך" }),
+  timeSlot: z.enum(["morning", "afternoon"], { required_error: "יש לבחור טווח שעות" }),
   greeting: z.string().max(500, "כרטיס ברכה עד 500 תווים").optional(),
   customerName: z.string().trim().min(2, "שם חייב להכיל לפחות 2 תווים").max(100),
   customerPhone: z.string().trim().min(9, "מספר טלפון לא תקין").max(15).optional(),
@@ -55,6 +63,7 @@ const Checkout = () => {
   });
   const [deliveryMethod, setDeliveryMethod] = useState<"delivery" | "pickup">("delivery");
   const [deliveryDate, setDeliveryDate] = useState<Date | undefined>();
+  const [timeSlot, setTimeSlot] = useState<TimeSlotId | undefined>();
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderSuccess, setOrderSuccess] = useState<OrderSuccess | null>(null);
@@ -66,6 +75,7 @@ const Checkout = () => {
     const result = checkoutSchema.safeParse({
       ...formData,
       deliveryDate,
+      timeSlot,
       deliveryMethod,
     });
 
@@ -89,6 +99,8 @@ const Checkout = () => {
 
     try {
       const isPickup = deliveryMethod === "pickup";
+      const selectedSlot = TIME_SLOTS.find(s => s.id === timeSlot);
+      const timeSlotNote = selectedSlot ? `שעות ${isPickup ? "איסוף" : "משלוח"}: ${selectedSlot.hours}` : "";
       const { data: order, error: orderError } = await supabase
         .from("orders")
         .insert({
@@ -99,6 +111,7 @@ const Checkout = () => {
           delivery_address: isPickup ? "איסוף עצמי" : formData.address,
           delivery_date: format(deliveryDate!, "yyyy-MM-dd"),
           greeting: formData.greeting || null,
+          notes: timeSlotNote || null,
         })
         .select("id")
         .single();
@@ -143,8 +156,10 @@ const Checkout = () => {
     const phone = orderSuccess.shopPhone.replace(/[^0-9]/g, "");
     const phoneFormatted = phone.startsWith("0") ? `972${phone.slice(1)}` : phone;
     const deliveryText = deliveryMethod === "pickup" ? "תאריך איסוף" : "תאריך משלוח";
+    const selectedSlot = TIME_SLOTS.find(s => s.id === timeSlot);
+    const timeText = selectedSlot ? `\nשעות: ${selectedSlot.hours}` : "";
     const message = encodeURIComponent(
-      `שלום! 🌸\nביצעתי הזמנת זר דרך האתר.\nשם מקבל/ת: ${orderSuccess.recipientName}\n${deliveryText}: ${orderSuccess.deliveryDate}\n${deliveryMethod === "pickup" ? "איסוף עצמי 🏪" : ""}\nמספר הזמנה: ${orderSuccess.orderId.slice(0, 8)}`
+      `שלום! 🌸\nביצעתי הזמנת זר דרך האתר.\nשם מקבל/ת: ${orderSuccess.recipientName}\n${deliveryText}: ${orderSuccess.deliveryDate}${timeText}\n${deliveryMethod === "pickup" ? "איסוף עצמי 🏪" : ""}\nמספר הזמנה: ${orderSuccess.orderId.slice(0, 8)}`
     );
     return `https://wa.me/${phoneFormatted}?text=${message}`;
   };
@@ -168,6 +183,7 @@ const Checkout = () => {
             {deliveryMethod === "pickup"
               ? `הזר ל${orderSuccess.recipientName} יהיה מוכן לאיסוף בתאריך ${orderSuccess.deliveryDate}`
               : `הזר ל${orderSuccess.recipientName} ישלח בתאריך ${orderSuccess.deliveryDate}`}
+            {timeSlot && ` (${TIME_SLOTS.find(s => s.id === timeSlot)?.hours})`}
           </p>
           <p className="text-xs text-muted-foreground font-body mb-8">
             מספר הזמנה: {orderSuccess.orderId.slice(0, 8)}
@@ -386,7 +402,35 @@ const Checkout = () => {
             )}
           </div>
 
-          {/* Greeting Card */}
+          {/* Time Slot */}
+          <div className="space-y-3">
+            <label className="flex items-center gap-2 text-sm font-medium text-foreground font-body">
+              <Clock className="w-4 h-4 text-primary/60" />
+              {deliveryMethod === "delivery" ? "טווח שעות למשלוח" : "טווח שעות לאיסוף"}
+            </label>
+            <div className="grid grid-cols-2 gap-3">
+              {TIME_SLOTS.map((slot) => (
+                <button
+                  key={slot.id}
+                  type="button"
+                  onClick={() => setTimeSlot(slot.id)}
+                  className={cn(
+                    "flex flex-col items-center gap-1 py-3 px-3 rounded-xl border-2 transition-all font-body text-sm",
+                    timeSlot === slot.id
+                      ? "border-primary bg-primary/5 text-foreground shadow-sm"
+                      : "border-border text-muted-foreground hover:border-primary/30"
+                  )}
+                >
+                  <span className="font-medium">{slot.label}</span>
+                  <span className="text-xs text-muted-foreground">{slot.hours}</span>
+                </button>
+              ))}
+            </div>
+            {errors.timeSlot && (
+              <p className="text-sm text-destructive font-body">{errors.timeSlot}</p>
+            )}
+          </div>
+
           <div className="space-y-2">
             <label className="flex items-center gap-2 text-sm font-medium text-foreground font-body">
               <MessageSquare className="w-4 h-4 text-primary/60" />
