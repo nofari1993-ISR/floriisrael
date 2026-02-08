@@ -273,16 +273,20 @@ const DIYBuilderPage = () => {
               </div>
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
-                {filteredFlowers.map((flower) => (
-                  <FlowerCard
-                    key={flower.id}
-                    flower={flower}
-                    selectedQuantity={getQuantity(flower.id)}
-                    onAdd={handleFlowerAdd}
-                    onRemove={handleRemoveFlower}
-                    hasColorVariants={(flowerColorVariants[flower.name]?.length || 0) > 1}
-                  />
-                ))}
+                {filteredFlowers.map((flower) => {
+                  const hasVariants = (flowerColorVariants[flower.name]?.length || 0) > 1;
+                  return (
+                    <FlowerCard
+                      key={flower.id}
+                      flower={flower}
+                      selectedQuantity={getQuantity(flower.id)}
+                      onAdd={handleFlowerAdd}
+                      onRemove={handleRemoveFlower}
+                      hasColorVariants={hasVariants}
+                      onOpenColorSelector={hasVariants ? () => setColorSelectorFlower(flower.name) : undefined}
+                    />
+                  );
+                })}
               </div>
             )}
           </div>
