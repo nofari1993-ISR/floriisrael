@@ -66,6 +66,10 @@ const SHOP_PLACEHOLDER_IMAGES = [
   "/shop-images/flowers-pink.jpg",
   "/shop-images/flowers-sunny.jpg",
   "/shop-images/flowers-purple.jpg",
+  "/shop-images/flowers-red.jpg",
+  "/shop-images/flowers-tropical.jpg",
+  "/shop-images/flowers-pastel.jpg",
+  "/shop-images/flowers-wild.jpg",
 ];
 
 export interface Shop {
