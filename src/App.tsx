@@ -10,6 +10,7 @@ import AIChatPage from "./pages/AIChatPage";
 import DIYBuilderPage from "./pages/DIYBuilderPage";
 import Checkout from "./pages/Checkout";
 import Dashboard from "./pages/Dashboard";
+import Terms from "./pages/Terms";
 
 const queryClient = new QueryClient();
 
@@ -26,6 +27,7 @@ const App = () => (
           <Route path="/diy-builder" element={<DIYBuilderPage />} />
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/terms" element={<Terms />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
