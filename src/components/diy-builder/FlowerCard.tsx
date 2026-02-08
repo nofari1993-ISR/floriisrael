@@ -96,17 +96,33 @@ const FlowerCard = ({
           {flower.name}
         </h3>
 
-        {/* Color badge */}
-        {flower.color && (
+        {/* Color dots for variants */}
+        {hasColors && colorVariants && (
+          <div className="flex flex-wrap gap-1.5 mb-2">
+            {colorVariants.map((v) => {
+              const COLOR_MAP: Record<string, string> = {
+                "אדום": "#DC2626", "לבן": "#FFFFFF", "צהוב": "#FCD34D",
+                "ורוד": "#F472B6", "כתום": "#F97316", "סגול": "#A855F7",
+                "כחול": "#3B82F6", "ירוק": "#10B981",
+              };
+              const dotColor = COLOR_MAP[v.color] || "#9CA3AF";
+              return (
+                <div
+                  key={v.id}
+                  className="w-4 h-4 rounded-full border border-border/50"
+                  style={{ backgroundColor: dotColor }}
+                  title={v.color}
+                />
+              );
+            })}
+          </div>
+        )}
+        {/* Single color text (no variants) */}
+        {!hasColors && flower.color && (
           <div className="flex flex-wrap gap-1 mb-2">
             <span className="text-xs text-muted-foreground font-body">{flower.color}</span>
           </div>
         )}
-
-        {/* Stock info */}
-        <div className="text-[10px] text-muted-foreground font-body mb-2">
-          {flower.quantity} יח׳ במלאי
-        </div>
 
         {/* Price & Actions */}
         <div className="flex items-center justify-between gap-1 min-w-0">

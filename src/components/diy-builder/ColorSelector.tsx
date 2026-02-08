@@ -122,7 +122,7 @@ const ColorSelector = ({ flowerName, variants, isOpen, onClose, onConfirm }: Col
                         {variant.color}
                       </span>
                       <span className="text-xs text-muted-foreground font-body block">
-                        ₪{variant.price} · {variant.quantity} במלאי
+                        ₪{variant.price}
                       </span>
                     </div>
                   </div>
