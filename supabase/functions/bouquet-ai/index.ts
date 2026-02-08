@@ -109,6 +109,34 @@ ${flowersContext}
 
 # פורמט JSON בלבד:
 {"message": "הסבר מה שינית", "flowers": [{"name": "שם", "quantity": מספר, "color": "צבע"}]}`;
+    } else if (action === "high-stock") {
+      // Find flowers with highest stock and create a bouquet that uses them
+      const highStockFlowers = flowersList
+        .filter((f: any) => f.quantity > 0)
+        .sort((a: any, b: any) => b.quantity - a.quantity);
+
+      const topFlowers = highStockFlowers.slice(0, 10);
+      const topFlowersText = topFlowers
+        .map((f: any) => `- ${f.name}${f.color ? ` (${f.color})` : ""}: ${f.quantity} יח', ₪${f.price}`)
+        .join("\n");
+
+      prompt = `אתה מעצב זרי פרחים מקצועי. בעל החנות מבקש ממך ליצור זר מיוחד שישתמש בעיקר בפרחים שיש ממנו מלאי גבוה.
+
+# פרחים עם מלאי גבוה (עדיפות גבוהה):
+${topFlowersText}
+
+# כל הפרחים הזמינים:
+${flowersContext}
+
+# הנחיות:
+1. **עדיפות עליונה**: השתמש בפרחים מהמלאי הגבוה ביותר
+2. צור זר יפה ומגוון עם 3-5 סוגי פרחים שונים
+3. שלב גם ירק/עלווה אם זמין
+4. תקציב: עד ₪250 לפרחים
+5. הודעה: כתוב הודעה שמסבירה שהזר הזה מכיל פרחים טריים שיש מהם מלאי מלא - פרחים באיכות הכי טובה
+
+# פורמט JSON בלבד:
+{"message": "הודעה אישית", "flowers": [{"name": "שם מדויק מהמלאי", "quantity": מספר, "color": "צבע"}]}`;
     } else {
       return new Response(
         JSON.stringify({ error: "Invalid action" }),
@@ -163,7 +191,7 @@ ${flowersContext}
     // Validate and adjust flowers against real inventory
     const validatedFlowers: any[] = [];
     let totalCost = 0;
-    const budget = parseFloat(answers?.budget) || 200;
+    const budget = action === "high-stock" ? 250 : (parseFloat(answers?.budget) || 200);
     const budgetForFlowers = budget / 1.05;
 
     for (const aiFlower of (parsed.flowers || [])) {

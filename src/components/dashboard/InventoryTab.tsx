@@ -1,6 +1,7 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Trash2, Edit2, Package, Flower2, Check, X } from "lucide-react";
+import { Plus, Trash2, Edit2, Package, Flower2, Check, X, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,6 +20,7 @@ interface InventoryTabProps {
 }
 
 const InventoryTab = ({ shopId }: InventoryTabProps) => {
+  const navigate = useNavigate();
   const { flowers, loading, addFlower, updateFlower, removeFlower } = useInventory(shopId);
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -70,15 +72,27 @@ const InventoryTab = ({ shopId }: InventoryTabProps) => {
             {flowers.length} פרחים במלאי
           </p>
         </div>
-        <Button
-          variant="hero"
-          size="default"
-          className="rounded-xl gap-2"
-          onClick={() => setShowAddForm(!showAddForm)}
-        >
-          <Plus className="w-4 h-4" />
-          {showAddForm ? "ביטול" : "הוסף פרח"}
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="default"
+            className="rounded-xl gap-2 border-primary/30 text-primary hover:bg-primary/5"
+            onClick={() => navigate(`/ai-chat?shopId=${shopId}&mode=high-stock`)}
+            disabled={flowers.length === 0}
+          >
+            <Sparkles className="w-4 h-4" />
+            צור זר ממלאי גבוה
+          </Button>
+          <Button
+            variant="hero"
+            size="default"
+            className="rounded-xl gap-2"
+            onClick={() => setShowAddForm(!showAddForm)}
+          >
+            <Plus className="w-4 h-4" />
+            {showAddForm ? "ביטול" : "הוסף פרח"}
+          </Button>
+        </div>
       </div>
 
       {/* Add Form */}
