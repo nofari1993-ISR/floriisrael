@@ -17,9 +17,10 @@ interface FlowerCardProps {
   selectedQuantity: number;
   onAdd: (flower: FlowerData) => void;
   onRemove: (flower: FlowerData) => void;
+  hasColorVariants?: boolean;
 }
 
-const FlowerCard = ({ flower, selectedQuantity, onAdd, onRemove }: FlowerCardProps) => {
+const FlowerCard = ({ flower, selectedQuantity, onAdd, onRemove, hasColorVariants }: FlowerCardProps) => {
   const isOutOfStock = !flower.in_stock || flower.quantity <= 0;
   const reachedMax = selectedQuantity >= flower.quantity;
 
@@ -114,7 +115,7 @@ const FlowerCard = ({ flower, selectedQuantity, onAdd, onRemove }: FlowerCardPro
                 onClick={() => onAdd(flower)}
               >
                 <Plus className="w-3.5 h-3.5" />
-                הוסף לזר
+                {hasColorVariants ? "בחר צבעים" : "הוסף לזר"}
               </Button>
             )}
           </div>
