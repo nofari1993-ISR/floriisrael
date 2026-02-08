@@ -29,10 +29,10 @@ const Logo = ({ size = "md", showText = true, className = "", layout = "horizont
       className={`flex ${isVertical ? "flex-col items-center gap-2" : "items-center gap-3"} cursor-pointer ${className}`}
       onClick={() => navigate("/")}
     >
-      <img src={logoImage} alt="Nuphar Flowers AI" className={`${sizeMap[size]} object-contain mix-blend-multiply`} />
+      <img src={logoImage} alt="Bloom" className={`${sizeMap[size]} object-contain mix-blend-multiply`} />
       {showText && (
         <span className={`font-brand ${textSizeMap[size]} text-foreground tracking-wide ${isVertical ? "text-center" : ""}`}>
-          Nuphar Flowers AI
+          Bloom
         </span>
       )}
     </div>
