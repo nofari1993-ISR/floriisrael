@@ -7,7 +7,7 @@ const CTASection = () => {
   const navigate = useNavigate();
 
   return (
-    <section className="py-20 relative overflow-hidden">
+    <section className="py-14 md:py-20 relative overflow-hidden">
       <div className="absolute inset-0 bg-gradient-sage opacity-90" />
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-20 -right-20 w-96 h-96 rounded-full bg-accent/20 blur-3xl" />
@@ -34,49 +34,49 @@ const CTASection = () => {
             </motion.div>
           </div>
 
-          <h2 className="text-4xl md:text-5xl font-display font-bold text-primary-foreground leading-tight">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-display font-bold text-primary-foreground leading-tight">
             מוכנים ליצור את הזר<br />המושלם שלכם?
           </h2>
-          <p className="text-xl text-primary-foreground/80 font-body max-w-xl mx-auto">
+          <p className="text-base md:text-xl text-primary-foreground/80 font-body max-w-xl mx-auto">
             הצטרפו לאלפי לקוחות מרוצים שכבר גילו את הדרך הקלה והיפה ביותר להזמין פרחים
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+          <div className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center items-center">
             <Button
               variant="blush"
               size="lg"
-              className="rounded-2xl gap-2 text-lg px-8 py-6"
+              className="rounded-2xl gap-2 text-base md:text-lg px-6 md:px-8 py-5 md:py-6 w-full sm:w-auto"
               onClick={() => navigate("/ai-chat")}
             >
-              <Sparkles className="w-5 h-5" />
+              <Sparkles className="w-4 h-4 md:w-5 md:h-5" />
               בניית זר עם AI
             </Button>
             <Button
               variant="hero-outline"
               size="lg"
-              className="rounded-2xl gap-2 text-lg px-8 py-6 border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground"
+              className="rounded-2xl gap-2 text-base md:text-lg px-6 md:px-8 py-5 md:py-6 w-full sm:w-auto border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground"
               onClick={() => navigate("/diy")}
             >
-              <Flower2 className="w-5 h-5" />
+              <Flower2 className="w-4 h-4 md:w-5 md:h-5" />
               עיצוב DIY
             </Button>
           </div>
 
           {/* Social proof */}
-          <div className="flex items-center justify-center gap-8 pt-4">
+          <div className="flex items-center justify-center gap-4 md:gap-8 pt-4 flex-wrap">
             <div className="text-center">
-              <div className="text-2xl font-display font-bold text-primary-foreground">2,500+</div>
-              <div className="text-sm text-primary-foreground/60 font-body">זרים נוצרו</div>
+              <div className="text-xl md:text-2xl font-display font-bold text-primary-foreground">2,500+</div>
+              <div className="text-xs md:text-sm text-primary-foreground/60 font-body">זרים נוצרו</div>
             </div>
-            <div className="w-px h-10 bg-primary-foreground/20" />
+            <div className="w-px h-8 md:h-10 bg-primary-foreground/20" />
             <div className="text-center">
-              <div className="text-2xl font-display font-bold text-primary-foreground">4.9 ⭐</div>
-              <div className="text-sm text-primary-foreground/60 font-body">דירוג ממוצע</div>
+              <div className="text-xl md:text-2xl font-display font-bold text-primary-foreground">4.9 ⭐</div>
+              <div className="text-xs md:text-sm text-primary-foreground/60 font-body">דירוג ממוצע</div>
             </div>
-            <div className="w-px h-10 bg-primary-foreground/20" />
+            <div className="w-px h-8 md:h-10 bg-primary-foreground/20" />
             <div className="text-center">
-              <div className="text-2xl font-display font-bold text-primary-foreground">50+</div>
-              <div className="text-sm text-primary-foreground/60 font-body">חנויות שותפות</div>
+              <div className="text-xl md:text-2xl font-display font-bold text-primary-foreground">50+</div>
+              <div className="text-xs md:text-sm text-primary-foreground/60 font-body">חנויות שותפות</div>
             </div>
           </div>
         </motion.div>
