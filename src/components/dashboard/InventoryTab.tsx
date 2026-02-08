@@ -24,8 +24,8 @@ const InventoryTab = ({ shopId }: InventoryTabProps) => {
   const { flowers, loading, addFlower, updateFlower, removeFlower } = useInventory(shopId);
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [formData, setFormData] = useState({ name: "", color: "", price: "", quantity: "" });
-  const [editData, setEditData] = useState({ name: "", color: "", price: "", quantity: "" });
+  const [formData, setFormData] = useState({ name: "", color: "", price: "", quantity: "", shelf_life_days: "7" });
+  const [editData, setEditData] = useState({ name: "", color: "", price: "", quantity: "", shelf_life_days: "7" });
 
   // Promote flower AI state
   const [promoteOpen, setPromoteOpen] = useState(false);
@@ -68,9 +68,10 @@ const InventoryTab = ({ shopId }: InventoryTabProps) => {
       color: formData.color || undefined,
       price: Number(formData.price),
       quantity: Number(formData.quantity) || 0,
+      shelf_life_days: Number(formData.shelf_life_days) || 7,
     });
     if (success) {
-      setFormData({ name: "", color: "", price: "", quantity: "" });
+      setFormData({ name: "", color: "", price: "", quantity: "", shelf_life_days: "7" });
       setShowAddForm(false);
     }
   };
@@ -82,6 +83,7 @@ const InventoryTab = ({ shopId }: InventoryTabProps) => {
       color: flower.color || "",
       price: String(flower.price),
       quantity: String(flower.quantity),
+      shelf_life_days: String(flower.shelf_life_days ?? 7),
     });
   };
 
@@ -92,6 +94,7 @@ const InventoryTab = ({ shopId }: InventoryTabProps) => {
       color: editData.color || null,
       price: Number(editData.price),
       quantity: Number(editData.quantity) || 0,
+      shelf_life_days: Number(editData.shelf_life_days) || 7,
     });
     if (success) setEditingId(null);
   };
@@ -199,6 +202,17 @@ const InventoryTab = ({ shopId }: InventoryTabProps) => {
                     min="0"
                   />
                 </div>
+                <div className="space-y-2">
+                  <Label className="font-body">ימי מדף</Label>
+                  <Input
+                    type="number"
+                    value={formData.shelf_life_days}
+                    onChange={(e) => setFormData((p) => ({ ...p, shelf_life_days: e.target.value }))}
+                    placeholder="7"
+                    className="rounded-xl"
+                    min="1"
+                  />
+                </div>
               </div>
               <div className="flex justify-end">
                 <Button variant="hero" className="rounded-xl gap-2" onClick={handleAdd}>
@@ -224,11 +238,12 @@ const InventoryTab = ({ shopId }: InventoryTabProps) => {
         <div className="bg-card rounded-2xl border border-border/50 shadow-card overflow-hidden">
           <Table>
             <TableHeader>
-              <TableRow className="bg-muted/50 hover:bg-muted/50">
+             <TableRow className="bg-muted/50 hover:bg-muted/50">
                 <TableHead className="text-right font-display font-semibold">שם</TableHead>
                 <TableHead className="text-right font-display font-semibold">צבע</TableHead>
                 <TableHead className="text-right font-display font-semibold">מחיר</TableHead>
                 <TableHead className="text-right font-display font-semibold">כמות</TableHead>
+                <TableHead className="text-right font-display font-semibold">תפוגה</TableHead>
                 <TableHead className="text-right font-display font-semibold">סטטוס</TableHead>
                 <TableHead className="text-right font-display font-semibold w-[140px]">פעולות</TableHead>
               </TableRow>
@@ -277,6 +292,15 @@ const InventoryTab = ({ shopId }: InventoryTabProps) => {
                             min="0"
                           />
                         </TableCell>
+                        <TableCell>
+                          <Input
+                            type="number"
+                            value={editData.shelf_life_days}
+                            onChange={(e) => setEditData((p) => ({ ...p, shelf_life_days: e.target.value }))}
+                            className="rounded-lg h-8"
+                            min="1"
+                          />
+                        </TableCell>
                         <TableCell />
                         <TableCell>
                           <div className="flex gap-1">
@@ -308,6 +332,22 @@ const InventoryTab = ({ shopId }: InventoryTabProps) => {
                               {flower.quantity}
                             </span>
                           </div>
+                        </TableCell>
+                        <TableCell>
+                          {(() => {
+                            if (isOutOfStock) return <span className="text-xs text-muted-foreground">—</span>;
+                            const restocked = flower.last_restocked_at ? new Date(flower.last_restocked_at) : null;
+                            if (!restocked) return <span className="text-xs text-muted-foreground">—</span>;
+                            const expiryDate = new Date(restocked.getTime() + (flower.shelf_life_days || 7) * 24 * 60 * 60 * 1000);
+                            const daysLeft = Math.ceil((expiryDate.getTime() - Date.now()) / (24 * 60 * 60 * 1000));
+                            if (daysLeft <= 0) {
+                              return <span className="text-xs px-2 py-0.5 rounded-full bg-destructive/10 text-destructive font-medium">פג תוקף</span>;
+                            }
+                            if (daysLeft <= 2) {
+                              return <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 font-medium">{daysLeft} ימים</span>;
+                            }
+                            return <span className="text-xs text-muted-foreground">{daysLeft} ימים</span>;
+                          })()}
                         </TableCell>
                         <TableCell>
                           {isOutOfStock ? (
