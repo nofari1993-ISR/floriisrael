@@ -33,7 +33,7 @@ const ShopSearchResults = ({ open, onClose, searchQuery }: ShopSearchResultsProp
     locationError,
     requestLocation,
   } = useShops(searchQuery);
-  const { isAdmin } = useAuth();
+  const { isAdmin, user } = useAuth();
   const navigate = useNavigate();
   const [showAddForm, setShowAddForm] = useState(false);
   
@@ -54,6 +54,7 @@ const ShopSearchResults = ({ open, onClose, searchQuery }: ShopSearchResultsProp
       speciality: formData.speciality || undefined,
       hours: formData.hours || undefined,
       tags: formData.tags ? formData.tags.split(",").map((t) => t.trim()) : undefined,
+      owner_id: user?.id,
     });
 
     if (success) {
