@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { Loader2, Flower2, ImageIcon } from "lucide-react";
+import { Loader2, Flower2, ImageIcon, Maximize2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import FullscreenImageModal from "@/components/diy-builder/FullscreenImageModal";
 import {
   Dialog,
   DialogContent,
@@ -46,6 +47,7 @@ const PromoteBouquetModal = ({
   error,
 }: PromoteBouquetModalProps) => {
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [fullscreenOpen, setFullscreenOpen] = useState(false);
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
@@ -79,7 +81,10 @@ const PromoteBouquetModal = ({
           <div className="space-y-4">
             {/* Bouquet Image */}
             {result.image_url && (
-              <div className="relative rounded-2xl overflow-hidden border border-border/50 bg-muted/30">
+              <div
+                className="relative rounded-2xl overflow-hidden border border-border/50 bg-muted/30 max-h-64 cursor-pointer group"
+                onClick={() => setFullscreenOpen(true)}
+              >
                 {!imageLoaded && (
                   <div className="flex items-center justify-center py-16">
                     <Loader2 className="w-6 h-6 text-primary animate-spin" />
@@ -91,8 +96,17 @@ const PromoteBouquetModal = ({
                   className={`w-full object-cover transition-opacity ${imageLoaded ? "opacity-100" : "opacity-0 h-0"}`}
                   onLoad={() => setImageLoaded(true)}
                 />
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                  <Maximize2 className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
+                </div>
               </div>
             )}
+
+            <FullscreenImageModal
+              imageUrl={result.image_url || null}
+              isOpen={fullscreenOpen}
+              onClose={() => setFullscreenOpen(false)}
+            />
 
             {!result.image_url && (
               <div className="flex items-center justify-center py-8 bg-muted/30 rounded-2xl border border-border/50">

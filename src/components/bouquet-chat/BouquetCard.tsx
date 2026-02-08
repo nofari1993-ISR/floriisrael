@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { ShoppingBag, Pencil, RotateCcw, Loader2 } from "lucide-react";
+import { ShoppingBag, Pencil, RotateCcw, Loader2, Maximize2 } from "lucide-react";
+import FullscreenImageModal from "@/components/diy-builder/FullscreenImageModal";
 
 export interface BouquetFlower {
   name: string;
@@ -29,7 +30,7 @@ interface BouquetCardProps {
 
 const BouquetCard = ({ recommendation, onAccept, onModify, onReset }: BouquetCardProps) => {
   const [imageLoaded, setImageLoaded] = useState(false);
-
+  const [fullscreenOpen, setFullscreenOpen] = useState(false);
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
@@ -38,7 +39,10 @@ const BouquetCard = ({ recommendation, onAccept, onModify, onReset }: BouquetCar
     >
       {/* Bouquet Image */}
       {recommendation.image_url && (
-        <div className="relative w-full bg-muted/30">
+        <div
+          className="relative w-full max-h-56 overflow-hidden bg-muted/30 cursor-pointer group"
+          onClick={() => setFullscreenOpen(true)}
+        >
           {!imageLoaded && (
             <div className="flex items-center justify-center py-10">
               <Loader2 className="w-5 h-5 text-primary animate-spin" />
@@ -50,8 +54,18 @@ const BouquetCard = ({ recommendation, onAccept, onModify, onReset }: BouquetCar
             className={`w-full object-cover transition-opacity ${imageLoaded ? "opacity-100" : "opacity-0 h-0"}`}
             onLoad={() => setImageLoaded(true)}
           />
+          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+            <Maximize2 className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
+          </div>
         </div>
       )}
+
+      {/* Fullscreen modal */}
+      <FullscreenImageModal
+        imageUrl={recommendation.image_url || null}
+        isOpen={fullscreenOpen}
+        onClose={() => setFullscreenOpen(false)}
+      />
 
       {/* Flowers list */}
       <div className="p-4 space-y-2">
