@@ -215,6 +215,18 @@ export const useShops = (searchQuery?: string) => {
   };
 
   const removeShop = async (id: string) => {
+    // Delete related order_items via orders
+    const { data: orders } = await supabase.from("orders").select("id").eq("shop_id", id);
+    if (orders && orders.length > 0) {
+      const orderIds = orders.map((o) => o.id);
+      await supabase.from("order_items").delete().in("order_id", orderIds);
+      await supabase.from("orders").delete().eq("shop_id", id);
+    }
+
+    // Delete related flowers
+    await supabase.from("flowers").delete().eq("shop_id", id);
+
+    // Delete the shop
     const { error } = await supabase.from("shops").delete().eq("id", id);
 
     if (error) {
@@ -222,7 +234,7 @@ export const useShops = (searchQuery?: string) => {
       return false;
     }
 
-    toast({ title: "חנות הוסרה" });
+    toast({ title: "החנות וכל הנתונים שלה נמחקו בהצלחה 🗑️" });
     await fetchShops();
     return true;
   };
