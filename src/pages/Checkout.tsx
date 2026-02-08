@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight, Send, User, MapPin, Calendar, MessageSquare, CheckCircle2, Store, Truck, Clock } from "lucide-react";
+import { ArrowRight, Send, User, MapPin, Calendar, MessageSquare, CheckCircle2, Store, Truck, Clock, ShoppingBag } from "lucide-react";
 import { format } from "date-fns";
 import { he } from "date-fns/locale";
 import { z } from "zod";
@@ -49,10 +49,25 @@ interface OrderSuccess {
   deliveryDate: string;
 }
 
+interface DIYItem {
+  flower_name: string;
+  flower_id: string;
+  quantity: number;
+  unit_price: number;
+  color: string;
+}
+
 const Checkout = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const location = useLocation();
   const shopId = searchParams.get("shopId");
+
+  // DIY data from navigation state
+  const diyState = location.state as { diyItems?: DIYItem[]; totalPrice?: number; isDIY?: boolean } | null;
+  const isDIY = diyState?.isDIY || false;
+  const diyItems = diyState?.diyItems || [];
+  const diyTotalPrice = diyState?.totalPrice || 0;
 
   const [formData, setFormData] = useState({
     recipientName: "",
@@ -101,6 +116,9 @@ const Checkout = () => {
       const isPickup = deliveryMethod === "pickup";
       const selectedSlot = TIME_SLOTS.find(s => s.id === timeSlot);
       const timeSlotNote = selectedSlot ? `שעות ${isPickup ? "איסוף" : "משלוח"}: ${selectedSlot.hours}` : "";
+      const diyNote = isDIY ? "זר מעוצב אישית (DIY)" : "";
+      const noteParts = [diyNote, timeSlotNote].filter(Boolean).join(" | ");
+
       const { data: order, error: orderError } = await supabase
         .from("orders")
         .insert({
@@ -111,12 +129,32 @@ const Checkout = () => {
           delivery_address: isPickup ? "איסוף עצמי" : formData.address,
           delivery_date: format(deliveryDate!, "yyyy-MM-dd"),
           greeting: formData.greeting || null,
-          notes: timeSlotNote || null,
+          notes: noteParts || null,
+          total_price: isDIY ? diyTotalPrice : 0,
         })
         .select("id")
         .single();
 
       if (orderError) throw orderError;
+
+      // Insert DIY order items if available
+      if (isDIY && diyItems.length > 0) {
+        const orderItems = diyItems.map((item) => ({
+          order_id: order.id,
+          flower_name: item.flower_name,
+          flower_id: item.flower_id || null,
+          quantity: item.quantity,
+          unit_price: item.unit_price,
+        }));
+
+        const { error: itemsError } = await supabase
+          .from("order_items")
+          .insert(orderItems);
+
+        if (itemsError) {
+          console.error("Order items insert error:", itemsError.message);
+        }
+      }
 
       // Fetch shop info for WhatsApp
       const { data: shop } = await supabase
@@ -254,6 +292,30 @@ const Checkout = () => {
           onSubmit={handleSubmit}
           className="bg-card rounded-2xl border border-border/50 shadow-card p-6 md:p-8 space-y-6"
         >
+          {/* DIY Items Summary */}
+          {isDIY && diyItems.length > 0 && (
+            <div className="space-y-3">
+              <label className="flex items-center gap-2 text-sm font-medium text-foreground font-body">
+                <ShoppingBag className="w-4 h-4 text-primary/60" />
+                הזר שלכם
+              </label>
+              <div className="bg-muted/30 rounded-xl p-4 space-y-2">
+                {diyItems.map((item, i) => (
+                  <div key={i} className="flex items-center justify-between text-sm font-body">
+                    <span className="text-foreground">
+                      {item.color ? `${item.color} ` : ""}{item.flower_name} × {item.quantity}
+                    </span>
+                    <span className="text-muted-foreground">₪{item.unit_price * item.quantity}</span>
+                  </div>
+                ))}
+                <div className="flex items-center justify-between pt-2 border-t border-border/30 font-display font-bold text-sm">
+                  <span>סה״כ</span>
+                  <span className="text-primary">₪{diyTotalPrice}</span>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Customer Name */}
           <div className="space-y-2">
             <label className="flex items-center gap-2 text-sm font-medium text-foreground font-body">
