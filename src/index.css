@@ -15,44 +15,49 @@
     --popover: 300 25% 99%;
     --popover-foreground: 270 30% 15%;
 
-    --primary: 270 45% 55%;
+    --primary: 270 55% 50%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 330 55% 88%;
-    --secondary-foreground: 330 50% 30%;
+    --secondary: 340 65% 85%;
+    --secondary-foreground: 340 55% 28%;
 
     --muted: 280 15% 94%;
     --muted-foreground: 270 10% 45%;
 
-    --accent: 310 45% 80%;
-    --accent-foreground: 310 40% 25%;
+    --accent: 320 55% 72%;
+    --accent-foreground: 320 45% 20%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 100%;
 
     --border: 280 20% 90%;
     --input: 280 20% 90%;
-    --ring: 270 45% 55%;
+    --ring: 270 55% 50%;
 
     --radius: 0.75rem;
 
-    --sage: 270 45% 55%;
-    --sage-light: 270 30% 92%;
-    --blush: 330 55% 88%;
-    --blush-dark: 330 50% 65%;
+    --sage: 270 55% 50%;
+    --sage-light: 270 35% 92%;
+    --blush: 340 65% 85%;
+    --blush-dark: 340 55% 60%;
     --cream: 300 20% 98%;
     --cream-dark: 300 15% 93%;
-    --gold: 310 45% 60%;
-    --gold-light: 310 45% 80%;
+    --gold: 320 55% 55%;
+    --gold-light: 320 50% 75%;
 
-    --gradient-hero: linear-gradient(135deg, hsl(0 0% 100%), hsl(330 55% 95%), hsl(270 40% 95%));
+    --rose-vivid: 350 80% 60%;
+    --sunflower: 45 95% 55%;
+    --leaf-green: 150 50% 45%;
+
+    --gradient-hero: linear-gradient(135deg, hsl(0 0% 100%), hsl(340 60% 95%), hsl(270 45% 94%));
     --gradient-card: linear-gradient(160deg, hsl(300 25% 99%), hsl(280 20% 96%));
-    --gradient-sage: linear-gradient(135deg, hsl(270 45% 55%), hsl(280 50% 65%));
-    --gradient-blush: linear-gradient(135deg, hsl(330 55% 88%), hsl(330 50% 78%));
+    --gradient-sage: linear-gradient(135deg, hsl(270 55% 50%), hsl(290 55% 60%));
+    --gradient-blush: linear-gradient(135deg, hsl(340 65% 85%), hsl(340 55% 72%));
+    --gradient-vivid: linear-gradient(135deg, hsl(350 80% 60%), hsl(320 55% 55%), hsl(270 55% 50%));
 
-    --shadow-soft: 0 4px 20px -4px hsl(270 45% 55% / 0.1);
-    --shadow-card: 0 8px 30px -8px hsl(270 45% 55% / 0.12);
-    --shadow-elevated: 0 16px 50px -12px hsl(270 45% 55% / 0.15);
+    --shadow-soft: 0 4px 20px -4px hsl(270 55% 50% / 0.12);
+    --shadow-card: 0 8px 30px -8px hsl(270 55% 50% / 0.15);
+    --shadow-elevated: 0 16px 50px -12px hsl(270 55% 50% / 0.18);
 
     --font-display: 'Rubik', sans-serif;
     --font-body: 'Heebo', sans-serif;
@@ -117,14 +122,21 @@
 
 @layer utilities {
   .text-gradient-sage {
-    background: linear-gradient(135deg, hsl(270 45% 55%), hsl(280 50% 65%));
+    background: linear-gradient(135deg, hsl(270 55% 50%), hsl(290 55% 60%));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
 
   .text-gradient-blush {
-    background: linear-gradient(135deg, hsl(330 50% 55%), hsl(330 55% 65%));
+    background: linear-gradient(135deg, hsl(340 55% 50%), hsl(340 60% 60%));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .text-gradient-vivid {
+    background: var(--gradient-vivid);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -144,6 +156,10 @@
 
   .bg-gradient-blush {
     background: var(--gradient-blush);
+  }
+
+  .bg-gradient-vivid {
+    background: var(--gradient-vivid);
   }
 
   .shadow-soft {

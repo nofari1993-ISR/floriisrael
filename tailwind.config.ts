@@ -68,6 +68,9 @@ export default {
           DEFAULT: "hsl(var(--gold))",
           light: "hsl(var(--gold-light))",
         },
+        "rose-vivid": "hsl(var(--rose-vivid))",
+        sunflower: "hsl(var(--sunflower))",
+        "leaf-green": "hsl(var(--leaf-green))",
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
