@@ -145,7 +145,7 @@ const AIChatPage = () => {
         )}
 
         {/* Messages */}
-        <div className={`flex-1 overflow-y-auto px-4 py-4 space-y-3 ${recommendation ? "max-h-[35vh]" : ""}`}>
+        <div className={`flex-1 overflow-y-auto px-4 py-4 space-y-3 ${recommendation ? "min-h-[30vh]" : ""}`}>
           {messages.map((msg, i) => (
             <BouquetChatMessage key={i} role={msg.role} content={msg.content} />
           ))}
