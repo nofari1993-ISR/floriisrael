@@ -4,6 +4,12 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Shop } from "@/hooks/useShops";
 
+import shopPlaceholder1 from "@/assets/shop-placeholder-1.jpg";
+import shopPlaceholder2 from "@/assets/shop-placeholder-2.jpg";
+import shopPlaceholder3 from "@/assets/shop-placeholder-3.jpg";
+
+const placeholderImages = [shopPlaceholder1, shopPlaceholder2, shopPlaceholder3];
+
 interface ShopCardProps {
   shop: Shop;
   index: number;
@@ -39,10 +45,10 @@ const ShopCard = ({ shop, index, isAdmin, onRemove, formatDistance }: ShopCardPr
     return stars;
   };
 
-  // Placeholder image when shop has no real image
+  // Use shop image if available, otherwise cycle through placeholders based on index
   const shopImage = shop.image && shop.image !== "🌼"
     ? shop.image
-    : null;
+    : placeholderImages[index % placeholderImages.length];
 
   return (
     <motion.div
@@ -53,17 +59,11 @@ const ShopCard = ({ shop, index, isAdmin, onRemove, formatDistance }: ShopCardPr
     >
       {/* Image Section */}
       <div className="relative h-48 overflow-hidden bg-muted">
-        {shopImage ? (
-          <img
-            src={shopImage}
-            alt={shop.name}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-          />
-        ) : (
-          <div className="w-full h-full bg-gradient-sage flex items-center justify-center">
-            <span className="text-5xl opacity-80">💐</span>
-          </div>
-        )}
+        <img
+          src={shopImage}
+          alt={shop.name}
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+        />
 
         {/* Gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-foreground/30 via-transparent to-transparent" />
