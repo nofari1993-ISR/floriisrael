@@ -111,6 +111,13 @@ const Checkout = () => {
         }
       });
       setErrors(fieldErrors);
+      const firstError = result.error.errors[0]?.message || "יש למלא את כל השדות הנדרשים";
+      toast({ title: "חסרים פרטים", description: firstError, variant: "destructive" });
+      // Scroll to first error
+      setTimeout(() => {
+        const errorEl = document.querySelector(".text-destructive");
+        errorEl?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 100);
       return;
     }
 
