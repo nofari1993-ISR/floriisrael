@@ -119,54 +119,75 @@ const Checkout = () => {
       const diyNote = isDIY ? "זר מעוצב אישית (DIY)" : "";
       const noteParts = [diyNote, timeSlotNote].filter(Boolean).join(" | ");
 
-      const { data: order, error: orderError } = await supabase
-        .from("orders")
-        .insert({
-          shop_id: shopId,
-          customer_name: formData.customerName,
-          customer_phone: formData.customerPhone || null,
-          recipient_name: formData.recipientName,
-          delivery_address: isPickup ? "איסוף עצמי" : formData.address,
-          delivery_date: format(deliveryDate!, "yyyy-MM-dd"),
-          greeting: formData.greeting || null,
-          notes: noteParts || null,
-          total_price: isDIY ? diyTotalPrice : 0,
-        })
-        .select("id")
-        .single();
-
-      if (orderError) throw orderError;
-
-      // Insert DIY order items if available
-      if (isDIY && diyItems.length > 0) {
-        const orderItems = diyItems.map((item) => ({
-          order_id: order.id,
+      const deliveryDateStr = format(deliveryDate!, "yyyy-MM-dd");
+      const orderPayload = {
+        shop_id: shopId,
+        customer_name: formData.customerName,
+        customer_phone: formData.customerPhone || null,
+        recipient_name: formData.recipientName,
+        delivery_address: isPickup ? "איסוף עצמי" : formData.address,
+        delivery_date: deliveryDateStr,
+        greeting: formData.greeting || null,
+        total_price: isDIY ? diyTotalPrice : 0,
+        items: isDIY ? diyItems.map((item) => ({
           flower_name: item.flower_name,
           flower_id: item.flower_id || null,
           quantity: item.quantity,
           unit_price: item.unit_price,
-        }));
+        })) : undefined,
+      };
 
-        const { error: itemsError } = await supabase
-          .from("order_items")
-          .insert(orderItems);
+      // Use edge function for DIY orders (handles inventory deduction with service role)
+      // Use direct insert for non-DIY orders
+      let orderId: string;
+      let shopName = "החנות";
+      let shopPhone: string | null = null;
 
-        if (itemsError) {
-          console.error("Order items insert error:", itemsError.message);
-        }
+      if (isDIY && diyItems.length > 0) {
+        const { data: fnData, error: fnError } = await supabase.functions.invoke("create-order", {
+          body: orderPayload,
+        });
+
+        if (fnError) throw fnError;
+        if (!fnData?.success) throw new Error(fnData?.error || "שגיאה ביצירת ההזמנה");
+
+        orderId = fnData.order_id;
+        shopName = fnData.shop_name || shopName;
+        shopPhone = fnData.shop_phone || null;
+      } else {
+        const { data: order, error: orderError } = await supabase
+          .from("orders")
+          .insert({
+            shop_id: shopId,
+            customer_name: formData.customerName,
+            customer_phone: formData.customerPhone || null,
+            recipient_name: formData.recipientName,
+            delivery_address: isPickup ? "איסוף עצמי" : formData.address,
+            delivery_date: deliveryDateStr,
+            greeting: formData.greeting || null,
+            notes: noteParts || null,
+            total_price: 0,
+          })
+          .select("id")
+          .single();
+
+        if (orderError) throw orderError;
+        orderId = order.id;
+
+        const { data: shop } = await supabase
+          .from("shops")
+          .select("name, phone")
+          .eq("id", shopId)
+          .single();
+
+        shopName = shop?.name || shopName;
+        shopPhone = shop?.phone || null;
       }
 
-      // Fetch shop info for WhatsApp
-      const { data: shop } = await supabase
-        .from("shops")
-        .select("name, phone")
-        .eq("id", shopId)
-        .single();
-
       setOrderSuccess({
-        orderId: order.id,
-        shopPhone: shop?.phone || null,
-        shopName: shop?.name || "החנות",
+        orderId,
+        shopPhone,
+        shopName,
         recipientName: formData.recipientName,
         deliveryDate: format(deliveryDate!, "dd/MM/yyyy"),
       });
