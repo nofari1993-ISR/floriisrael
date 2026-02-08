@@ -114,7 +114,7 @@ const BouquetCard = ({ recommendation, onAccept, onModify, onReset }: BouquetCar
             onClick={onAccept}
           >
             <ShoppingBag className="w-4 h-4" />
-            שמור וסיים
+            להזמנה ותשלום
           </Button>
           <Button
             variant="hero-outline"

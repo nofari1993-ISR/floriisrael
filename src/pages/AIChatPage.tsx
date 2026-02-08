@@ -2,15 +2,12 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useRef, useEffect, useState } from "react";
 import { Loader2, RotateCcw, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/hooks/use-toast";
 
 import BouquetChatHeader from "@/components/bouquet-chat/BouquetChatHeader";
 import BouquetChatMessage from "@/components/bouquet-chat/BouquetChatMessage";
 import BouquetCard from "@/components/bouquet-chat/BouquetCard";
 import BudgetModal from "@/components/bouquet-chat/BudgetModal";
 import StepOptionButtons from "@/components/bouquet-chat/StepOptionButtons";
-import OrderSuccessScreen, { type OrderSuccessData } from "@/components/bouquet-chat/OrderSuccessScreen";
 import {
   useBouquetWizard,
   STEPS,
@@ -40,7 +37,7 @@ const AIChatPage = () => {
   } = useBouquetWizard(shopId, mode);
 
   const [input, setInput] = useState("");
-  const [orderSuccess, setOrderSuccess] = useState<OrderSuccessData | null>(null);
+  
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -62,64 +59,26 @@ const AIChatPage = () => {
     setInput("");
   };
 
-  const handleAcceptBouquet = async () => {
-    if (!recommendation) return;
+  const handleAcceptBouquet = () => {
+    if (!recommendation || !shopId) return;
 
-    // Navigate to checkout with bouquet data
-    const params = new URLSearchParams();
-    if (shopId) params.set("shopId", shopId);
+    const items = recommendation.flowers.map((f) => ({
+      flower_name: f.name,
+      flower_id: "",
+      quantity: f.quantity,
+      unit_price: f.unit_price,
+      color: f.color || "",
+    }));
 
-    // Save bouquet to order via edge function
-    try {
-      const { data, error } = await supabase.functions.invoke("create-order", {
-        body: {
-          shop_id: shopId,
-          customer_name: "לקוח מהאתר",
-          recipient_name: answers.recipient || "לא צוין",
-          delivery_address: "ייקבע בהמשך",
-          delivery_date: new Date().toISOString().split("T")[0],
-          total_price: recommendation.total_price,
-          notes: `אירוע: ${answers.occasion || "לא צוין"}, צבעים: ${answers.colors || "לא צוין"}`,
-          items: recommendation.flowers.map((f) => ({
-            flower_name: f.name,
-            quantity: f.quantity,
-            unit_price: f.unit_price,
-          })),
-        },
-      });
-
-      if (error) throw error;
-
-      setOrderSuccess({
-        orderId: data.order_id,
-        shopPhone: data.shop_phone,
-        shopName: data.shop_name,
-        recipientName: answers.recipient || "",
-        deliveryDate: "",
-      });
-
-      toast({
-        title: "ההזמנה נשמרה בהצלחה! 🎉",
-        description: `מספר הזמנה: ${data.order_id?.slice(0, 8)}`,
-      });
-    } catch (err: any) {
-      console.error("Order error:", err);
-      toast({
-        title: "שגיאה בשמירת ההזמנה",
-        description: err.message || "נסו שוב",
-        variant: "destructive",
-      });
-    }
+    navigate(`/checkout?shopId=${shopId}`, {
+      state: {
+        diyItems: items,
+        totalPrice: recommendation.total_price,
+        isDIY: true,
+      },
+    });
   };
 
-  if (orderSuccess) {
-    return (
-      <OrderSuccessScreen
-        order={orderSuccess}
-        onGoHome={() => navigate("/")}
-      />
-    );
-  }
 
   // Determine which step options to show
   const showRecipientOptions = currentStep === STEPS.RECIPIENT && !recommendation;
