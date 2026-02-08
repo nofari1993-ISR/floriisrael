@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Loader2 } from "lucide-react";
 
-const PAYPAL_CLIENT_ID = "AYdTJKHvNqAjIfN8N8SAjqCuzxUl85_F26eHMO7C-hEStW2a9c7H1s7Lo0vmv4zplZ_AhU3wAqjc2eDG";
+const PAYPAL_CLIENT_ID = "AVbjXN15jyiav7tuqZKYhjcMFR7YvdLW5Q9ZF_FOHQ9yXC-0s6PaLb8__J3rBUUkOnhueEPeOyvgc6Gm";
 
 interface PayPalButtonProps {
   amount: number;
@@ -117,7 +117,7 @@ const PayPalButton = ({ amount, currency = "ILS", onApprove, onError, disabled }
     <div className="space-y-2">
       <div ref={containerRef} className={disabled ? "opacity-50 pointer-events-none" : ""} />
       <p className="text-[11px] text-muted-foreground text-center font-body">
-        🔒 התשלום מאובטח דרך PayPal (Sandbox)
+        🔒 התשלום מאובטח דרך PayPal
       </p>
     </div>
   );
