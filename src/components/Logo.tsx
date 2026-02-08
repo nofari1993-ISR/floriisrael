@@ -32,7 +32,7 @@ const Logo = ({ size = "md", showText = true, className = "", layout = "horizont
       <img src={logoImage} alt="Bloom" className={`${sizeMap[size]} object-contain mix-blend-multiply`} />
       {showText && (
         <span className={`font-display font-bold ${textSizeMap[size]} text-foreground tracking-wide ${isVertical ? "text-center" : ""}`}>
-          Bloom
+          FloristA
         </span>
       )}
     </div>
