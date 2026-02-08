@@ -82,31 +82,19 @@ export function useBouquetWizard(shopId: string | null, mode?: string | null) {
   const [pendingBouquet, setPendingBouquet] = useState<PendingBouquet | null>(null);
   const [autoTriggered, setAutoTriggered] = useState(false);
 
-  // Auto-trigger special modes (high-stock or promote-flower)
-  const triggerAutoMode = useCallback(async (params: URLSearchParams) => {
+  // Auto-trigger high-stock mode
+  const triggerHighStock = useCallback(async () => {
     if (autoTriggered || isLoading) return;
     setAutoTriggered(true);
 
-    const currentMode = params.get("mode");
-    const flowerName = params.get("flowerName");
-    const flowerColor = params.get("flowerColor");
-
-    const loadingMsg = currentMode === "promote-flower" && flowerName
-      ? `✨ מייצר זר עם דגש על ${flowerName}${flowerColor ? ` (${flowerColor})` : ""}...`
-      : "🌿 מייצר המלצה לזר מהמלאי הגבוה ביותר...";
-
-    setMessages([{ role: "assistant", content: loadingMsg }]);
+    setMessages([{ role: "assistant", content: "🌿 מייצר המלצה לזר מהמלאי הגבוה ביותר..." }]);
     setCurrentStep(STEPS.RECOMMEND);
     setIsLoading(true);
 
     try {
-      const body: Record<string, any> = { action: currentMode, shopId };
-      if (currentMode === "promote-flower") {
-        body.flowerName = flowerName;
-        body.flowerColor = flowerColor || undefined;
-      }
-
-      const { data, error } = await supabase.functions.invoke("bouquet-ai", { body });
+      const { data, error } = await supabase.functions.invoke("bouquet-ai", {
+        body: { action: "high-stock", shopId },
+      });
       if (error) throw error;
 
       const rec: BouquetRecommendation = {
@@ -120,7 +108,7 @@ export function useBouquetWizard(shopId: string | null, mode?: string | null) {
       setRecommendation(rec);
       setMessages((prev) => [...prev, { role: "assistant", content: data.message }]);
     } catch (err: any) {
-      console.error("Auto-mode generate error:", err);
+      console.error("High-stock generate error:", err);
       setMessages((prev) => [
         ...prev,
         { role: "assistant", content: "מצטער/ת, נתקלתי בבעיה טכנית. נסו שוב 😔" },
@@ -130,13 +118,12 @@ export function useBouquetWizard(shopId: string | null, mode?: string | null) {
     }
   }, [autoTriggered, isLoading, shopId]);
 
-  // Auto-trigger when mode is set
+  // Auto-trigger when mode is high-stock
   useEffect(() => {
-    if (mode === "high-stock" || mode === "promote-flower") {
-      const params = new URLSearchParams(window.location.search);
-      triggerAutoMode(params);
+    if (mode === "high-stock") {
+      triggerHighStock();
     }
-  }, [mode, triggerAutoMode]);
+  }, [mode, triggerHighStock]);
 
   const handleStepAnswer = useCallback(
     async (answer: string) => {

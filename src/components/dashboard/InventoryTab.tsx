@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Trash2, Edit2, Package, Flower2, Check, X, Sparkles, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -13,19 +12,54 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { supabase } from "@/integrations/supabase/client";
 import { useInventory, type Flower } from "@/hooks/useInventory";
+import PromoteBouquetModal, { type PromoteBouquetResult } from "./PromoteBouquetModal";
 
 interface InventoryTabProps {
   shopId: string;
 }
 
 const InventoryTab = ({ shopId }: InventoryTabProps) => {
-  const navigate = useNavigate();
   const { flowers, loading, addFlower, updateFlower, removeFlower } = useInventory(shopId);
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({ name: "", color: "", price: "", quantity: "" });
   const [editData, setEditData] = useState({ name: "", color: "", price: "", quantity: "" });
+
+  // Promote flower AI state
+  const [promoteOpen, setPromoteOpen] = useState(false);
+  const [promoteLoading, setPromoteLoading] = useState(false);
+  const [promoteResult, setPromoteResult] = useState<PromoteBouquetResult | null>(null);
+  const [promoteError, setPromoteError] = useState<string | null>(null);
+  const [promoteFlower, setPromoteFlower] = useState({ name: "", color: "" });
+
+  const handlePromoteFlower = async (flower: Flower) => {
+    setPromoteFlower({ name: flower.name, color: flower.color || "" });
+    setPromoteOpen(true);
+    setPromoteLoading(true);
+    setPromoteResult(null);
+    setPromoteError(null);
+
+    try {
+      const { data, error } = await supabase.functions.invoke("bouquet-ai", {
+        body: {
+          action: "promote-flower",
+          shopId,
+          flowerName: flower.name,
+          flowerColor: flower.color || undefined,
+        },
+      });
+
+      if (error) throw error;
+      setPromoteResult(data as PromoteBouquetResult);
+    } catch (err: any) {
+      console.error("Promote flower error:", err);
+      setPromoteError(err.message || "שגיאה בייצור הזר, נסו שוב.");
+    } finally {
+      setPromoteLoading(false);
+    }
+  };
 
   const handleAdd = async () => {
     if (!formData.name || !formData.price) return;
@@ -295,7 +329,7 @@ const InventoryTab = ({ shopId }: InventoryTabProps) => {
                             <Button
                               size="icon"
                               variant="ghost"
-                              onClick={() => navigate(`/ai-chat?shopId=${shopId}&mode=promote-flower&flowerName=${encodeURIComponent(flower.name)}${flower.color ? `&flowerColor=${encodeURIComponent(flower.color)}` : ""}`)}
+                              onClick={() => handlePromoteFlower(flower)}
                               className="h-7 w-7 text-primary/60 hover:text-primary"
                               title={`צור זר עם ${flower.name}`}
                             >
@@ -318,6 +352,17 @@ const InventoryTab = ({ shopId }: InventoryTabProps) => {
           </Table>
         </div>
       )}
+
+      {/* Promote Bouquet Modal */}
+      <PromoteBouquetModal
+        open={promoteOpen}
+        onClose={() => setPromoteOpen(false)}
+        flowerName={promoteFlower.name}
+        flowerColor={promoteFlower.color || undefined}
+        isLoading={promoteLoading}
+        result={promoteResult}
+        error={promoteError}
+      />
     </div>
   );
 };
