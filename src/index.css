@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&family=Rubik:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Quicksand:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;500;600;700;800&family=Heebo:wght@300;400;500;600;700;800&family=Quicksand:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -59,7 +59,7 @@
     --shadow-card: 0 8px 30px -8px hsl(270 55% 50% / 0.15);
     --shadow-elevated: 0 16px 50px -12px hsl(270 55% 50% / 0.18);
 
-    --font-display: 'Rubik', sans-serif;
+    --font-display: 'Frank Ruhl Libre', serif;
     --font-body: 'Heebo', sans-serif;
     --font-brand: 'Quicksand', sans-serif;
 
