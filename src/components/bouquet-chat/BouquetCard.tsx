@@ -40,7 +40,7 @@ const BouquetCard = ({ recommendation, onAccept, onModify, onReset }: BouquetCar
       {/* Bouquet Image */}
       {recommendation.image_url && (
         <div
-          className="relative w-full max-h-56 overflow-hidden bg-muted/30 cursor-pointer group"
+          className="relative w-full bg-muted/30 cursor-pointer group"
           onClick={() => setFullscreenOpen(true)}
         >
           {!imageLoaded && (
@@ -51,7 +51,7 @@ const BouquetCard = ({ recommendation, onAccept, onModify, onReset }: BouquetCar
           <img
             src={recommendation.image_url}
             alt="הזר שלך"
-            className={`w-full object-cover transition-opacity ${imageLoaded ? "opacity-100" : "opacity-0 h-0"}`}
+            className={`w-full object-contain transition-opacity ${imageLoaded ? "opacity-100" : "opacity-0 h-0"}`}
             onLoad={() => setImageLoaded(true)}
           />
           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
