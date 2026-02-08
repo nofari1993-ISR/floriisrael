@@ -21,9 +21,11 @@ export type Database = {
           id: string
           image: string | null
           in_stock: boolean
+          last_restocked_at: string
           name: string
           price: number
           quantity: number
+          shelf_life_days: number
           shop_id: string
           updated_at: string | null
         }
@@ -33,9 +35,11 @@ export type Database = {
           id?: string
           image?: string | null
           in_stock?: boolean
+          last_restocked_at?: string
           name: string
           price?: number
           quantity?: number
+          shelf_life_days?: number
           shop_id: string
           updated_at?: string | null
         }
@@ -45,9 +49,11 @@ export type Database = {
           id?: string
           image?: string | null
           in_stock?: boolean
+          last_restocked_at?: string
           name?: string
           price?: number
           quantity?: number
+          shelf_life_days?: number
           shop_id?: string
           updated_at?: string | null
         }

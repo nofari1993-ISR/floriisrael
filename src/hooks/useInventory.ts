@@ -12,6 +12,8 @@ export interface Flower {
   image: string | null;
   in_stock: boolean;
   created_at: string | null;
+  shelf_life_days: number;
+  last_restocked_at: string | null;
 }
 
 export const useInventory = (shopId: string | undefined) => {
@@ -33,7 +35,7 @@ export const useInventory = (shopId: string | undefined) => {
       toast({ title: "שגיאה בטעינת מלאי", description: error.message, variant: "destructive" });
     } else {
       setFlowers(
-        (data || []).map((f) => ({
+        (data || []).map((f: any) => ({
           id: f.id,
           shop_id: f.shop_id,
           name: f.name,
@@ -43,6 +45,8 @@ export const useInventory = (shopId: string | undefined) => {
           image: f.image,
           in_stock: f.in_stock ?? true,
           created_at: f.created_at,
+          shelf_life_days: f.shelf_life_days ?? 7,
+          last_restocked_at: f.last_restocked_at,
         }))
       );
     }
@@ -59,6 +63,7 @@ export const useInventory = (shopId: string | undefined) => {
     price: number;
     quantity: number;
     image?: string;
+    shelf_life_days?: number;
   }) => {
     if (!shopId) return false;
 
@@ -70,6 +75,8 @@ export const useInventory = (shopId: string | undefined) => {
       quantity: flowerData.quantity,
       image: flowerData.image || null,
       in_stock: flowerData.quantity > 0,
+      shelf_life_days: flowerData.shelf_life_days ?? 7,
+      last_restocked_at: new Date().toISOString(),
     });
 
     if (error) {
@@ -83,12 +90,17 @@ export const useInventory = (shopId: string | undefined) => {
   };
 
   const updateFlower = async (id: string, updates: Partial<Flower>) => {
+    const updatePayload: any = {
+      ...updates,
+      in_stock: (updates.quantity ?? 0) > 0,
+    };
+    // If quantity increased, reset the restock date
+    if (updates.quantity !== undefined) {
+      updatePayload.last_restocked_at = new Date().toISOString();
+    }
     const { error } = await supabase
       .from("flowers")
-      .update({
-        ...updates,
-        in_stock: (updates.quantity ?? 0) > 0,
-      })
+      .update(updatePayload)
       .eq("id", id);
 
     if (error) {
