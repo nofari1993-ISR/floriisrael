@@ -38,7 +38,7 @@ const BouquetCard = ({ recommendation, onAccept, onModify, onReset }: BouquetCar
     >
       {/* Bouquet Image */}
       {recommendation.image_url && (
-        <div className="relative w-full max-h-48 overflow-hidden bg-muted/30">
+        <div className="relative w-full bg-muted/30">
           {!imageLoaded && (
             <div className="flex items-center justify-center py-10">
               <Loader2 className="w-5 h-5 text-primary animate-spin" />
