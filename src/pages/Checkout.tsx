@@ -75,6 +75,7 @@ const Checkout = () => {
   const [formData, setFormData] = useState({
     recipientName: "",
     address: "",
+    deliveryNotes: "",
     greeting: "",
     customerName: "",
     customerPhone: "",
@@ -139,7 +140,8 @@ const Checkout = () => {
       const timeSlotNote = selectedSlot ? `שעות ${isPickup ? "איסוף" : "משלוח"}: ${selectedSlot.hours}` : "";
       const diyNote = isDIY ? "זר מעוצב אישית (DIY)" : "";
       const paypalNote = `PayPal: ${paypalOrderId}`;
-      const noteParts = [diyNote, timeSlotNote, paypalNote].filter(Boolean).join(" | ");
+      const deliveryNotesText = formData.deliveryNotes?.trim() ? `הערות לשליח: ${formData.deliveryNotes.trim()}` : "";
+      const noteParts = [diyNote, timeSlotNote, deliveryNotesText, paypalNote].filter(Boolean).join(" | ");
 
       const deliveryDateStr = format(deliveryDate!, "yyyy-MM-dd");
       const orderPayload = {
@@ -474,21 +476,37 @@ const Checkout = () => {
 
           {/* Address (only for delivery) */}
           {deliveryMethod === "delivery" && (
-            <div className="space-y-2">
-              <label className="flex items-center gap-2 text-sm font-medium text-foreground font-body">
-                <MapPin className="w-4 h-4 text-primary/60" />
-                כתובת מלאה למשלוח
-              </label>
-              <input
-                type="text"
-                value={formData.address}
-                onChange={(e) => setFormData((prev) => ({ ...prev, address: e.target.value }))}
-                placeholder="רחוב, מספר, עיר"
-                className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm font-body text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-ring transition-shadow"
-              />
-              {errors.address && (
-                <p className="text-sm text-destructive font-body">{errors.address}</p>
-              )}
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="flex items-center gap-2 text-sm font-medium text-foreground font-body">
+                  <MapPin className="w-4 h-4 text-primary/60" />
+                  כתובת מלאה למשלוח
+                </label>
+                <input
+                  type="text"
+                  value={formData.address}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, address: e.target.value }))}
+                  placeholder="רחוב, מספר, עיר"
+                  className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm font-body text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-ring transition-shadow"
+                />
+                {errors.address && (
+                  <p className="text-sm text-destructive font-body">{errors.address}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <label className="flex items-center gap-2 text-sm font-medium text-foreground font-body">
+                  <MessageSquare className="w-4 h-4 text-primary/60" />
+                  הערות לשליח (אופציונלי)
+                </label>
+                <textarea
+                  value={formData.deliveryNotes}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, deliveryNotes: e.target.value }))}
+                  placeholder="למשל: קומה 3, דלת שמאל, לצלצל פעמיים..."
+                  className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm font-body text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-ring transition-shadow resize-none min-h-[70px]"
+                  maxLength={200}
+                />
+              </div>
             </div>
           )}
 
