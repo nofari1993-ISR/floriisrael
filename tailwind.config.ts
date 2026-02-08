@@ -14,9 +14,9 @@ export default {
     },
     extend: {
       fontFamily: {
-        display: ['Frank Ruhl Libre', 'serif'],
+        display: ['Heebo', 'sans-serif'],
         body: ['Heebo', 'sans-serif'],
-        brand: ['Quicksand', 'sans-serif'],
+        brand: ['Heebo', 'sans-serif'],
       },
       colors: {
         border: "hsl(var(--border))",
