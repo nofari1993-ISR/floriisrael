@@ -49,9 +49,7 @@ const Hero = () => {
           <Logo size="md" />
           <div className="hidden md:flex items-center gap-8 font-body text-muted-foreground">
             <a href="#how-it-works" className="hover:text-foreground transition-colors">איך זה עובד</a>
-            <a href="#bouquet-builder" className="hover:text-foreground transition-colors">עיצוב זר עצמאי</a>
             <a href="#shops" className="hover:text-foreground transition-colors">חנויות</a>
-            <a href="#ai-chat" className="hover:text-foreground transition-colors">בניית זר AI</a>
           </div>
           {user ? (
             <div className="flex items-center gap-2">
@@ -84,8 +82,8 @@ const Hero = () => {
           >
             <div className="space-y-4 lg:space-y-6">
               <Logo size="lg" layout="vertical" className="mb-2 lg:mb-4" />
-              <p className="text-base md:text-lg lg:text-xl text-muted-foreground font-body max-w-lg leading-relaxed">
-                גלו חנויות פרחים באזור שלכם, בנו את הזר המושלם בעצמכם או תנו ל-AI החכם שלנו ליצור עבורכם 🌷✨
+              <p className="text-base md:text-lg lg:text-xl text-muted-foreground font-body max-w-lg leading-relaxed mx-auto">
+                גלו חנויות פרחים באזור שלכם וקבלו את הזר המושלם ישירות עד הבית 🌷
               </p>
             </div>
 
