@@ -32,20 +32,25 @@ serve(async (req) => {
       const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
       const { data: inventory, error } = await supabase
         .from("flowers")
-        .select("name, color, quantity, price, in_stock")
+        .select("name, color, quantity, price, in_stock, boosted")
         .eq("shop_id", shopId)
         .eq("in_stock", true);
 
       if (error) {
         console.error("Error fetching inventory:", error.message);
       } else if (inventory && inventory.length > 0) {
+        const boosted = inventory.filter((item: any) => item.boosted && item.quantity > 0);
+        const boostedSection = boosted.length > 0
+          ? `\n\n⭐ פרחים מקודמים (תעדף אותם בהמלצות!):\n${boosted.map((item: any) => `- ${item.name}${item.color ? ` (${item.color})` : ""}: ${item.quantity} יחידות, מחיר: ${item.price}₪`).join("\n")}`
+          : "";
+
         inventoryList = inventory
           .map(
-            (item) =>
-              `- ${item.name}${item.color ? ` (${item.color})` : ""}: ${item.quantity} יחידות, מחיר: ${item.price}₪`
+            (item: any) =>
+              `- ${item.name}${item.color ? ` (${item.color})` : ""}: ${item.quantity} יחידות, מחיר: ${item.price}₪${item.boosted ? " ⭐" : ""}`
           )
-          .join("\n");
-        console.log(`Loaded ${inventory.length} flowers for shop ${shopId}`);
+          .join("\n") + boostedSection;
+        console.log(`Loaded ${inventory.length} flowers for shop ${shopId}, ${boosted.length} boosted`);
       } else {
         inventoryList = "אין כרגע פרחים זמינים במלאי.";
         console.log("No flowers found for shop", shopId);
@@ -67,7 +72,8 @@ ${inventoryList}
 - תהיה חם, ידידותי ומקצועי
 - כשמתאים, הצע שילובי צבעים ופרחים מהמלאי
 - ציין זמינות עונתית כשרלוונטי
-- אם הלקוח מבקש פרח שלא קיים במלאי, הצע חלופות מהמלאי הזמין`;
+- אם הלקוח מבקש פרח שלא קיים במלאי, הצע חלופות מהמלאי הזמין
+- פרחים מסומנים ב-⭐ הם פרחים מקודמים - תעדף אותם בהמלצות שלך ותשלב אותם בזרים כשזה מתאים`;
 
     const response = await fetch(
       "https://ai.gateway.lovable.dev/v1/chat/completions",

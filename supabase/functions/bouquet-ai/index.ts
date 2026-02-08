@@ -26,12 +26,13 @@ Deno.serve(async (req) => {
     // Fetch inventory
     let flowersContext = "אין פרחים זמינים במלאי.";
     let flowersList: any[] = [];
+    let boostedFlowers: any[] = [];
 
     if (shopId && SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
       const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
       const { data: inventory, error } = await supabase
         .from("flowers")
-        .select("name, color, quantity, price, in_stock")
+        .select("name, color, quantity, price, in_stock, boosted")
         .eq("shop_id", shopId)
         .eq("in_stock", true);
 
@@ -39,11 +40,12 @@ Deno.serve(async (req) => {
         console.error("Error fetching inventory:", error.message);
       } else if (inventory && inventory.length > 0) {
         flowersList = inventory;
+        boostedFlowers = inventory.filter((f: any) => f.boosted && f.quantity > 0);
         flowersContext = inventory
           .filter((f: any) => f.quantity > 0)
-          .map((f: any) => `- ${f.name}${f.color ? ` (${f.color})` : ""}: ${f.quantity} יח', ₪${f.price}`)
+          .map((f: any) => `- ${f.name}${f.color ? ` (${f.color})` : ""}: ${f.quantity} יח', ₪${f.price}${f.boosted ? " ⭐ מקודם" : ""}`)
           .join("\n");
-        console.log(`Loaded ${inventory.length} flowers for shop ${shopId}`);
+        console.log(`Loaded ${inventory.length} flowers for shop ${shopId}, ${boostedFlowers.length} boosted`);
       }
     }
 
@@ -54,11 +56,16 @@ Deno.serve(async (req) => {
       const budget = parseFloat(answers.budget) || 200;
       const budgetForFlowers = budget / 1.05;
 
+      // Build boosted flowers instruction
+      const boostedInstruction = boostedFlowers.length > 0
+        ? `\n# ⭐ פרחים מקודמים (עדיפות גבוהה - בעל החנות מבקש לתעדף אותם!):\n${boostedFlowers.map((f: any) => `- ${f.name}${f.color ? ` (${f.color})` : ""}: ${f.quantity} יח', ₪${f.price}`).join("\n")}\nחובה לשלב לפחות פרח מקודם אחד בזר אם הוא מתאים לבקשה!\n`
+        : "";
+
       prompt = `אתה מעצב זרי פרחים מקצועי. בנה זר מגוון עם מספר סוגי פרחים שונים.
 
 # פרחים זמינים במלאי:
 ${flowersContext}
-
+${boostedInstruction}
 # בקשת הלקוח:
 - למי: ${answers.recipient || "לא צוין"}
 - אירוע: ${answers.occasion || "לא צוין"}
@@ -72,6 +79,7 @@ ${flowersContext}
 3. השתמש רק בפרחים מהמלאי הזמין
 4. אם פרח לא זמין, הצע חלופה
 5. כל רשומה בזר = צבע אחד בלבד של הפרח
+6. ${boostedFlowers.length > 0 ? "תעדף את הפרחים המקודמים (⭐) ותן להם כמות גבוהה יותר בזר" : "בחר פרחים שמתאימים לבקשה"}
 
 # ההודעה שלך (message):
 כתוב הודעה חמה ואישית (2-3 משפטים) שמסבירה למה בחרת בפרחים האלה ואיך הם מתאימים לאירוע.
@@ -87,6 +95,10 @@ ${flowersContext}
         .map((f: any) => `- ${f.quantity} ${f.color || ""} ${f.name} (₪${f.unit_price || 0} ליחידה)`)
         .join("\n");
 
+      const boostedModifyInstruction = boostedFlowers.length > 0
+        ? `\n# ⭐ פרחים מקודמים (עדיפות גבוהה):\n${boostedFlowers.map((f: any) => `- ${f.name}${f.color ? ` (${f.color})` : ""}`).join("\n")}\nאם הלקוח מבקש להוסיף פרחים, תעדף את המקודמים.\n`
+        : "";
+
       prompt = `אתה עורך זר פרחים קיים. בצע את השינוי שהלקוח ביקש והחזר את כל הזר המלא.
 
 # הזר הנוכחי:
@@ -95,7 +107,7 @@ ${currentFlowersList}
 
 # פרחים זמינים במלאי:
 ${flowersContext}
-
+${boostedModifyInstruction}
 # תקציב: ₪${Math.floor(budgetForFlowers)}
 
 # הלקוח ביקש:
