@@ -2,9 +2,14 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import {
   Package, MapPin, Calendar, MessageSquare, User, Phone, Mail,
-  ChevronDown, ChevronUp, ClipboardList, Save
+  ChevronDown, ChevronUp, ClipboardList, Save, XCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { useOrders, ORDER_STATUSES } from "@/hooks/useOrders";
 import { format } from "date-fns";
 import { he } from "date-fns/locale";
@@ -211,6 +216,40 @@ const OrdersTab = ({ shopId }: OrdersTabProps) => {
                         ))}
                       </div>
                     </div>
+
+                    {/* Cancel Order Button */}
+                    {order.status !== "בוטלה" && (
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            className="rounded-xl gap-2"
+                          >
+                            <XCircle className="w-4 h-4" />
+                            ביטול הזמנה
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent dir="rtl">
+                          <AlertDialogHeader>
+                            <AlertDialogTitle className="font-display">ביטול הזמנה</AlertDialogTitle>
+                            <AlertDialogDescription className="font-body">
+                              האם את/ה בטוח/ה שברצונך לבטל את ההזמנה של {order.recipient_name}?
+                              <br />פעולה זו תעדכן את סטטוס ההזמנה ל"בוטלה".
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter className="flex-row-reverse gap-2">
+                            <AlertDialogCancel className="font-body">חזרה</AlertDialogCancel>
+                            <AlertDialogAction
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90 font-body"
+                              onClick={() => updateOrderStatus(order.id, "בוטלה")}
+                            >
+                              כן, בטל הזמנה
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    )}
 
                     {/* Notes */}
                     <div className="space-y-2">
