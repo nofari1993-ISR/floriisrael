@@ -62,6 +62,12 @@ const DEFAULT_FLOWERS = [
   { name: "שרך", color: "ירוק", price: 4, image: "/flowers/fern.png" },
 ];
 
+const SHOP_PLACEHOLDER_IMAGES = [
+  "/shop-images/flowers-pink.jpg",
+  "/shop-images/flowers-sunny.jpg",
+  "/shop-images/flowers-purple.jpg",
+];
+
 export interface Shop {
   id: string;
   name: string;
@@ -206,6 +212,7 @@ export const useShops = (searchQuery?: string) => {
       hours: shopData.hours || "09:00 - 18:00",
       tags: shopData.tags || [],
       owner_id: shopData.owner_id || null,
+      image: SHOP_PLACEHOLDER_IMAGES[Math.floor(Math.random() * SHOP_PLACEHOLDER_IMAGES.length)],
     }).select("id").single();
 
     if (error) {
