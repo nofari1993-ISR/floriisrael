@@ -79,7 +79,7 @@ const DIYBuilderPage = () => {
 
   // Categorize flowers
   const GREENERY = new Set(["אקליפטוס", "רוסקוס", "שרך"]);
-  const FILLER = new Set(["רקפת", "לבנדר", "גיבסנית"]);
+  const FILLER = new Set(["גיבסנית", "לבנדר"]);
 
   // Deduplicate flowers by name – show one card per name with color variants
   const uniqueFlowers = useMemo(() => {
