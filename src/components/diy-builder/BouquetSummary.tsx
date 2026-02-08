@@ -29,8 +29,7 @@ const BouquetSummary = ({ selectedFlowers, onRemove, onClearAll, onCheckout }: B
     0
   );
   const totalItems = selectedFlowers.reduce((sum, item) => sum + item.quantity, 0);
-  const designFee = Math.round(totalPrice * 0.05);
-  const grandTotal = totalPrice + designFee;
+  const grandTotal = totalPrice;
 
   const handleGenerateImage = async () => {
     setIsGeneratingImage(true);
@@ -201,16 +200,8 @@ const BouquetSummary = ({ selectedFlowers, onRemove, onClearAll, onCheckout }: B
         </div>
 
         {/* Totals */}
-        <div className="p-3 border-t border-border/50 space-y-1.5">
-          <div className="flex justify-between text-xs font-body text-muted-foreground">
-            <span>עלות פרחים</span>
-            <span>₪{totalPrice}</span>
-          </div>
-          <div className="flex justify-between text-xs font-body text-muted-foreground">
-            <span>דמי עיצוב (5%)</span>
-            <span>₪{designFee}</span>
-          </div>
-          <div className="flex justify-between text-sm font-display font-bold text-foreground pt-1.5 border-t border-border/30">
+        <div className="p-3 border-t border-border/50">
+          <div className="flex justify-between text-sm font-display font-bold text-foreground">
             <span>סה״כ</span>
             <span>₪{grandTotal}</span>
           </div>

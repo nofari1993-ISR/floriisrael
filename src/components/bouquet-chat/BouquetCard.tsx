@@ -89,16 +89,8 @@ const BouquetCard = ({ recommendation, onAccept, onModify, onReset }: BouquetCar
           ))}
         </div>
 
-        <div className="border-t border-border/50 pt-2 mt-3 space-y-1">
-          <div className="flex justify-between text-xs font-body text-muted-foreground">
-            <span>עלות פרחים</span>
-            <span>₪{recommendation.flowers_cost}</span>
-          </div>
-          <div className="flex justify-between text-xs font-body text-muted-foreground">
-            <span>דמי עיצוב (5%)</span>
-            <span>₪{recommendation.digital_design_fee}</span>
-          </div>
-          <div className="flex justify-between text-sm font-display font-bold text-foreground pt-1 border-t border-border/30">
+        <div className="border-t border-border/50 pt-2 mt-3">
+          <div className="flex justify-between text-sm font-display font-bold text-foreground">
             <span>סה״כ</span>
             <span>₪{recommendation.total_price}</span>
           </div>
