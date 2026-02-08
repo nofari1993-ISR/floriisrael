@@ -55,11 +55,11 @@ const Footer = () => {
           transition={{ duration: 0.6, delay: 0.4 }}
           className="border-t border-primary-foreground/10 pt-8 flex flex-col md:flex-row items-center justify-between gap-4"
         >
-          <p className="text-primary-foreground/40 text-sm font-body flex items-center gap-1">
-            נבנה עם <Heart className="w-3 h-3 fill-blush-dark text-blush-dark" /> ב-2026
+          <p className="text-primary-foreground/40 text-sm font-body">
+            © 2026 FloristA - All Rights Reserved
           </p>
           <div className="flex gap-6 text-primary-foreground/40 text-sm font-body">
-            <a href="#" className="hover:text-primary-foreground/70 transition-colors">תנאי שימוש</a>
+            <a href="/terms" className="hover:text-primary-foreground/70 transition-colors">תנאי שימוש</a>
             <a href="#" className="hover:text-primary-foreground/70 transition-colors">מדיניות פרטיות</a>
             <a href="#" className="hover:text-primary-foreground/70 transition-colors">נגישות</a>
           </div>
