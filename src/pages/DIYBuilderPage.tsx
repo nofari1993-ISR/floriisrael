@@ -64,7 +64,7 @@ const DIYBuilderPage = () => {
   // Get unique colors for filter
   const availableColors = [
     "הכל",
-    ...new Set(flowers.map((f) => f.color).filter(Boolean)),
+    ...new Set(flowers.map((f) => f.color).filter(Boolean) as string[]),
   ];
 
   // Group flowers by name to detect color variants
@@ -77,10 +77,22 @@ const DIYBuilderPage = () => {
     return groups;
   }, [flowers]);
 
+  // Deduplicate flowers by name – show one card per name with color variants
+  const uniqueFlowers = useMemo(() => {
+    const seen = new Set<string>();
+    return flowers.filter((flower) => {
+      if (seen.has(flower.name)) return false;
+      seen.add(flower.name);
+      return true;
+    });
+  }, [flowers]);
+
   // Filter flowers
-  const filteredFlowers = flowers.filter((flower) => {
+  const filteredFlowers = uniqueFlowers.filter((flower) => {
     const matchesSearch = flower.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesColor = selectedColor === "הכל" || flower.color === selectedColor;
+    const matchesColor =
+      selectedColor === "הכל" ||
+      (flowerColorVariants[flower.name] || []).some((v) => v.color === selectedColor);
     return matchesSearch && matchesColor;
   });
 
@@ -246,7 +258,11 @@ const DIYBuilderPage = () => {
                     <FlowerCard
                       key={flower.id}
                       flower={flower}
-                      selectedQuantity={getQuantity(flower.id)}
+                      selectedQuantity={
+                        variants.length > 1
+                          ? variants.reduce((sum, v) => sum + getQuantity(v.id), 0)
+                          : getQuantity(flower.id)
+                      }
                       onAdd={handleAddFlower}
                       onRemove={handleRemoveFlower}
                       colorVariants={colorVars}
