@@ -129,7 +129,7 @@ const AIChatPage = () => {
 
   return (
     <div className="h-screen flex flex-col bg-gradient-hero">
-      <BouquetChatHeader onBack={() => navigate(-1)} />
+      <BouquetChatHeader onBack={() => navigate("/?shops=open")} backLabel="חזרה לחנויות" />
 
       <div className="flex-1 min-h-0 flex flex-col max-w-3xl mx-auto w-full">
         {/* Bouquet recommendation card (sticky top) */}
