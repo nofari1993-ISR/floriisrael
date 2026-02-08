@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       flowers: {
         Row: {
+          boosted: boolean
           color: string | null
           created_at: string | null
           id: string
@@ -30,6 +31,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          boosted?: boolean
           color?: string | null
           created_at?: string | null
           id?: string
@@ -44,6 +46,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          boosted?: boolean
           color?: string | null
           created_at?: string | null
           id?: string

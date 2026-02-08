@@ -12,9 +12,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { supabase } from "@/integrations/supabase/client";
 import { useInventory, type Flower } from "@/hooks/useInventory";
-import PromoteBouquetModal, { type PromoteBouquetResult } from "./PromoteBouquetModal";
+import { useToast } from "@/hooks/use-toast";
 
 interface InventoryTabProps {
   shopId: string;
@@ -22,42 +21,28 @@ interface InventoryTabProps {
 
 const InventoryTab = ({ shopId }: InventoryTabProps) => {
   const { flowers, loading, addFlower, updateFlower, removeFlower } = useInventory(shopId);
+  const { toast } = useToast();
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({ name: "", color: "", price: "", quantity: "", shelf_life_days: "7" });
   const [editData, setEditData] = useState({ name: "", color: "", price: "", quantity: "", shelf_life_days: "7" });
+  const [togglingBoostIds, setTogglingBoostIds] = useState<Set<string>>(new Set());
 
-  // Promote flower AI state
-  const [promoteOpen, setPromoteOpen] = useState(false);
-  const [promoteLoading, setPromoteLoading] = useState(false);
-  const [promoteResult, setPromoteResult] = useState<PromoteBouquetResult | null>(null);
-  const [promoteError, setPromoteError] = useState<string | null>(null);
-  const [promoteFlower, setPromoteFlower] = useState({ name: "", color: "" });
-
-  const handlePromoteFlower = async (flower: Flower) => {
-    setPromoteFlower({ name: flower.name, color: flower.color || "" });
-    setPromoteOpen(true);
-    setPromoteLoading(true);
-    setPromoteResult(null);
-    setPromoteError(null);
-
-    try {
-      const { data, error } = await supabase.functions.invoke("bouquet-ai", {
-        body: {
-          action: "promote-flower",
-          shopId,
-          flowerName: flower.name,
-          flowerColor: flower.color || undefined,
-        },
+  const handleToggleBoost = async (flower: Flower) => {
+    setTogglingBoostIds((prev) => new Set(prev).add(flower.id));
+    const newBoosted = !flower.boosted;
+    const success = await updateFlower(flower.id, { boosted: newBoosted } as any);
+    setTogglingBoostIds((prev) => {
+      const next = new Set(prev);
+      next.delete(flower.id);
+      return next;
+    });
+    if (success) {
+      toast({
+        title: newBoosted
+          ? `✨ ${flower.name} מקודם! ה-AI יתעדף אותו בזרים`
+          : `${flower.name} הוסר מקידום`,
       });
-
-      if (error) throw error;
-      setPromoteResult(data as PromoteBouquetResult);
-    } catch (err: any) {
-      console.error("Promote flower error:", err);
-      setPromoteError(err.message || "שגיאה בייצור הזר, נסו שוב.");
-    } finally {
-      setPromoteLoading(false);
     }
   };
 
@@ -369,11 +354,12 @@ const InventoryTab = ({ shopId }: InventoryTabProps) => {
                             <Button
                               size="icon"
                               variant="ghost"
-                              onClick={() => handlePromoteFlower(flower)}
-                              className="h-7 w-7 text-primary/60 hover:text-primary"
-                              title={`צור זר עם ${flower.name}`}
+                              onClick={() => handleToggleBoost(flower)}
+                              disabled={togglingBoostIds.has(flower.id)}
+                              className={`h-7 w-7 ${flower.boosted ? "text-amber-500 hover:text-amber-600" : "text-primary/60 hover:text-primary"}`}
+                              title={flower.boosted ? `הסר קידום מ-${flower.name}` : `קדם את ${flower.name} בזרים`}
                             >
-                              <Sparkles className="w-4 h-4" />
+                              <Sparkles className={`w-4 h-4 ${flower.boosted ? "fill-amber-500" : ""}`} />
                             </Button>
                             <Button size="icon" variant="ghost" onClick={() => startEdit(flower)} className="h-7 w-7 text-muted-foreground hover:text-primary">
                               <Edit2 className="w-4 h-4" />
@@ -393,16 +379,6 @@ const InventoryTab = ({ shopId }: InventoryTabProps) => {
         </div>
       )}
 
-      {/* Promote Bouquet Modal */}
-      <PromoteBouquetModal
-        open={promoteOpen}
-        onClose={() => setPromoteOpen(false)}
-        flowerName={promoteFlower.name}
-        flowerColor={promoteFlower.color || undefined}
-        isLoading={promoteLoading}
-        result={promoteResult}
-        error={promoteError}
-      />
     </div>
   );
 };

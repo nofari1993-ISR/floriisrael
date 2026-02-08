@@ -14,6 +14,7 @@ export interface Flower {
   created_at: string | null;
   shelf_life_days: number;
   last_restocked_at: string | null;
+  boosted: boolean;
 }
 
 export const useInventory = (shopId: string | undefined) => {
@@ -48,6 +49,7 @@ export const useInventory = (shopId: string | undefined) => {
           created_at: f.created_at,
           shelf_life_days: f.shelf_life_days ?? 7,
           last_restocked_at: f.last_restocked_at,
+          boosted: f.boosted ?? false,
         }))
       );
     }
