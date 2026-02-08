@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { ArrowRight, Palette, Search, Loader2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/hooks/use-toast";
+
 
 import Logo from "@/components/Logo";
 import { Input } from "@/components/ui/input";
@@ -113,49 +113,28 @@ const DIYBuilderPage = () => {
   }, [filteredFlowers]);
 
 
-  // Handle checkout
-  const handleCheckout = async () => {
+  // Handle checkout - navigate to checkout page with flower data
+  const handleCheckout = () => {
     if (selectedFlowers.length === 0) return;
 
-    try {
-      const designFee = Math.round(totalPrice * 0.05);
-      const grandTotal = totalPrice + designFee;
+    const designFee = Math.round(totalPrice * 0.05);
+    const grandTotal = totalPrice + designFee;
 
-      const { data, error } = await supabase.functions.invoke("create-order", {
-        body: {
-          shop_id: shopId,
-          customer_name: "לקוח מהאתר",
-          recipient_name: "ייקבע בהמשך",
-          delivery_address: "ייקבע בהמשך",
-          delivery_date: new Date().toISOString().split("T")[0],
-          total_price: grandTotal,
-          notes: "זר מעוצב אישית (DIY)",
-          items: selectedFlowers.map((item) => ({
-            flower_name: item.flower.name,
-            flower_id: item.flower.id,
-            quantity: item.quantity,
-            unit_price: item.flower.price,
-          })),
-        },
-      });
+    const items = selectedFlowers.map((item) => ({
+      flower_name: item.flower.name,
+      flower_id: item.flower.id,
+      quantity: item.quantity,
+      unit_price: item.flower.price,
+      color: item.flower.color || "",
+    }));
 
-      if (error) throw error;
-
-      toast({
-        title: "ההזמנה נשמרה בהצלחה! 🎉",
-        description: `מספר הזמנה: ${data.order_id?.slice(0, 8)}`,
-      });
-
-      // Navigate to success or home
-      navigate("/?shops=open");
-    } catch (err: any) {
-      console.error("Checkout error:", err);
-      toast({
-        title: "שגיאה בשמירת ההזמנה",
-        description: err.message || "נסו שוב",
-        variant: "destructive",
-      });
-    }
+    navigate(`/checkout?shopId=${shopId}`, {
+      state: {
+        diyItems: items,
+        totalPrice: grandTotal,
+        isDIY: true,
+      },
+    });
   };
 
   return (
