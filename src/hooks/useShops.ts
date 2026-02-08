@@ -2,6 +2,39 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
+/** Default flower catalog seeded into every new shop */
+const DEFAULT_FLOWERS = [
+  { name: "ורד", color: "אדום", price: 12, image: "/flowers/roses.png?v=2" },
+  { name: "ורד", color: "ורוד", price: 12, image: "/flowers/roses.png?v=2" },
+  { name: "ורד", color: "לבן", price: 12, image: "/flowers/roses.png?v=2" },
+  { name: "ורד", color: "צהוב", price: 12, image: "/flowers/roses.png?v=2" },
+  { name: "ורד", color: "כתום", price: 12, image: "/flowers/roses.png?v=2" },
+  { name: "ורד", color: "סגול", price: 12, image: "/flowers/roses.png?v=2" },
+  { name: "טוליפ", color: "ורוד", price: 9, image: "/flowers/tulips.png" },
+  { name: "טוליפ", color: "אדום", price: 9, image: "/flowers/tulips.png" },
+  { name: "טוליפ", color: "לבן", price: 9, image: "/flowers/tulips.png" },
+  { name: "טוליפ", color: "צהוב", price: 9, image: "/flowers/tulips.png" },
+  { name: "טוליפ", color: "סגול", price: 9, image: "/flowers/tulips.png" },
+  { name: "גרברה", color: "ורוד", price: 8, image: "/flowers/gerbera.png" },
+  { name: "גרברה", color: "כתום", price: 8, image: "/flowers/gerbera.png" },
+  { name: "גרברה", color: "צהוב", price: 8, image: "/flowers/gerbera.png" },
+  { name: "גרברה", color: "אדום", price: 8, image: "/flowers/gerbera.png" },
+  { name: "גרברה", color: "לבן", price: 8, image: "/flowers/gerbera.png" },
+  { name: "כלנית", color: "אדום", price: 8, image: "/flowers/anemones.png" },
+  { name: "כלנית", color: "סגול", price: 8, image: "/flowers/anemones.png" },
+  { name: "כלנית", color: "לבן", price: 8, image: "/flowers/anemones.png" },
+  { name: "חמנייה", color: "צהוב", price: 10, image: "/flowers/sunflower.png" },
+  { name: "ליזיאנטוס", color: "לבן", price: 10, image: "/flowers/lisianthus.png" },
+  { name: "ליזיאנטוס", color: "סגול", price: 10, image: "/flowers/lisianthus.png" },
+  { name: "ליזיאנטוס", color: "ורוד", price: 10, image: "/flowers/lisianthus.png" },
+  { name: "לילי", color: "לבן", price: 15, image: "/flowers/lily.png" },
+  { name: "פיוני", color: "ורוד", price: 18, image: "/flowers/peonies.png" },
+  { name: "לבנדר", color: "סגול", price: 7, image: "/flowers/lavender.png" },
+  { name: "גיבסנית", color: "לבן", price: 6, image: "/flowers/babys-breath.png" },
+  { name: "גיבסנית", color: "ורוד", price: 6, image: "/flowers/babys-breath.png" },
+  { name: "אקליפטוס", color: "ירוק", price: 5, image: "/flowers/eucalyptus.png" },
+];
+
 export interface Shop {
   id: string;
   name: string;
@@ -139,21 +172,38 @@ export const useShops = (searchQuery?: string) => {
     tags?: string[];
     owner_id?: string;
   }) => {
-    const { error } = await supabase.from("shops").insert({
+    const { data: newShop, error } = await supabase.from("shops").insert({
       name: shopData.name,
       location: shopData.location,
       speciality: shopData.speciality || "כללי",
       hours: shopData.hours || "09:00 - 18:00",
       tags: shopData.tags || [],
       owner_id: shopData.owner_id || null,
-    });
+    }).select("id").single();
 
     if (error) {
       toast({ title: "שגיאה בהוספת חנות", description: error.message, variant: "destructive" });
       return false;
     }
 
-    toast({ title: "חנות נוספה בהצלחה! 🎉" });
+    // Seed default flower inventory for the new shop
+    const defaultInventory = DEFAULT_FLOWERS.map((f) => ({
+      shop_id: newShop.id,
+      name: f.name,
+      color: f.color,
+      price: f.price,
+      image: f.image,
+      quantity: 50,
+      in_stock: true,
+      shelf_life_days: 7,
+    }));
+
+    const { error: flowerError } = await supabase.from("flowers").insert(defaultInventory);
+    if (flowerError) {
+      console.error("Error seeding flowers:", flowerError.message);
+    }
+
+    toast({ title: "חנות נוספה בהצלחה! 🎉", description: "מלאי ברירת מחדל נוסף אוטומטית" });
 
     // Geocode the new shop in the background
     supabase.functions.invoke("geocode-shops", {
