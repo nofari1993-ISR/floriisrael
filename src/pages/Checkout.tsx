@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight, Send, User, MapPin, Calendar, MessageSquare, CheckCircle2 } from "lucide-react";
+import { ArrowRight, Send, User, MapPin, Calendar, MessageSquare, CheckCircle2, Store, Truck } from "lucide-react";
 import { format } from "date-fns";
 import { he } from "date-fns/locale";
 import { z } from "zod";
@@ -15,11 +15,20 @@ import { supabase } from "@/integrations/supabase/client";
 
 const checkoutSchema = z.object({
   recipientName: z.string().trim().min(2, "שם חייב להכיל לפחות 2 תווים").max(100),
-  address: z.string().trim().min(5, "כתובת חייבת להכיל לפחות 5 תווים").max(300),
-  deliveryDate: z.date({ required_error: "יש לבחור תאריך משלוח" }),
+  address: z.string().max(300).optional(),
+  deliveryDate: z.date({ required_error: "יש לבחור תאריך" }),
   greeting: z.string().max(500, "כרטיס ברכה עד 500 תווים").optional(),
   customerName: z.string().trim().min(2, "שם חייב להכיל לפחות 2 תווים").max(100),
   customerPhone: z.string().trim().min(9, "מספר טלפון לא תקין").max(15).optional(),
+  deliveryMethod: z.enum(["delivery", "pickup"]),
+}).refine((data) => {
+  if (data.deliveryMethod === "delivery") {
+    return data.address && data.address.trim().length >= 5;
+  }
+  return true;
+}, {
+  message: "כתובת חייבת להכיל לפחות 5 תווים",
+  path: ["address"],
 });
 
 type CheckoutFormData = z.infer<typeof checkoutSchema>;
@@ -44,6 +53,7 @@ const Checkout = () => {
     customerName: "",
     customerPhone: "",
   });
+  const [deliveryMethod, setDeliveryMethod] = useState<"delivery" | "pickup">("delivery");
   const [deliveryDate, setDeliveryDate] = useState<Date | undefined>();
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -56,6 +66,7 @@ const Checkout = () => {
     const result = checkoutSchema.safeParse({
       ...formData,
       deliveryDate,
+      deliveryMethod,
     });
 
     if (!result.success) {
@@ -77,7 +88,7 @@ const Checkout = () => {
     setIsSubmitting(true);
 
     try {
-      // Insert order into database
+      const isPickup = deliveryMethod === "pickup";
       const { data: order, error: orderError } = await supabase
         .from("orders")
         .insert({
@@ -85,7 +96,7 @@ const Checkout = () => {
           customer_name: formData.customerName,
           customer_phone: formData.customerPhone || null,
           recipient_name: formData.recipientName,
-          delivery_address: formData.address,
+          delivery_address: isPickup ? "איסוף עצמי" : formData.address,
           delivery_date: format(deliveryDate!, "yyyy-MM-dd"),
           greeting: formData.greeting || null,
         })
@@ -111,7 +122,9 @@ const Checkout = () => {
 
       toast({
         title: "ההזמנה נשלחה בהצלחה! 🎉",
-        description: `הזר ישלח ל${formData.recipientName} בתאריך ${format(deliveryDate!, "dd/MM/yyyy")}`,
+        description: isPickup
+          ? `הזר ל${formData.recipientName} יהיה מוכן לאיסוף בתאריך ${format(deliveryDate!, "dd/MM/yyyy")}`
+          : `הזר ישלח ל${formData.recipientName} בתאריך ${format(deliveryDate!, "dd/MM/yyyy")}`,
       });
     } catch (err: any) {
       console.error("Order creation error:", err);
@@ -129,8 +142,9 @@ const Checkout = () => {
     if (!orderSuccess?.shopPhone) return null;
     const phone = orderSuccess.shopPhone.replace(/[^0-9]/g, "");
     const phoneFormatted = phone.startsWith("0") ? `972${phone.slice(1)}` : phone;
+    const deliveryText = deliveryMethod === "pickup" ? "תאריך איסוף" : "תאריך משלוח";
     const message = encodeURIComponent(
-      `שלום! 🌸\nביצעתי הזמנת זר דרך האתר.\nשם מקבל/ת: ${orderSuccess.recipientName}\nתאריך משלוח: ${orderSuccess.deliveryDate}\nמספר הזמנה: ${orderSuccess.orderId.slice(0, 8)}`
+      `שלום! 🌸\nביצעתי הזמנת זר דרך האתר.\nשם מקבל/ת: ${orderSuccess.recipientName}\n${deliveryText}: ${orderSuccess.deliveryDate}\n${deliveryMethod === "pickup" ? "איסוף עצמי 🏪" : ""}\nמספר הזמנה: ${orderSuccess.orderId.slice(0, 8)}`
     );
     return `https://wa.me/${phoneFormatted}?text=${message}`;
   };
@@ -151,7 +165,9 @@ const Checkout = () => {
           </motion.div>
           <h1 className="text-2xl font-display font-bold text-foreground mb-2">ההזמנה התקבלה!</h1>
           <p className="text-muted-foreground font-body mb-2">
-            הזר ל{orderSuccess.recipientName} ישלח בתאריך {orderSuccess.deliveryDate}
+            {deliveryMethod === "pickup"
+              ? `הזר ל${orderSuccess.recipientName} יהיה מוכן לאיסוף בתאריך ${orderSuccess.deliveryDate}`
+              : `הזר ל${orderSuccess.recipientName} ישלח בתאריך ${orderSuccess.deliveryDate}`}
           </p>
           <p className="text-xs text-muted-foreground font-body mb-8">
             מספר הזמנה: {orderSuccess.orderId.slice(0, 8)}
@@ -211,7 +227,7 @@ const Checkout = () => {
             השלמת הזמנה
           </h1>
           <p className="text-muted-foreground font-body">
-            מלאו את פרטי המשלוח כדי לשלוח את הזר
+            מלאו את הפרטים כדי להשלים את ההזמנה
           </p>
         </motion.div>
 
@@ -277,29 +293,69 @@ const Checkout = () => {
             )}
           </div>
 
-          {/* Address */}
-          <div className="space-y-2">
+          {/* Delivery Method Toggle */}
+          <div className="space-y-3">
             <label className="flex items-center gap-2 text-sm font-medium text-foreground font-body">
-              <MapPin className="w-4 h-4 text-primary/60" />
-              כתובת מלאה למשלוח
+              <Truck className="w-4 h-4 text-primary/60" />
+              אופן קבלת הזר
             </label>
-            <input
-              type="text"
-              value={formData.address}
-              onChange={(e) => setFormData((prev) => ({ ...prev, address: e.target.value }))}
-              placeholder="רחוב, מספר, עיר"
-              className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm font-body text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-ring transition-shadow"
-            />
-            {errors.address && (
-              <p className="text-sm text-destructive font-body">{errors.address}</p>
-            )}
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => setDeliveryMethod("delivery")}
+                className={cn(
+                  "flex flex-col items-center gap-2 py-4 px-3 rounded-xl border-2 transition-all font-body text-sm",
+                  deliveryMethod === "delivery"
+                    ? "border-primary bg-primary/5 text-foreground shadow-sm"
+                    : "border-border text-muted-foreground hover:border-primary/30"
+                )}
+              >
+                <Truck className="w-5 h-5" />
+                <span className="font-medium">משלוח</span>
+                <span className="text-xs text-muted-foreground">עד הדלת</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setDeliveryMethod("pickup")}
+                className={cn(
+                  "flex flex-col items-center gap-2 py-4 px-3 rounded-xl border-2 transition-all font-body text-sm",
+                  deliveryMethod === "pickup"
+                    ? "border-primary bg-primary/5 text-foreground shadow-sm"
+                    : "border-border text-muted-foreground hover:border-primary/30"
+                )}
+              >
+                <Store className="w-5 h-5" />
+                <span className="font-medium">איסוף עצמי</span>
+                <span className="text-xs text-muted-foreground">ללא דמי משלוח</span>
+              </button>
+            </div>
           </div>
+
+          {/* Address (only for delivery) */}
+          {deliveryMethod === "delivery" && (
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-sm font-medium text-foreground font-body">
+                <MapPin className="w-4 h-4 text-primary/60" />
+                כתובת מלאה למשלוח
+              </label>
+              <input
+                type="text"
+                value={formData.address}
+                onChange={(e) => setFormData((prev) => ({ ...prev, address: e.target.value }))}
+                placeholder="רחוב, מספר, עיר"
+                className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm font-body text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-ring transition-shadow"
+              />
+              {errors.address && (
+                <p className="text-sm text-destructive font-body">{errors.address}</p>
+              )}
+            </div>
+          )}
 
           {/* Delivery Date */}
           <div className="space-y-2">
             <label className="flex items-center gap-2 text-sm font-medium text-foreground font-body">
               <Calendar className="w-4 h-4 text-primary/60" />
-              תאריך משלוח
+              {deliveryMethod === "delivery" ? "תאריך משלוח" : "תאריך איסוף"}
             </label>
             <Popover>
               <PopoverTrigger asChild>
