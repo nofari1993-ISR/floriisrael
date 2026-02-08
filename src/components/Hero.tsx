@@ -1,7 +1,6 @@
 import { motion } from "framer-motion";
 import { Search, MapPin, LogOut, LayoutDashboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import heroImage from "@/assets/hero-flowers.jpg";
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import ShopSearchResults from "@/components/ShopSearchResults";
@@ -76,12 +75,12 @@ const Hero = () => {
         </motion.nav>
 
         {/* Hero Content */}
-        <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center min-h-[calc(100vh-120px)] py-8 lg:py-0">
+        <div className="flex items-center justify-center min-h-[calc(100vh-120px)] py-8 lg:py-0">
           <motion.div
-            initial={{ opacity: 0, x: 30 }}
-            animate={{ opacity: 1, x: 0 }}
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
-            className="space-y-6 lg:space-y-8"
+            className="space-y-6 lg:space-y-8 text-center max-w-2xl mx-auto"
           >
             <div className="space-y-4 lg:space-y-6">
               <Logo size="lg" layout="vertical" className="mb-2 lg:mb-4" />
@@ -117,49 +116,7 @@ const Hero = () => {
 
           </motion.div>
 
-          {/* Hero Image */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 1, delay: 0.3 }}
-            className="relative hidden lg:block"
-          >
-            <div className="relative rounded-3xl overflow-hidden shadow-elevated max-w-md mx-auto">
-              <img
-                src={heroImage}
-                alt="זרי פרחים יפהפיים"
-                className="w-full h-[400px] object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-foreground/10 to-transparent" />
-            </div>
-            {/* Floating Card */}
-            <motion.div
-              animate={{ y: [0, -10, 0] }}
-              transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-              className="absolute -bottom-6 -right-6 glass-card rounded-2xl p-4 shadow-elevated"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-gradient-vivid flex items-center justify-center text-2xl">
-                  🌷
-                </div>
-                <div>
-                  <div className="font-display font-semibold text-foreground">זר רומנטי</div>
-                  <div className="text-sm text-muted-foreground">נוצר עכשיו ע״י AI ✨</div>
-                </div>
-              </div>
-            </motion.div>
-            {/* Second floating card */}
-            <motion.div
-              animate={{ y: [0, 8, 0] }}
-              transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-              className="absolute -top-4 -left-4 glass-card rounded-2xl p-3 shadow-card"
-            >
-              <div className="flex items-center gap-2">
-                <span className="text-lg">🌻</span>
-                <span className="text-sm font-body font-medium text-foreground">4.9 ⭐ דירוג</span>
-              </div>
-            </motion.div>
-          </motion.div>
+
         </div>
       </div>
       <ShopSearchResults open={showResults} onClose={closeResults} searchQuery={searchQuery} />
