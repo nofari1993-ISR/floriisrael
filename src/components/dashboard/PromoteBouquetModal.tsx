@@ -155,15 +155,7 @@ const PromoteBouquetModal = ({
             </div>
 
             {/* Total */}
-            <div className="flex items-center justify-between border-t border-border/50 pt-3">
-              <span className="text-sm font-body text-muted-foreground">עלות פרחים</span>
-              <span className="font-semibold text-foreground">₪{result.flowers_cost}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-body text-muted-foreground">דמי עיצוב (5%)</span>
-              <span className="font-semibold text-foreground">₪{result.digital_design_fee}</span>
-            </div>
-            <div className="flex items-center justify-between bg-primary/5 rounded-xl px-3 py-2">
+            <div className="flex items-center justify-between border-t border-border/50 pt-3 bg-primary/5 rounded-xl px-3 py-2">
               <span className="font-display font-bold text-foreground">סה״כ</span>
               <span className="font-display font-bold text-primary text-lg">₪{result.total_price}</span>
             </div>

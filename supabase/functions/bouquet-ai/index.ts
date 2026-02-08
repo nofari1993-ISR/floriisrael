@@ -120,7 +120,7 @@ Deno.serve(async (req) => {
 
     if (action === "generate") {
       const budget = parseFloat(answers.budget) || 200;
-      const budgetForFlowers = budget / 1.05;
+      const budgetForFlowers = budget;
 
       const boostedInstruction = boostedFlowers.length > 0
         ? `\n# ⭐ פרחים מקודמים (עדיפות גבוהה - בעל החנות מבקש לתעדף אותם!):\n${boostedFlowers.map((f: any) => `- ${f.name}${f.color ? ` (${f.color})` : ""}: ${f.quantity} יח', ₪${f.price}`).join("\n")}\nחובה לשלב לפחות פרח מקודם אחד בזר אם הוא מתאים לבקשה!\n`
@@ -162,7 +162,7 @@ ${budgetForFlowers <= 200 ? "8. **חובה**: בתקציב עד ₪200, הזר �
 {"message": "הודעה אישית", "flowers": [{"name": "שם מדויק מהמלאי", "quantity": מספר, "color": "צבע"}]}`;
     } else if (action === "modify") {
       const budget = parseFloat(answers?.budget) || 200;
-      const budgetForFlowers = budget / 1.05;
+      const budgetForFlowers = budget;
       const currentFlowersList = (currentBouquet?.flowers || [])
         .map((f: any) => `- ${f.quantity} ${f.color || ""} ${f.name} (₪${f.unit_price || 0} ליחידה)`)
         .join("\n");
@@ -294,7 +294,7 @@ ${flowersContext}
     const validatedFlowers: any[] = [];
     let totalCost = 0;
     const budget = action === "high-stock" ? 250 : (parseFloat(answers?.budget) || 200);
-    const budgetForFlowers = budget / 1.05;
+    const budgetForFlowers = budget;
 
     const greenNames = ["אקליפטוס", "רוסקוס", "שרך", "גיבסנית"];
     const aiFlowers = parsed.flowers || [];
@@ -339,8 +339,8 @@ ${flowersContext}
       if (totalCost >= budgetForFlowers * 0.95) break;
     }
 
-    const digitalDesignFee = Math.round(totalCost * 0.05);
-    const totalPrice = totalCost + digitalDesignFee;
+    const digitalDesignFee = 0;
+    const totalPrice = totalCost;
 
     console.log(`[bouquet-ai] Final: ${validatedFlowers.length} flowers, total=₪${totalPrice}`);
 
