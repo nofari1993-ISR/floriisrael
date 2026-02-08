@@ -29,7 +29,8 @@ export const useInventory = (shopId: string | undefined) => {
       .from("flowers")
       .select("*")
       .eq("shop_id", shopId)
-      .order("created_at", { ascending: false });
+      .order("name", { ascending: true })
+      .order("color", { ascending: true });
 
     if (error) {
       toast({ title: "שגיאה בטעינת מלאי", description: error.message, variant: "destructive" });
