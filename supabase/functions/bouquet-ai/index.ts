@@ -240,7 +240,20 @@ ${flowersContext}
     const budget = action === "high-stock" ? 250 : (parseFloat(answers?.budget) || 200);
     const budgetForFlowers = budget / 1.05;
 
-    for (const aiFlower of (parsed.flowers || [])) {
+    // Greens/fillers list for priority ordering
+    const greenNames = ["אקליפטוס", "רוסקוס", "שרך", "גיבסנית"];
+    const aiFlowers = parsed.flowers || [];
+
+    // When budget <= 200, prioritize greens by processing them first
+    const shouldPrioritizeGreens = budgetForFlowers <= 200;
+    let orderedFlowers = aiFlowers;
+    if (shouldPrioritizeGreens) {
+      const greens = aiFlowers.filter((f: any) => greenNames.includes(f.name));
+      const nonGreens = aiFlowers.filter((f: any) => !greenNames.includes(f.name));
+      orderedFlowers = [...greens, ...nonGreens];
+    }
+
+    for (const aiFlower of orderedFlowers) {
       const realFlower = flowersList.find((f: any) => f.name === aiFlower.name);
       if (!realFlower) {
         console.warn(`"${aiFlower.name}" not found in inventory, skipping`);
