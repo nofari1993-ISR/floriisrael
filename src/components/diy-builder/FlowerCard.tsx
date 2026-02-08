@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
-import { Plus, Minus } from "lucide-react";
+import { Plus, Minus, Palette } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 interface FlowerData {
   id: string;
@@ -18,11 +20,27 @@ interface FlowerCardProps {
   onAdd: (flower: FlowerData) => void;
   onRemove: (flower: FlowerData) => void;
   hasColorVariants?: boolean;
+  onOpenColorSelector?: () => void;
 }
 
-const FlowerCard = ({ flower, selectedQuantity, onAdd, onRemove, hasColorVariants }: FlowerCardProps) => {
+const FlowerCard = ({
+  flower,
+  selectedQuantity,
+  onAdd,
+  onRemove,
+  hasColorVariants,
+  onOpenColorSelector,
+}: FlowerCardProps) => {
   const isOutOfStock = !flower.in_stock || flower.quantity <= 0;
   const reachedMax = selectedQuantity >= flower.quantity;
+
+  const handleAdd = () => {
+    if (hasColorVariants && onOpenColorSelector) {
+      onOpenColorSelector();
+    } else {
+      onAdd(flower);
+    }
+  };
 
   return (
     <motion.div
@@ -32,7 +50,7 @@ const FlowerCard = ({ flower, selectedQuantity, onAdd, onRemove, hasColorVariant
         isOutOfStock ? "opacity-50" : ""
       }`}
     >
-      {/* Image / Emoji */}
+      {/* Image */}
       <div className="aspect-square bg-muted/30 flex items-center justify-center relative">
         {flower.image ? (
           <img
@@ -63,63 +81,82 @@ const FlowerCard = ({ flower, selectedQuantity, onAdd, onRemove, hasColorVariant
 
       {/* Info */}
       <div className="p-3 space-y-2">
-        <div className="flex items-start justify-between gap-1">
-          <div>
-            <h3 className="font-display font-semibold text-foreground text-sm leading-tight">
-              {flower.name}
-            </h3>
-            {flower.color && (
-              <span className="text-xs text-muted-foreground font-body">{flower.color}</span>
-            )}
-          </div>
-          <span className="text-sm font-display font-bold text-primary whitespace-nowrap">
-            ₪{flower.price}
-          </span>
-        </div>
+        <h3 className="font-display font-semibold text-foreground text-sm leading-tight">
+          {flower.name}
+        </h3>
 
+        {/* Color badge */}
+        {flower.color && (
+          <div className="flex flex-wrap gap-1">
+            <Badge variant="outline" className="text-[10px] px-1.5 py-0 rounded-full border-border/50 text-muted-foreground">
+              {flower.color}
+            </Badge>
+          </div>
+        )}
+
+        {/* Stock info */}
         <div className="text-[10px] text-muted-foreground font-body">
           {flower.quantity} יח׳ במלאי
         </div>
 
-        {/* Add/Remove buttons */}
-        {!isOutOfStock && (
-          <div className="flex items-center gap-2">
-            {selectedQuantity > 0 ? (
-              <div className="flex items-center gap-2 w-full">
+        {/* Price & actions */}
+        <div className="flex items-center justify-between gap-1">
+          <span className="text-sm font-display font-bold text-primary whitespace-nowrap">
+            ₪{flower.price}
+          </span>
+
+          {!isOutOfStock && (
+            <div className="flex items-center gap-1.5">
+              {/* Color palette button for multi-color flowers */}
+              {hasColorVariants && (
                 <Button
                   variant="outline"
                   size="icon"
-                  className="h-8 w-8 rounded-full border-border"
-                  onClick={() => onRemove(flower)}
+                  className="h-7 w-7 rounded-full border-primary/30 text-primary"
+                  onClick={onOpenColorSelector}
+                  title="בחר צבעים"
                 >
-                  <Minus className="w-3.5 h-3.5" />
+                  <Palette className="w-3.5 h-3.5" />
                 </Button>
-                <span className="flex-1 text-center font-display font-bold text-foreground text-sm">
-                  {selectedQuantity}
-                </span>
+              )}
+
+              {selectedQuantity > 0 ? (
+                <div className="flex items-center gap-1.5">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-7 w-7 rounded-full border-border"
+                    onClick={() => onRemove(flower)}
+                  >
+                    <Minus className="w-3 h-3" />
+                  </Button>
+                  <span className="w-5 text-center font-display font-bold text-foreground text-xs">
+                    {selectedQuantity}
+                  </span>
+                  <Button
+                    variant="hero"
+                    size="icon"
+                    className="h-7 w-7 rounded-full"
+                    onClick={() => onAdd(flower)}
+                    disabled={reachedMax}
+                  >
+                    <Plus className="w-3 h-3" />
+                  </Button>
+                </div>
+              ) : (
                 <Button
-                  variant="hero"
-                  size="icon"
-                  className="h-8 w-8 rounded-full"
-                  onClick={() => onAdd(flower)}
-                  disabled={reachedMax}
+                  variant="hero-outline"
+                  size="sm"
+                  className="rounded-full text-xs gap-1 h-7 px-3"
+                  onClick={handleAdd}
                 >
-                  <Plus className="w-3.5 h-3.5" />
+                  <Plus className="w-3 h-3" />
+                  הוסף
                 </Button>
-              </div>
-            ) : (
-              <Button
-                variant="hero-outline"
-                size="sm"
-                className="w-full rounded-full text-xs gap-1"
-                onClick={() => onAdd(flower)}
-              >
-                <Plus className="w-3.5 h-3.5" />
-                {hasColorVariants ? "בחר צבעים" : "הוסף לזר"}
-              </Button>
-            )}
-          </div>
-        )}
+              )}
+            </div>
+          )}
+        </div>
       </div>
     </motion.div>
   );
