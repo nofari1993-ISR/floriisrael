@@ -1,6 +1,7 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { ShoppingBag, Pencil, RotateCcw } from "lucide-react";
+import { ShoppingBag, Pencil, RotateCcw, Loader2 } from "lucide-react";
 
 export interface BouquetFlower {
   name: string;
@@ -16,6 +17,7 @@ export interface BouquetRecommendation {
   flowers_cost: number;
   digital_design_fee: number;
   message: string;
+  image_url?: string | null;
 }
 
 interface BouquetCardProps {
@@ -26,12 +28,31 @@ interface BouquetCardProps {
 }
 
 const BouquetCard = ({ recommendation, onAccept, onModify, onReset }: BouquetCardProps) => {
+  const [imageLoaded, setImageLoaded] = useState(false);
+
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       className="border border-border rounded-2xl overflow-hidden bg-card shadow-card"
     >
+      {/* Bouquet Image */}
+      {recommendation.image_url && (
+        <div className="relative w-full max-h-48 overflow-hidden bg-muted/30">
+          {!imageLoaded && (
+            <div className="flex items-center justify-center py-10">
+              <Loader2 className="w-5 h-5 text-primary animate-spin" />
+            </div>
+          )}
+          <img
+            src={recommendation.image_url}
+            alt="הזר שלך"
+            className={`w-full object-cover transition-opacity ${imageLoaded ? "opacity-100" : "opacity-0 h-0"}`}
+            onLoad={() => setImageLoaded(true)}
+          />
+        </div>
+      )}
+
       {/* Flowers list */}
       <div className="p-4 space-y-2">
         <h3 className="text-sm font-display font-bold text-foreground mb-3 flex items-center gap-2">
