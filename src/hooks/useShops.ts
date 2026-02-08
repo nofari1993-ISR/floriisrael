@@ -4,35 +4,62 @@ import { useToast } from "@/hooks/use-toast";
 
 /** Default flower catalog seeded into every new shop */
 const DEFAULT_FLOWERS = [
+  // ורדים
   { name: "ורד", color: "אדום", price: 12, image: "/flowers/roses.png?v=2" },
   { name: "ורד", color: "ורוד", price: 12, image: "/flowers/roses.png?v=2" },
   { name: "ורד", color: "לבן", price: 12, image: "/flowers/roses.png?v=2" },
   { name: "ורד", color: "צהוב", price: 12, image: "/flowers/roses.png?v=2" },
   { name: "ורד", color: "כתום", price: 12, image: "/flowers/roses.png?v=2" },
   { name: "ורד", color: "סגול", price: 12, image: "/flowers/roses.png?v=2" },
+  // טוליפים
   { name: "טוליפ", color: "ורוד", price: 9, image: "/flowers/tulips.png" },
   { name: "טוליפ", color: "אדום", price: 9, image: "/flowers/tulips.png" },
   { name: "טוליפ", color: "לבן", price: 9, image: "/flowers/tulips.png" },
   { name: "טוליפ", color: "צהוב", price: 9, image: "/flowers/tulips.png" },
   { name: "טוליפ", color: "סגול", price: 9, image: "/flowers/tulips.png" },
+  // גרברות
   { name: "גרברה", color: "ורוד", price: 8, image: "/flowers/gerbera.png" },
   { name: "גרברה", color: "כתום", price: 8, image: "/flowers/gerbera.png" },
   { name: "גרברה", color: "צהוב", price: 8, image: "/flowers/gerbera.png" },
   { name: "גרברה", color: "אדום", price: 8, image: "/flowers/gerbera.png" },
   { name: "גרברה", color: "לבן", price: 8, image: "/flowers/gerbera.png" },
+  // כלניות
   { name: "כלנית", color: "אדום", price: 8, image: "/flowers/anemones.png" },
   { name: "כלנית", color: "סגול", price: 8, image: "/flowers/anemones.png" },
   { name: "כלנית", color: "לבן", price: 8, image: "/flowers/anemones.png" },
+  // חמנייה
   { name: "חמנייה", color: "צהוב", price: 10, image: "/flowers/sunflower.png" },
+  // ליזיאנטוס
   { name: "ליזיאנטוס", color: "לבן", price: 10, image: "/flowers/lisianthus.png" },
   { name: "ליזיאנטוס", color: "סגול", price: 10, image: "/flowers/lisianthus.png" },
   { name: "ליזיאנטוס", color: "ורוד", price: 10, image: "/flowers/lisianthus.png" },
+  // לילי
   { name: "לילי", color: "לבן", price: 15, image: "/flowers/lily.png" },
+  { name: "לילי", color: "ורוד", price: 15, image: "/flowers/lily.png" },
+  // פיוני
   { name: "פיוני", color: "ורוד", price: 18, image: "/flowers/peonies.png" },
+  { name: "פיוני", color: "לבן", price: 18, image: "/flowers/peonies.png" },
+  // לבנדר
   { name: "לבנדר", color: "סגול", price: 7, image: "/flowers/lavender.png" },
+  // גיבסנית
   { name: "גיבסנית", color: "לבן", price: 6, image: "/flowers/babys-breath.png" },
   { name: "גיבסנית", color: "ורוד", price: 6, image: "/flowers/babys-breath.png" },
+  // ציפורן
+  { name: "ציפורן", color: "אדום", price: 7, image: "/flowers/carnation.png" },
+  { name: "ציפורן", color: "ורוד", price: 7, image: "/flowers/carnation.png" },
+  { name: "ציפורן", color: "לבן", price: 7, image: "/flowers/carnation.png" },
+  // פרזיה
+  { name: "פרזיה", color: "צהוב", price: 9, image: "/flowers/freesia.png" },
+  { name: "פרזיה", color: "לבן", price: 9, image: "/flowers/freesia.png" },
+  { name: "פרזיה", color: "סגול", price: 9, image: "/flowers/freesia.png" },
+  // סחלב
+  { name: "סחלב", color: "לבן", price: 20, image: "/flowers/orchid.png" },
+  { name: "סחלב", color: "ורוד", price: 20, image: "/flowers/orchid.png" },
+  { name: "סחלב", color: "סגול", price: 20, image: "/flowers/orchid.png" },
+  // ירק - עלים
   { name: "אקליפטוס", color: "ירוק", price: 5, image: "/flowers/eucalyptus.png" },
+  { name: "רוסקוס", color: "ירוק", price: 5, image: "/flowers/ruscus.png" },
+  { name: "שרך", color: "ירוק", price: 4, image: "/flowers/fern.png" },
 ];
 
 export interface Shop {
