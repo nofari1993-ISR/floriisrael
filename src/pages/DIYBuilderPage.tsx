@@ -1,5 +1,5 @@
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { useState } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { motion } from "framer-motion";
 import { ArrowRight, Palette, Search, Loader2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
@@ -20,6 +20,7 @@ import {
 
 import FlowerCard from "@/components/diy-builder/FlowerCard";
 import BouquetSummary from "@/components/diy-builder/BouquetSummary";
+import ColorSelector from "@/components/diy-builder/ColorSelector";
 import { useDIYBuilder } from "@/hooks/useDIYBuilder";
 
 const DIYBuilderPage = () => {
@@ -30,6 +31,7 @@ const DIYBuilderPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedColor, setSelectedColor] = useState("הכל");
   const [isMobileSummaryOpen, setIsMobileSummaryOpen] = useState(false);
+  const [colorSelectorFlower, setColorSelectorFlower] = useState<string | null>(null);
 
   const {
     selectedFlowers,
@@ -66,12 +68,63 @@ const DIYBuilderPage = () => {
     ...new Set(flowers.map((f) => f.color).filter(Boolean)),
   ];
 
+  // Group flowers by name to detect color variants
+  const flowerColorVariants = useMemo(() => {
+    const groups: Record<string, typeof flowers> = {};
+    for (const f of flowers) {
+      if (!groups[f.name]) groups[f.name] = [];
+      groups[f.name].push(f);
+    }
+    return groups;
+  }, [flowers]);
+
   // Filter flowers
   const filteredFlowers = flowers.filter((flower) => {
     const matchesSearch = flower.name.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesColor = selectedColor === "הכל" || flower.color === selectedColor;
     return matchesSearch && matchesColor;
   });
+
+  // Handle flower add - check if it has color variants
+  const handleFlowerAdd = useCallback(
+    (flower: any) => {
+      const variants = flowerColorVariants[flower.name];
+      if (variants && variants.length > 1) {
+        setColorSelectorFlower(flower.name);
+      } else {
+        handleAddFlower(flower);
+      }
+    },
+    [flowerColorVariants, handleAddFlower]
+  );
+
+  // Handle color selector confirm
+  const handleColorConfirm = useCallback(
+    (selections: { variantId: string; color: string; quantity: number }[]) => {
+      for (const sel of selections) {
+        const flower = flowers.find((f) => f.id === sel.variantId);
+        if (flower) {
+          const currentQty = getQuantity(flower.id);
+          const toAdd = sel.quantity - currentQty;
+          for (let i = 0; i < toAdd; i++) {
+            handleAddFlower(flower);
+          }
+        }
+      }
+    },
+    [flowers, getQuantity, handleAddFlower]
+  );
+
+  // Color selector variants for the active flower
+  const activeColorVariants = useMemo(() => {
+    if (!colorSelectorFlower) return [];
+    return (flowerColorVariants[colorSelectorFlower] || []).map((f) => ({
+      id: f.id,
+      color: f.color || "ללא צבע",
+      price: f.price,
+      quantity: f.quantity,
+    }));
+  }, [colorSelectorFlower, flowerColorVariants]);
 
   // Handle checkout
   const handleCheckout = async () => {
@@ -225,8 +278,9 @@ const DIYBuilderPage = () => {
                     key={flower.id}
                     flower={flower}
                     selectedQuantity={getQuantity(flower.id)}
-                    onAdd={handleAddFlower}
+                    onAdd={handleFlowerAdd}
                     onRemove={handleRemoveFlower}
+                    hasColorVariants={(flowerColorVariants[flower.name]?.length || 0) > 1}
                   />
                 ))}
               </div>
@@ -278,6 +332,15 @@ const DIYBuilderPage = () => {
           </Sheet>
         </div>
       )}
+
+      {/* Color Selector Dialog */}
+      <ColorSelector
+        flowerName={colorSelectorFlower || ""}
+        variants={activeColorVariants}
+        isOpen={!!colorSelectorFlower}
+        onClose={() => setColorSelectorFlower(null)}
+        onConfirm={handleColorConfirm}
+      />
     </div>
   );
 };
