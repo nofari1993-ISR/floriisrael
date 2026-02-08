@@ -51,9 +51,47 @@ Deno.serve(async (req) => {
       "נצרת": "Nazareth",
     };
 
+    // Common Hebrew street prefixes to help Nominatim
+    const streetPrefixes: Record<string, string> = {
+      "רחוב": "",
+      "רח'": "",
+      "שדרות": "Sderot",
+      "שד'": "Sderot",
+      "דרך": "Derech",
+    };
+
+    async function tryGeocode(query: string): Promise<{ lat: number; lon: number } | null> {
+      const encoded = encodeURIComponent(query);
+      const url = `https://nominatim.openstreetmap.org/search?q=${encoded}&format=json&limit=1&countrycodes=il`;
+      
+      console.log(`[geocode-shops] Trying: "${query}"`);
+      
+      const resp = await fetch(url, {
+        headers: { "User-Agent": "NupharFlowersAI/1.0" },
+      });
+
+      if (!resp.ok) {
+        console.error(`Nominatim error: ${resp.status}`);
+        return null;
+      }
+
+      const results = await resp.json();
+      if (results && results.length > 0) {
+        const lat = parseFloat(results[0].lat);
+        const lon = parseFloat(results[0].lon);
+        console.log(`[geocode-shops] Found: ${lat}, ${lon}`);
+        return { lat, lon };
+      }
+      return null;
+    }
+
     async function geocodeAddress(addr: string): Promise<{ lat: number; lon: number } | null> {
       try {
-        // Translate Hebrew city names to English for Nominatim
+        // Strategy 1: Try full Hebrew address as-is (Nominatim supports Hebrew)
+        let result = await tryGeocode(addr + ", ישראל");
+        if (result) return result;
+
+        // Strategy 2: Translate city name to English, keep street in Hebrew
         let translatedAddr = addr;
         for (const [heb, eng] of Object.entries(cityMap)) {
           if (addr.includes(heb)) {
@@ -62,29 +100,60 @@ Deno.serve(async (req) => {
           }
         }
 
-        const encoded = encodeURIComponent(translatedAddr + ", Israel");
-        const url = `https://nominatim.openstreetmap.org/search?q=${encoded}&format=json&limit=1&countrycodes=il`;
-        
-        console.log(`[geocode-shops] Geocoding: "${addr}" -> "${translatedAddr}"`);
-        
-        const resp = await fetch(url, {
-          headers: { "User-Agent": "NupharFlowersAI/1.0" },
-        });
+        if (translatedAddr !== addr) {
+          // Also clean up Hebrew street prefixes
+          for (const [heb, eng] of Object.entries(streetPrefixes)) {
+            if (translatedAddr.includes(heb)) {
+              translatedAddr = translatedAddr.replace(heb, eng).trim();
+              break;
+            }
+          }
 
-        if (!resp.ok) {
-          console.error(`Nominatim error: ${resp.status}`);
-          return null;
+          // Wait for rate limit
+          await new Promise((r) => setTimeout(r, 1100));
+          result = await tryGeocode(translatedAddr + ", Israel");
+          if (result) return result;
         }
 
-        const results = await resp.json();
-        if (results && results.length > 0) {
-          const lat = parseFloat(results[0].lat);
-          const lon = parseFloat(results[0].lon);
-          console.log(`[geocode-shops] Found: ${lat}, ${lon}`);
-          return { lat, lon };
+        // Strategy 3: Try structured query - extract city and search separately
+        // Split by comma or space to find city part
+        const parts = addr.split(/[,،\-–]/);
+        if (parts.length >= 2) {
+          const possibleCity = parts[parts.length - 1].trim();
+          const possibleStreet = parts.slice(0, -1).join(",").trim();
+          
+          // Check if any part matches a known city
+          let cityEng = "";
+          for (const [heb, eng] of Object.entries(cityMap)) {
+            if (possibleCity.includes(heb) || possibleStreet.includes(heb)) {
+              cityEng = eng;
+              break;
+            }
+          }
+
+          if (cityEng) {
+            await new Promise((r) => setTimeout(r, 1100));
+            const structuredUrl = `https://nominatim.openstreetmap.org/search?city=${encodeURIComponent(cityEng)}&street=${encodeURIComponent(possibleStreet)}&country=Israel&format=json&limit=1`;
+            
+            console.log(`[geocode-shops] Trying structured: city="${cityEng}", street="${possibleStreet}"`);
+            
+            const resp = await fetch(structuredUrl, {
+              headers: { "User-Agent": "NupharFlowersAI/1.0" },
+            });
+
+            if (resp.ok) {
+              const results = await resp.json();
+              if (results && results.length > 0) {
+                const lat = parseFloat(results[0].lat);
+                const lon = parseFloat(results[0].lon);
+                console.log(`[geocode-shops] Found via structured: ${lat}, ${lon}`);
+                return { lat, lon };
+              }
+            }
+          }
         }
 
-        console.warn(`[geocode-shops] No results for "${translatedAddr}"`);
+        console.warn(`[geocode-shops] No results for "${addr}" after all strategies`);
         return null;
       } catch (err) {
         console.error(`[geocode-shops] Geocode error for "${addr}":`, err);
