@@ -34,8 +34,9 @@ const Hero = () => {
     <section className="relative min-h-screen overflow-hidden bg-gradient-hero">
       {/* Decorative elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-20 -left-20 w-96 h-96 rounded-full bg-secondary/30 blur-3xl" />
-        <div className="absolute bottom-20 -right-20 w-80 h-80 rounded-full bg-sage-light/40 blur-3xl" />
+        <div className="absolute -top-20 -left-20 w-96 h-96 rounded-full bg-accent/30 blur-3xl" />
+        <div className="absolute bottom-20 -right-20 w-80 h-80 rounded-full bg-secondary/40 blur-3xl" />
+        <div className="absolute top-1/2 left-1/3 w-64 h-64 rounded-full bg-primary/10 blur-3xl" />
       </div>
 
       <div className="container mx-auto px-4 pt-8">
@@ -85,7 +86,7 @@ const Hero = () => {
             <div className="space-y-6">
               <Logo size="lg" layout="vertical" className="mb-4" />
               <p className="text-xl text-muted-foreground font-body max-w-lg leading-relaxed">
-                גלו חנויות פרחים באזור שלכם, בנו את הזר המושלם בעצמכם או תנו ל-AI החכם שלנו לעזור לכם
+                גלו חנויות פרחים באזור שלכם, בנו את הזר המושלם בעצמכם או תנו ל-AI החכם שלנו ליצור עבורכם 🌷✨
               </p>
             </div>
 
@@ -135,16 +136,27 @@ const Hero = () => {
             <motion.div
               animate={{ y: [0, -10, 0] }}
               transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-              className="absolute -bottom-6 -right-6 glass-card rounded-2xl p-4 shadow-card"
+              className="absolute -bottom-6 -right-6 glass-card rounded-2xl p-4 shadow-elevated"
             >
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-gradient-blush flex items-center justify-center text-2xl">
+                <div className="w-12 h-12 rounded-full bg-gradient-vivid flex items-center justify-center text-2xl">
                   🌷
                 </div>
                 <div>
                   <div className="font-display font-semibold text-foreground">זר רומנטי</div>
-                  <div className="text-sm text-muted-foreground">נוצר עכשיו ע״י AI</div>
+                  <div className="text-sm text-muted-foreground">נוצר עכשיו ע״י AI ✨</div>
                 </div>
+              </div>
+            </motion.div>
+            {/* Second floating card */}
+            <motion.div
+              animate={{ y: [0, 8, 0] }}
+              transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+              className="absolute -top-4 -left-4 glass-card rounded-2xl p-3 shadow-card"
+            >
+              <div className="flex items-center gap-2">
+                <span className="text-lg">🌻</span>
+                <span className="text-sm font-body font-medium text-foreground">4.9 ⭐ דירוג</span>
               </div>
             </motion.div>
           </motion.div>
