@@ -95,7 +95,7 @@ const BouquetCard = ({ recommendation, onAccept, onModify, onReset }: BouquetCar
             <span>₪{recommendation.flowers_cost}</span>
           </div>
           <div className="flex justify-between text-xs font-body text-muted-foreground">
-            <span>דמי עיצוב דיגיטלי (5%)</span>
+            <span>דמי עיצוב (5%)</span>
             <span>₪{recommendation.digital_design_fee}</span>
           </div>
           <div className="flex justify-between text-sm font-display font-bold text-foreground pt-1 border-t border-border/30">
