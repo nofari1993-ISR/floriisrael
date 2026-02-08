@@ -39,7 +39,6 @@ const FlowerCard = ({
 }: FlowerCardProps) => {
   const [isColorSelectorOpen, setIsColorSelectorOpen] = useState(false);
 
-  const isOutOfStock = !flower.in_stock || flower.quantity <= 0;
   const reachedMax = selectedQuantity >= flower.quantity;
   const hasColors = colorVariants && colorVariants.length > 1;
 
@@ -55,9 +54,7 @@ const FlowerCard = ({
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className={`bg-card rounded-2xl overflow-hidden shadow-soft hover:shadow-card transition-all duration-300 group ${
-        isOutOfStock ? "opacity-50" : ""
-      }`}
+      className="bg-card rounded-2xl overflow-hidden shadow-soft hover:shadow-card transition-all duration-300 group"
     >
       {/* Image */}
       <div className="relative aspect-square overflow-hidden">
@@ -74,13 +71,6 @@ const FlowerCard = ({
           </div>
         )}
 
-        {isOutOfStock && (
-          <div className="absolute inset-0 bg-background/60 flex items-center justify-center">
-            <span className="text-sm font-body font-medium text-muted-foreground bg-background/80 px-3 py-1 rounded-full">
-              אזל מהמלאי
-            </span>
-          </div>
-        )}
 
         {/* Quantity Badge */}
         {selectedQuantity > 0 && (
@@ -130,8 +120,7 @@ const FlowerCard = ({
             ₪{flower.price}
           </span>
 
-          {!isOutOfStock && (
-            <div className="flex items-center gap-0.5 md:gap-1 shrink-0">
+          <div className="flex items-center gap-0.5 md:gap-1 shrink-0">
               {hasColors && (
                 <Button
                   size="icon"
@@ -178,8 +167,7 @@ const FlowerCard = ({
                   הוסף
                 </Button>
               )}
-            </div>
-          )}
+          </div>
         </div>
       </div>
 
