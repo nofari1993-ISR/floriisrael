@@ -1,8 +1,8 @@
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { motion } from "framer-motion";
 import { ArrowRight, Palette, Search, Loader2 } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 
@@ -43,13 +43,17 @@ const DIYBuilderPage = () => {
     totalItems,
   } = useDIYBuilder();
 
-  // Fetch flowers from database
+  const queryClient = useQueryClient();
+
+  // Fetch only in-stock flowers from database
   const { data: flowers = [], isLoading } = useQuery({
     queryKey: ["diy-flowers", shopId],
     queryFn: async () => {
       let query = supabase
         .from("flowers")
-        .select("id, name, color, price, quantity, image, in_stock");
+        .select("id, name, color, price, quantity, image, in_stock")
+        .eq("in_stock", true)
+        .gt("quantity", 0);
 
       if (shopId) {
         query = query.eq("shop_id", shopId);
@@ -60,6 +64,29 @@ const DIYBuilderPage = () => {
       return data || [];
     },
   });
+
+  // Real-time subscription – refresh list when inventory changes
+  useEffect(() => {
+    const channel = supabase
+      .channel("diy-flowers-realtime")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "flowers",
+          ...(shopId ? { filter: `shop_id=eq.${shopId}` } : {}),
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["diy-flowers", shopId] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [shopId, queryClient]);
 
   // Get unique colors for filter
   const availableColors = [
