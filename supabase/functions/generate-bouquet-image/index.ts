@@ -4,19 +4,82 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+// ── Rate Limiting (per-instance) ──
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+
+function checkRateLimit(ip: string, maxRequests: number, windowMs: number): boolean {
+  const now = Date.now();
+  const entry = rateLimitMap.get(ip);
+  if (entry && now < entry.resetAt) {
+    if (entry.count >= maxRequests) return false;
+    entry.count++;
+  } else {
+    rateLimitMap.set(ip, { count: 1, resetAt: now + windowMs });
+  }
+  if (rateLimitMap.size > 1000) {
+    for (const [key, val] of rateLimitMap) {
+      if (now > val.resetAt) rateLimitMap.delete(key);
+    }
+  }
+  return true;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
 
   try {
+    // ── Rate limit: 10 image generations per hour per IP ──
+    const clientIP = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+                     req.headers.get("x-real-ip") || "unknown";
+    if (!checkRateLimit(clientIP, 10, 3600000)) {
+      console.warn(`[generate-bouquet-image] Rate limit exceeded for IP: ${clientIP}`);
+      return new Response(
+        JSON.stringify({ error: "יותר מדי בקשות. נסו שוב בעוד מספר דקות." }),
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const { flowers } = await req.json();
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    if (!flowers || flowers.length === 0) {
-      throw new Error("No flowers provided");
+    // ── Input Validation ──
+    if (!Array.isArray(flowers) || flowers.length === 0) {
+      return new Response(
+        JSON.stringify({ error: "Flowers must be a non-empty array" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (flowers.length > 20) {
+      return new Response(
+        JSON.stringify({ error: "Too many flower types (max 20)" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    for (const flower of flowers) {
+      if (!flower.name || typeof flower.name !== "string" || flower.name.length > 50) {
+        return new Response(
+          JSON.stringify({ error: "Invalid flower name" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      if (flower.color && (typeof flower.color !== "string" || flower.color.length > 30)) {
+        return new Response(
+          JSON.stringify({ error: "Invalid color" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      if (flower.quantity !== undefined && (typeof flower.quantity !== "number" || flower.quantity < 1 || flower.quantity > 100)) {
+        return new Response(
+          JSON.stringify({ error: "Invalid quantity (must be 1-100)" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
     }
 
     // Build a precise, countable description
@@ -47,7 +110,7 @@ Arrangement: ${totalFlowers <= 3 ? "Simple and minimal, each stem clearly visibl
 Wrapping: Light kraft paper or tissue, tied with a simple ribbon.
 Photography: Clean white background, soft natural light, overhead view so every flower head is visible and countable.`;
 
-    console.log("[generate-bouquet-image] Generating image...");
+    console.log(`[generate-bouquet-image] Generating image for ${totalFlowers} flowers, IP: ${clientIP}`);
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
