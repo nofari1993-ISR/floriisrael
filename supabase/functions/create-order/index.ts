@@ -6,6 +6,26 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+// ── Rate Limiting (per-instance) ──
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+
+function checkRateLimit(ip: string, maxRequests: number, windowMs: number): boolean {
+  const now = Date.now();
+  const entry = rateLimitMap.get(ip);
+  if (entry && now < entry.resetAt) {
+    if (entry.count >= maxRequests) return false;
+    entry.count++;
+  } else {
+    rateLimitMap.set(ip, { count: 1, resetAt: now + windowMs });
+  }
+  if (rateLimitMap.size > 1000) {
+    for (const [key, val] of rateLimitMap) {
+      if (now > val.resetAt) rateLimitMap.delete(key);
+    }
+  }
+  return true;
+}
+
 Deno.serve(async (req) => {
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
@@ -13,8 +33,19 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // ── Rate limit: 5 orders per hour per IP ──
+    const clientIP = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+                     req.headers.get("x-real-ip") || "unknown";
+    if (!checkRateLimit(clientIP, 5, 3600000)) {
+      console.warn(`[create-order] Rate limit exceeded for IP: ${clientIP}`);
+      return new Response(
+        JSON.stringify({ error: "יותר מדי הזמנות. נסו שוב בעוד שעה." }),
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const body = await req.json();
-    console.log("Received order request");
+    console.log(`[create-order] Received order request, IP: ${clientIP}`);
 
     const {
       shop_id,
@@ -32,43 +63,36 @@ Deno.serve(async (req) => {
     // ── Input Validation ──
     const errors: string[] = [];
 
-    // Required fields
     if (!shop_id || typeof shop_id !== "string") errors.push("shop_id is required");
     if (!customer_name || typeof customer_name !== "string") errors.push("customer_name is required");
     if (!recipient_name || typeof recipient_name !== "string") errors.push("recipient_name is required");
     if (!delivery_address || typeof delivery_address !== "string") errors.push("delivery_address is required");
     if (!delivery_date || typeof delivery_date !== "string") errors.push("delivery_date is required");
 
-    // String length limits
     if (typeof customer_name === "string" && customer_name.length > 100) errors.push("customer_name too long (max 100)");
     if (typeof recipient_name === "string" && recipient_name.length > 100) errors.push("recipient_name too long (max 100)");
     if (typeof delivery_address === "string" && delivery_address.length > 300) errors.push("delivery_address too long (max 300)");
     if (typeof greeting === "string" && greeting.length > 500) errors.push("greeting too long (max 500)");
 
-    // Email format (if provided)
     if (customer_email && typeof customer_email === "string" && customer_email.length > 0) {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(customer_email)) errors.push("Invalid email format");
       if (customer_email.length > 255) errors.push("customer_email too long (max 255)");
     }
 
-    // Phone format (if provided)
     if (customer_phone && typeof customer_phone === "string" && customer_phone.length > 0) {
       const phoneRegex = /^[0-9\-+() ]{9,15}$/;
       if (!phoneRegex.test(customer_phone)) errors.push("Invalid phone format");
     }
 
-    // Date format
     if (typeof delivery_date === "string" && !/^\d{4}-\d{2}-\d{2}$/.test(delivery_date)) {
       errors.push("Invalid delivery_date format (expected YYYY-MM-DD)");
     }
 
-    // Price validation
     if (total_price !== undefined && (typeof total_price !== "number" || total_price < 0 || total_price > 50000)) {
       errors.push("total_price must be a positive number up to 50000");
     }
 
-    // Items validation
     if (items !== undefined && items !== null) {
       if (!Array.isArray(items) || items.length > 50) {
         errors.push("items must be an array with max 50 entries");
@@ -91,13 +115,11 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Create Supabase client with service role
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Insert order
     const { data: order, error: orderError } = await supabase
       .from("orders")
       .insert({
@@ -124,7 +146,6 @@ Deno.serve(async (req) => {
 
     console.log("Order created:", order.id);
 
-    // Insert order items if provided
     if (items && Array.isArray(items) && items.length > 0) {
       const orderItems = items.map((item: any) => ({
         order_id: order.id,
@@ -140,15 +161,12 @@ Deno.serve(async (req) => {
 
       if (itemsError) {
         console.error("Order items insert error:", itemsError.message);
-        // Don't fail the whole order, just log
       } else {
         console.log(`Inserted ${orderItems.length} order items`);
       }
 
-      // Deduct inventory for each item
       for (const item of orderItems) {
         if (item.flower_id) {
-          // Get current quantity
           const { data: flower } = await supabase
             .from("flowers")
             .select("quantity")
@@ -175,7 +193,6 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Fetch shop info for WhatsApp
     const { data: shop } = await supabase
       .from("shops")
       .select("name, phone")

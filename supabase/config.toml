@@ -14,3 +14,6 @@ verify_jwt = false
 
 [functions.expire-flowers]
 verify_jwt = false
+
+[functions.generate-bouquet-image]
+verify_jwt = false

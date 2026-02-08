@@ -6,14 +6,81 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+// ── Rate Limiting (per-instance) ──
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+
+function checkRateLimit(ip: string, maxRequests: number, windowMs: number): boolean {
+  const now = Date.now();
+  const entry = rateLimitMap.get(ip);
+  if (entry && now < entry.resetAt) {
+    if (entry.count >= maxRequests) return false;
+    entry.count++;
+  } else {
+    rateLimitMap.set(ip, { count: 1, resetAt: now + windowMs });
+  }
+  // Cleanup old entries periodically
+  if (rateLimitMap.size > 1000) {
+    for (const [key, val] of rateLimitMap) {
+      if (now > val.resetAt) rateLimitMap.delete(key);
+    }
+  }
+  return true;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
 
   try {
+    // ── Rate limit: 10 requests per hour per IP ──
+    const clientIP = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+                     req.headers.get("x-real-ip") || "unknown";
+    if (!checkRateLimit(clientIP, 10, 3600000)) {
+      console.warn(`[bouquet-ai] Rate limit exceeded for IP: ${clientIP}`);
+      return new Response(
+        JSON.stringify({ error: "יותר מדי בקשות. נסו שוב בעוד מספר דקות." }),
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const body = await req.json();
     const { action, shopId, answers, currentBouquet, userMessage, flowerName, flowerColor } = body;
+
+    // ── Input Validation ──
+    if (!action || typeof action !== "string" || !["generate", "modify", "high-stock", "promote-flower"].includes(action)) {
+      return new Response(
+        JSON.stringify({ error: "Invalid action" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (answers) {
+      if (answers.budget && (isNaN(parseFloat(answers.budget)) || parseFloat(answers.budget) > 10000)) {
+        return new Response(JSON.stringify({ error: "Invalid budget" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      if (answers.recipient && (typeof answers.recipient !== "string" || answers.recipient.length > 100)) {
+        return new Response(JSON.stringify({ error: "Recipient name too long" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      if (answers.occasion && (typeof answers.occasion !== "string" || answers.occasion.length > 200)) {
+        return new Response(JSON.stringify({ error: "Occasion text too long" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      if (answers.notes && (typeof answers.notes !== "string" || answers.notes.length > 500)) {
+        return new Response(JSON.stringify({ error: "Notes too long" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+    }
+
+    if (userMessage && (typeof userMessage !== "string" || userMessage.length > 500)) {
+      return new Response(JSON.stringify({ error: "Message too long" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    if (flowerName && (typeof flowerName !== "string" || flowerName.length > 50)) {
+      return new Response(JSON.stringify({ error: "Flower name too long" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    if (flowerColor && (typeof flowerColor !== "string" || flowerColor.length > 30)) {
+      return new Response(JSON.stringify({ error: "Color name too long" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
@@ -21,7 +88,7 @@ Deno.serve(async (req) => {
 
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    console.log(`[bouquet-ai] action=${action}, shopId=${shopId}`);
+    console.log(`[bouquet-ai] action=${action}, shopId=${shopId}, IP=${clientIP}`);
 
     // Fetch inventory
     let flowersContext = "אין פרחים זמינים במלאי.";
@@ -52,11 +119,9 @@ Deno.serve(async (req) => {
     let prompt = "";
 
     if (action === "generate") {
-      // Generate initial bouquet recommendation
       const budget = parseFloat(answers.budget) || 200;
       const budgetForFlowers = budget / 1.05;
 
-      // Build boosted flowers instruction
       const boostedInstruction = boostedFlowers.length > 0
         ? `\n# ⭐ פרחים מקודמים (עדיפות גבוהה - בעל החנות מבקש לתעדף אותם!):\n${boostedFlowers.map((f: any) => `- ${f.name}${f.color ? ` (${f.color})` : ""}: ${f.quantity} יח', ₪${f.price}`).join("\n")}\nחובה לשלב לפחות פרח מקודם אחד בזר אם הוא מתאים לבקשה!\n`
         : "";
@@ -96,7 +161,6 @@ ${budgetForFlowers <= 200 ? "8. **חובה**: בתקציב עד ₪200, הזר �
 # פורמט JSON בלבד:
 {"message": "הודעה אישית", "flowers": [{"name": "שם מדויק מהמלאי", "quantity": מספר, "color": "צבע"}]}`;
     } else if (action === "modify") {
-      // Modify existing bouquet
       const budget = parseFloat(answers?.budget) || 200;
       const budgetForFlowers = budget / 1.05;
       const currentFlowersList = (currentBouquet?.flowers || [])
@@ -130,7 +194,6 @@ ${boostedModifyInstruction}
 # פורמט JSON בלבד:
 {"message": "הסבר מה שינית", "flowers": [{"name": "שם", "quantity": מספר, "color": "צבע"}]}`;
     } else if (action === "high-stock") {
-      // Find flowers with highest stock and create a bouquet that uses them
       const highStockFlowers = flowersList
         .filter((f: any) => f.quantity > 0)
         .sort((a: any, b: any) => b.quantity - a.quantity);
@@ -158,7 +221,6 @@ ${flowersContext}
 # פורמט JSON בלבד:
 {"message": "הודעה אישית", "flowers": [{"name": "שם מדויק מהמלאי", "quantity": מספר, "color": "צבע"}]}`;
     } else if (action === "promote-flower") {
-      // Create a bouquet that prominently features a specific flower
       if (!flowerName) {
         return new Response(
           JSON.stringify({ error: "Missing flowerName parameter" }),
@@ -183,11 +245,6 @@ ${flowersContext}
 
 # פורמט JSON בלבד:
 {"message": "הודעה אישית", "flowers": [{"name": "שם מדויק מהמלאי", "quantity": מספר, "color": "צבע"}]}`;
-    } else {
-      return new Response(
-        JSON.stringify({ error: "Invalid action" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
     }
 
     console.log(`[bouquet-ai] Sending prompt to AI, action=${action}`);
@@ -225,7 +282,6 @@ ${flowersContext}
     try {
       parsed = JSON.parse(content);
     } catch {
-      // Try extracting JSON from markdown code block
       const match = content.match(/```(?:json)?\s*([\s\S]*?)```/);
       if (match) {
         parsed = JSON.parse(match[1]);
@@ -240,11 +296,9 @@ ${flowersContext}
     const budget = action === "high-stock" ? 250 : (parseFloat(answers?.budget) || 200);
     const budgetForFlowers = budget / 1.05;
 
-    // Greens/fillers list for priority ordering
     const greenNames = ["אקליפטוס", "רוסקוס", "שרך", "גיבסנית"];
     const aiFlowers = parsed.flowers || [];
 
-    // When budget <= 200, prioritize greens by processing them first
     const shouldPrioritizeGreens = budgetForFlowers <= 200;
     let orderedFlowers = aiFlowers;
     if (shouldPrioritizeGreens) {
@@ -261,7 +315,7 @@ ${flowersContext}
       }
 
       let quantity = Math.floor(aiFlower.quantity || 1);
-      quantity = Math.min(quantity, realFlower.quantity); // Cap at stock
+      quantity = Math.min(quantity, realFlower.quantity);
 
       const potentialTotal = totalCost + (realFlower.price * quantity);
       if (potentialTotal > budgetForFlowers) {
@@ -331,7 +385,6 @@ ${flowersContext}
         }
       } catch (imgErr) {
         console.error("[bouquet-ai] Image generation error:", imgErr);
-        // Continue without image — non-critical
       }
     }
 

@@ -12,12 +12,54 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // ── Access Control: Only allow requests with valid cron secret ──
+    const cronSecret = req.headers.get("x-cron-secret");
+    const expectedSecret = Deno.env.get("CRON_SECRET");
+
+    // If CRON_SECRET is configured, enforce it
+    if (expectedSecret && cronSecret !== expectedSecret) {
+      console.warn("[expire-flowers] Unauthorized request - invalid or missing cron secret");
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // If CRON_SECRET is NOT configured, check for Authorization header as fallback
+    if (!expectedSecret) {
+      const authHeader = req.headers.get("Authorization");
+      if (!authHeader?.startsWith("Bearer ")) {
+        console.warn("[expire-flowers] Unauthorized request - no auth header and no cron secret configured");
+        return new Response(
+          JSON.stringify({ error: "Unauthorized" }),
+          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Validate the JWT
+      const supabaseAuth = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        Deno.env.get("SUPABASE_ANON_KEY")!,
+        { global: { headers: { Authorization: authHeader } } }
+      );
+
+      const token = authHeader.replace("Bearer ", "");
+      const { data: claims, error: claimsError } = await supabaseAuth.auth.getClaims(token);
+      if (claimsError || !claims?.claims) {
+        console.warn("[expire-flowers] Invalid JWT token");
+        return new Response(
+          JSON.stringify({ error: "Unauthorized" }),
+          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      console.log(`[expire-flowers] Authenticated user: ${claims.claims.sub}`);
+    }
+
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Find all flowers where last_restocked_at + shelf_life_days < now() AND quantity > 0
     const { data: flowers, error: fetchError } = await supabase
       .from("flowers")
       .select("id, name, color, quantity, shelf_life_days, last_restocked_at, shop_id")
@@ -45,7 +87,6 @@ Deno.serve(async (req) => {
 
     console.log(`Found ${expiredFlowers.length} expired flowers out of ${(flowers || []).length} total`);
 
-    // Zero out expired flowers
     let updated = 0;
     for (const flower of expiredFlowers) {
       const { error: updateError } = await supabase
