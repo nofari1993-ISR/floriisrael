@@ -52,7 +52,7 @@ export const useShops = (searchQuery?: string) => {
       toast({ title: "שגיאה בטעינת חנויות", description: error.message, variant: "destructive" });
     } else {
       setShops(
-        (data || []).map((s) => ({
+        (data || []).map((s: any) => ({
           id: s.id,
           name: s.name,
           location: s.location,
@@ -62,8 +62,8 @@ export const useShops = (searchQuery?: string) => {
           image: s.image || "🌼",
           hours: s.hours || "09:00 - 18:00",
           tags: s.tags || [],
-          latitude: s.latitude ?? null,
-          longitude: s.longitude ?? null,
+          latitude: s.latitude != null ? Number(s.latitude) : null,
+          longitude: s.longitude != null ? Number(s.longitude) : null,
         }))
       );
     }
