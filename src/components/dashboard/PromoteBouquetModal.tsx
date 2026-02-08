@@ -1,4 +1,5 @@
-import { Loader2, Flower2 } from "lucide-react";
+import { useState } from "react";
+import { Loader2, Flower2, ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -22,6 +23,7 @@ export interface PromoteBouquetResult {
   flowers_cost: number;
   digital_design_fee: number;
   total_price: number;
+  image_url?: string | null;
 }
 
 interface PromoteBouquetModalProps {
@@ -43,9 +45,11 @@ const PromoteBouquetModal = ({
   result,
   error,
 }: PromoteBouquetModalProps) => {
+  const [imageLoaded, setImageLoaded] = useState(false);
+
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="max-w-md rounded-2xl">
+      <DialogContent className="max-w-lg rounded-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="font-display text-lg text-right flex items-center gap-2">
             <Flower2 className="w-5 h-5 text-primary" />
@@ -57,7 +61,7 @@ const PromoteBouquetModal = ({
           <div className="flex flex-col items-center justify-center py-10 gap-3">
             <Loader2 className="w-8 h-8 text-primary animate-spin" />
             <p className="text-sm text-muted-foreground font-body">
-              ה-AI בונה זר מותאם...
+              ה-AI בונה זר ומייצר תמונה...
             </p>
           </div>
         )}
@@ -73,6 +77,32 @@ const PromoteBouquetModal = ({
 
         {result && !isLoading && (
           <div className="space-y-4">
+            {/* Bouquet Image */}
+            {result.image_url && (
+              <div className="relative rounded-2xl overflow-hidden border border-border/50 bg-muted/30">
+                {!imageLoaded && (
+                  <div className="flex items-center justify-center py-16">
+                    <Loader2 className="w-6 h-6 text-primary animate-spin" />
+                  </div>
+                )}
+                <img
+                  src={result.image_url}
+                  alt={`זר עם ${flowerName}`}
+                  className={`w-full object-cover transition-opacity ${imageLoaded ? "opacity-100" : "opacity-0 h-0"}`}
+                  onLoad={() => setImageLoaded(true)}
+                />
+              </div>
+            )}
+
+            {!result.image_url && (
+              <div className="flex items-center justify-center py-8 bg-muted/30 rounded-2xl border border-border/50">
+                <div className="text-center space-y-2">
+                  <ImageIcon className="w-10 h-10 mx-auto text-muted-foreground/30" />
+                  <p className="text-xs text-muted-foreground font-body">לא נוצרה תמונה</p>
+                </div>
+              </div>
+            )}
+
             {/* AI Message */}
             <div className="bg-muted/50 rounded-xl p-3 text-sm font-body text-foreground prose prose-sm max-w-none">
               <ReactMarkdown>{result.message}</ReactMarkdown>

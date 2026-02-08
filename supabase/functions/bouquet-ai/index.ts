@@ -257,6 +257,51 @@ ${flowersContext}
 
     console.log(`[bouquet-ai] Final: ${validatedFlowers.length} flowers, total=₪${totalPrice}`);
 
+    // Generate bouquet image
+    let bouquetImageUrl: string | null = null;
+
+    if (validatedFlowers.length > 0) {
+      try {
+        const flowerDescriptions = validatedFlowers
+          .map((f: any) => `${f.quantity} ${f.color} ${f.name}`)
+          .join(", ");
+
+        const imagePrompt = `Create a beautiful, realistic photograph of a professional florist bouquet containing exactly: ${flowerDescriptions}. The bouquet should be elegantly wrapped in kraft paper with a ribbon. Studio lighting, white background, high quality product photography. The flowers should be clearly identifiable and match their described colors precisely.`;
+
+        console.log("[bouquet-ai] Generating bouquet image...");
+
+        const imageResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${LOVABLE_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: "google/gemini-2.5-flash-image",
+            messages: [{ role: "user", content: imagePrompt }],
+            modalities: ["image", "text"],
+          }),
+        });
+
+        if (imageResponse.ok) {
+          const imageData = await imageResponse.json();
+          const imageUrl = imageData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+          if (imageUrl) {
+            bouquetImageUrl = imageUrl;
+            console.log("[bouquet-ai] Image generated successfully");
+          } else {
+            console.warn("[bouquet-ai] No image in response");
+          }
+        } else {
+          const errText = await imageResponse.text();
+          console.error("[bouquet-ai] Image generation failed:", imageResponse.status, errText);
+        }
+      } catch (imgErr) {
+        console.error("[bouquet-ai] Image generation error:", imgErr);
+        // Continue without image — non-critical
+      }
+    }
+
     return new Response(
       JSON.stringify({
         message: parsed.message || "הנה הזר שלכם! 💐",
@@ -264,6 +309,7 @@ ${flowersContext}
         flowers_cost: totalCost,
         digital_design_fee: digitalDesignFee,
         total_price: Math.round(totalPrice),
+        image_url: bouquetImageUrl,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

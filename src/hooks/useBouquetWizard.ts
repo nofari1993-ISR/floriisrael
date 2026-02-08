@@ -103,6 +103,7 @@ export function useBouquetWizard(shopId: string | null, mode?: string | null) {
         flowers_cost: data.flowers_cost,
         digital_design_fee: data.digital_design_fee,
         message: data.message,
+        image_url: data.image_url || null,
       };
 
       setRecommendation(rec);
@@ -185,6 +186,7 @@ export function useBouquetWizard(shopId: string | null, mode?: string | null) {
             flowers_cost: data.flowers_cost,
             digital_design_fee: data.digital_design_fee,
             message: data.message,
+            image_url: data.image_url || null,
           };
 
           setRecommendation(rec);
@@ -241,6 +243,7 @@ export function useBouquetWizard(shopId: string | null, mode?: string | null) {
           flowers_cost: data.flowers_cost,
           digital_design_fee: data.digital_design_fee,
           message: data.message,
+          image_url: data.image_url || null,
         };
 
         const budget = parseFloat(answers.budget || "0");
