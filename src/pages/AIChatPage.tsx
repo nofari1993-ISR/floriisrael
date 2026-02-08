@@ -15,12 +15,18 @@ import {
   OCCASION_OPTIONS,
   COLOR_OPTIONS,
 } from "@/hooks/useBouquetWizard";
+import { useShopOwner } from "@/hooks/useShopOwner";
 
 const AIChatPage = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const shopId = searchParams.get("shopId");
+  const paramShopId = searchParams.get("shopId");
   const mode = searchParams.get("mode");
+
+  // Fallback to the user's own shop if no shopId in URL
+  const { shops } = useShopOwner();
+  const shopId = paramShopId || (shops.length > 0 ? shops[0].id : null);
+
   const {
     messages,
     currentStep,
