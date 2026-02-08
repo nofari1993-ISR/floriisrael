@@ -1,11 +1,21 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { Star, MapPin, Clock, Plus, X, Store, Palette, ArrowRight, Loader2, Navigation, AlertCircle } from "lucide-react";
+import { Star, MapPin, Clock, Plus, Store, Palette, ArrowRight, Loader2, Navigation, AlertCircle, Trash2 } from "lucide-react";
 import Logo from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
-import { useShops, type Shop } from "@/hooks/useShops";
+import { useShops } from "@/hooks/useShops";
 import { useAuth } from "@/hooks/useAuth";
 
 interface AddShopFormData {
@@ -36,6 +46,7 @@ const ShopSearchResults = ({ open, onClose, searchQuery }: ShopSearchResultsProp
   const { isAdmin, user } = useAuth();
   const navigate = useNavigate();
   const [showAddForm, setShowAddForm] = useState(false);
+  const [shopToDelete, setShopToDelete] = useState<{ id: string; name: string } | null>(null);
   
   const [formData, setFormData] = useState<AddShopFormData>({
     name: "",
@@ -63,8 +74,15 @@ const ShopSearchResults = ({ open, onClose, searchQuery }: ShopSearchResultsProp
     }
   };
 
-  const handleRemoveShop = async (id: string) => {
-    await removeShop(id);
+  const handleConfirmDelete = async () => {
+    if (shopToDelete) {
+      await removeShop(shopToDelete.id);
+      setShopToDelete(null);
+    }
+  };
+
+  const handleRemoveShop = (id: string, name: string) => {
+    setShopToDelete({ id, name });
   };
 
   const formatDistance = (distance?: number) => {
@@ -260,11 +278,11 @@ const ShopSearchResults = ({ open, onClose, searchQuery }: ShopSearchResultsProp
                       {/* Remove Button - Admin only */}
                       {isAdmin && (
                         <button
-                          onClick={() => handleRemoveShop(shop.id)}
+                          onClick={() => handleRemoveShop(shop.id, shop.name)}
                           className="absolute top-3 left-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-full bg-background/80 hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
-                          title="הסר חנות"
+                          title="מחק חנות"
                         >
-                          <X className="w-4 h-4" />
+                          <Trash2 className="w-4 h-4" />
                         </button>
                       )}
 
@@ -348,6 +366,29 @@ const ShopSearchResults = ({ open, onClose, searchQuery }: ShopSearchResultsProp
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!shopToDelete} onOpenChange={(open) => !open && setShopToDelete(null)}>
+        <AlertDialogContent className="rounded-2xl" dir="rtl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="font-display text-right">
+              מחיקת חנות "{shopToDelete?.name}"
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-right font-body">
+              פעולה זו תמחק את החנות, כל המלאי, וכל ההזמנות שלה לצמיתות. לא ניתן לבטל פעולה זו.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex gap-2 sm:flex-row-reverse">
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-xl"
+            >
+              מחק לצמיתות
+            </AlertDialogAction>
+            <AlertDialogCancel className="rounded-xl">ביטול</AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };
