@@ -1,4 +1,4 @@
-import { ArrowRight, Sparkles, Loader2, CheckCircle2 } from "lucide-react";
+import { ArrowRight, Sparkles, Loader2, CheckCircle2, RefreshCw, AlertTriangle } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useEffect, useRef, useState, useCallback } from "react";
 import { motion } from "framer-motion";
@@ -23,6 +23,9 @@ const AIChatPage = () => {
   const [inventoryReady, setInventoryReady] = useState(false);
   const [loading, setLoading] = useState(!!shopId);
   const [orderSuccess, setOrderSuccess] = useState<OrderSuccess | null>(null);
+  const [iframeLoaded, setIframeLoaded] = useState(false);
+  const [iframeError, setIframeError] = useState(false);
+  const iframeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Send inventory to Base44 iframe via postMessage
   const sendInventoryToIframe = useCallback(async () => {
@@ -147,6 +150,40 @@ const AIChatPage = () => {
     ? `https://nupharflowersai.com/AIBouquetBuilderEmbed?shopId=${shopId}`
     : "https://nupharflowersai.com/AIBouquetBuilderEmbed";
 
+  // Timeout to detect iframe not loading
+  useEffect(() => {
+    if (!loading && !orderSuccess) {
+      iframeTimeoutRef.current = setTimeout(() => {
+        if (!iframeLoaded) {
+          setIframeError(true);
+        }
+      }, 12000); // 12 seconds timeout
+    }
+    return () => {
+      if (iframeTimeoutRef.current) clearTimeout(iframeTimeoutRef.current);
+    };
+  }, [loading, orderSuccess, iframeLoaded]);
+
+  const handleIframeLoad = () => {
+    setIframeLoaded(true);
+    setIframeError(false);
+    if (iframeTimeoutRef.current) clearTimeout(iframeTimeoutRef.current);
+  };
+
+  const handleRetry = () => {
+    setIframeLoaded(false);
+    setIframeError(false);
+    // Force iframe reload by toggling key
+    if (iframeRef.current) {
+      iframeRef.current.src = iframeSrc;
+    }
+    iframeTimeoutRef.current = setTimeout(() => {
+      if (!iframeLoaded) {
+        setIframeError(true);
+      }
+    }, 12000);
+  };
+
   const getWhatsAppUrl = () => {
     if (!orderSuccess?.shopPhone) return null;
     const phone = orderSuccess.shopPhone.replace(/[^0-9]/g, "");
@@ -235,18 +272,57 @@ const AIChatPage = () => {
             <span className="mr-3 text-muted-foreground font-body">טוען מלאי חנות...</span>
           </div>
         ) : (
-          <iframe
-            ref={iframeRef}
-            src={iframeSrc}
-            title="AI Bouquet Builder Chat"
-            style={{
-              width: "100%",
-              height: "100%",
-              border: "none",
-              display: "block",
-            }}
-            allow="clipboard-write"
-          />
+          <div className="relative w-full h-full">
+            {/* Loading overlay - shown until iframe loads */}
+            {!iframeLoaded && !iframeError && (
+              <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-background">
+                <Loader2 className="w-10 h-10 animate-spin text-primary mb-4" />
+                <p className="text-muted-foreground font-body">טוען את בונה הזרים...</p>
+              </div>
+            )}
+
+            {/* Error fallback */}
+            {iframeError && (
+              <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-background px-6">
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="text-center max-w-md"
+                >
+                  <AlertTriangle className="w-16 h-16 text-primary/60 mx-auto mb-4" />
+                  <h2 className="text-xl font-display font-bold text-foreground mb-2">
+                    בונה הזרים לא זמין כרגע
+                  </h2>
+                  <p className="text-muted-foreground font-body mb-6">
+                    נראה שיש בעיה בטעינת בונה הזרים החיצוני. נסו שוב או חזרו מאוחר יותר.
+                  </p>
+                  <div className="flex gap-3 justify-center">
+                    <Button variant="hero" className="rounded-xl gap-2" onClick={handleRetry}>
+                      <RefreshCw className="w-4 h-4" />
+                      נסו שוב
+                    </Button>
+                    <Button variant="hero-outline" className="rounded-xl" onClick={() => navigate(-1)}>
+                      חזרה
+                    </Button>
+                  </div>
+                </motion.div>
+              </div>
+            )}
+
+            <iframe
+              ref={iframeRef}
+              src={iframeSrc}
+              title="AI Bouquet Builder Chat"
+              onLoad={handleIframeLoad}
+              style={{
+                width: "100%",
+                height: "100%",
+                border: "none",
+                display: "block",
+              }}
+              allow="clipboard-write"
+            />
+          </div>
         )}
       </div>
     </div>
