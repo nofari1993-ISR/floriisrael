@@ -23,7 +23,7 @@ const AIChatPage = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const shopId = searchParams.get("shopId");
-
+  const mode = searchParams.get("mode");
   const {
     messages,
     currentStep,
@@ -37,7 +37,7 @@ const AIChatPage = () => {
     handleApproveBudgetIncrease,
     handleRejectBudgetIncrease,
     reset,
-  } = useBouquetWizard(shopId);
+  } = useBouquetWizard(shopId, mode);
 
   const [input, setInput] = useState("");
   const [orderSuccess, setOrderSuccess] = useState<OrderSuccessData | null>(null);

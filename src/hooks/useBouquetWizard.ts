@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { BouquetRecommendation, BouquetFlower } from "@/components/bouquet-chat/BouquetCard";
 
@@ -71,7 +71,7 @@ interface PendingBouquet {
   priceDifference: number;
 }
 
-export function useBouquetWizard(shopId: string | null) {
+export function useBouquetWizard(shopId: string | null, mode?: string | null) {
   const [messages, setMessages] = useState<ChatMessage[]>([
     { role: "assistant", content: INITIAL_MESSAGE },
   ]);
@@ -80,6 +80,56 @@ export function useBouquetWizard(shopId: string | null) {
   const [isLoading, setIsLoading] = useState(false);
   const [recommendation, setRecommendation] = useState<BouquetRecommendation | null>(null);
   const [pendingBouquet, setPendingBouquet] = useState<PendingBouquet | null>(null);
+  const [highStockTriggered, setHighStockTriggered] = useState(false);
+
+  // Auto-trigger high-stock mode
+  const triggerHighStock = useCallback(async () => {
+    if (highStockTriggered || isLoading) return;
+    setHighStockTriggered(true);
+
+    setMessages([
+      {
+        role: "assistant",
+        content: "🌿 מייצר המלצה לזר מהמלאי הגבוה ביותר...",
+      },
+    ]);
+    setCurrentStep(STEPS.RECOMMEND);
+    setIsLoading(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke("bouquet-ai", {
+        body: { action: "high-stock", shopId },
+      });
+
+      if (error) throw error;
+
+      const rec: BouquetRecommendation = {
+        flowers: data.flowers,
+        total_price: data.total_price,
+        flowers_cost: data.flowers_cost,
+        digital_design_fee: data.digital_design_fee,
+        message: data.message,
+      };
+
+      setRecommendation(rec);
+      setMessages((prev) => [...prev, { role: "assistant", content: data.message }]);
+    } catch (err: any) {
+      console.error("High-stock generate error:", err);
+      setMessages((prev) => [
+        ...prev,
+        { role: "assistant", content: "מצטער/ת, נתקלתי בבעיה טכנית. נסו שוב 😔" },
+      ]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [highStockTriggered, isLoading, shopId]);
+
+  // Auto-trigger when mode is high-stock
+  useEffect(() => {
+    if (mode === "high-stock") {
+      triggerHighStock();
+    }
+  }, [mode, triggerHighStock]);
 
   const handleStepAnswer = useCallback(
     async (answer: string) => {
