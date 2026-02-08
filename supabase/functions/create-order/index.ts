@@ -93,6 +93,35 @@ Deno.serve(async (req) => {
       } else {
         console.log(`Inserted ${orderItems.length} order items`);
       }
+
+      // Deduct inventory for each item
+      for (const item of orderItems) {
+        if (item.flower_id) {
+          // Get current quantity
+          const { data: flower } = await supabase
+            .from("flowers")
+            .select("quantity")
+            .eq("id", item.flower_id)
+            .single();
+
+          if (flower) {
+            const newQuantity = Math.max(0, (flower.quantity || 0) - (item.quantity || 1));
+            const { error: updateError } = await supabase
+              .from("flowers")
+              .update({
+                quantity: newQuantity,
+                in_stock: newQuantity > 0,
+              })
+              .eq("id", item.flower_id);
+
+            if (updateError) {
+              console.error(`Failed to deduct inventory for flower ${item.flower_id}:`, updateError.message);
+            } else {
+              console.log(`Deducted ${item.quantity} from flower ${item.flower_id}, new qty: ${newQuantity}`);
+            }
+          }
+        }
+      }
     }
 
     // Fetch shop info for WhatsApp
