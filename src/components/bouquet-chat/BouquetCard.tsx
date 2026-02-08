@@ -67,6 +67,12 @@ const BouquetCard = ({ recommendation, onAccept, onModify, onReset }: BouquetCar
         onClose={() => setFullscreenOpen(false)}
       />
 
+      {recommendation.image_url && (
+        <p className="px-4 pt-2 text-[11px] text-muted-foreground font-body text-center leading-relaxed">
+          💡 התמונה נוצרה ב-AI והיא להמחשה בלבד. ההרכב המדויק והכמויות מופיעים ברשימה למטה
+        </p>
+      )}
+
       {/* Flowers list */}
       <div className="p-4 space-y-2">
         <h3 className="text-sm font-display font-bold text-foreground mb-3 flex items-center gap-2">

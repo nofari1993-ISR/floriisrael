@@ -117,6 +117,12 @@ const PromoteBouquetModal = ({
               </div>
             )}
 
+            {result.image_url && (
+              <p className="text-[11px] text-muted-foreground font-body text-center leading-relaxed">
+                💡 התמונה נוצרה ב-AI והיא להמחשה בלבד. ההרכב המדויק והכמויות מופיעים ברשימה למטה
+              </p>
+            )}
+
             {/* AI Message */}
             <div className="bg-muted/50 rounded-xl p-3 text-sm font-body text-foreground prose prose-sm max-w-none">
               <ReactMarkdown>{result.message}</ReactMarkdown>
