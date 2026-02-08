@@ -19,33 +19,33 @@ Deno.serve(async (req) => {
       throw new Error("No flowers provided");
     }
 
-    const numberWords: Record<number, string> = {
-      1: "ONE", 2: "TWO", 3: "THREE", 4: "FOUR", 5: "FIVE",
-      6: "SIX", 7: "SEVEN", 8: "EIGHT", 9: "NINE", 10: "TEN",
-      11: "ELEVEN", 12: "TWELVE", 13: "THIRTEEN", 14: "FOURTEEN", 15: "FIFTEEN",
-    };
+    // Build a precise, countable description
+    const totalFlowers = flowers.reduce((sum: number, item: any) => sum + (item.quantity || 1), 0);
 
-    const flowersList = flowers
-      .map((item: any) => {
-        const colorInfo = item.color ? `${item.color} ` : "";
-        const flowerName = item.name;
-        const numWord = numberWords[item.quantity] || String(item.quantity);
-        return `- ${numWord} (${item.quantity}) ${colorInfo}${flowerName} - MAXIMUM ${item.quantity}, do not exceed this number`;
-      })
-      .join("\n");
+    const flowerDescriptions = flowers.map((item: any) => {
+      const color = item.color || "";
+      const name = item.name;
+      const qty = item.quantity || 1;
+      return `exactly ${qty} ${color} ${name}`.trim();
+    });
 
-    const prompt = `Professional photograph of a hand-held flower bouquet.
+    const flowerListForPrompt = flowerDescriptions.join(", ");
 
-STRICT flower quantities - DO NOT EXCEED these numbers:
-${flowersList}
+    const prompt = `Create a realistic top-down photograph of a small hand-tied bouquet on a clean white surface.
 
-CRITICAL RULES:
-1. Each flower type MUST have AT MOST the quantity specified above
-2. It's better to have FEWER flowers than MORE
-3. DO NOT add any flowers not listed above
-4. If unsure about quantities, use FEWER rather than more
+The bouquet contains EXACTLY ${totalFlowers} flowers total, no more, no less:
+${flowerDescriptions.map((d: string) => `• ${d}`).join("\n")}
 
-Style: Elegant arrangement wrapped in decorative paper with satin ribbon bow, soft natural lighting, clean white background, professional photography.`;
+ABSOLUTE RULES:
+- The total number of flower heads visible must be EXACTLY ${totalFlowers}. Count them.
+- Each flower must be clearly distinguishable and countable individually.
+- DO NOT add any extra flowers, leaves, or filler greenery unless explicitly listed above.
+- If only ${totalFlowers} flowers are listed, show only ${totalFlowers} flower heads. A bouquet of 2 flowers is perfectly fine.
+- NO artistic license to add more flowers for aesthetics.
+
+Arrangement: ${totalFlowers <= 3 ? "Simple and minimal, each stem clearly visible" : "Neatly arranged, each flower clearly visible and countable"}.
+Wrapping: Light kraft paper or tissue, tied with a simple ribbon.
+Photography: Clean white background, soft natural light, overhead view so every flower head is visible and countable.`;
 
     console.log("[generate-bouquet-image] Generating image...");
 
