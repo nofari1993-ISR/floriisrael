@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight, Send, User, MapPin, Calendar, MessageSquare, CheckCircle2, Store, Truck, Clock, ShoppingBag, CreditCard } from "lucide-react";
+import { ArrowRight, Send, User, MapPin, Calendar, MessageSquare, CheckCircle2, Store, Truck, Clock, ShoppingBag, CreditCard, Phone } from "lucide-react";
 import { format } from "date-fns";
 import { he } from "date-fns/locale";
 import { z } from "zod";
@@ -25,6 +25,7 @@ type TimeSlotId = typeof TIME_SLOTS[number]["id"];
 
 const checkoutSchema = z.object({
   recipientName: z.string().trim().min(2, "שם חייב להכיל לפחות 2 תווים").max(100),
+  recipientPhone: z.string().trim().min(9, "מספר טלפון לא תקין").max(15, "מספר טלפון לא תקין"),
   address: z.string().max(300).optional(),
   deliveryDate: z.date({ required_error: "יש לבחור תאריך" }),
   timeSlot: z.enum(["morning", "afternoon"], { required_error: "יש לבחור טווח שעות" }),
@@ -74,6 +75,7 @@ const Checkout = () => {
 
   const [formData, setFormData] = useState({
     recipientName: "",
+    recipientPhone: "",
     address: "",
     deliveryNotes: "",
     greeting: "",
@@ -141,7 +143,8 @@ const Checkout = () => {
       const diyNote = isDIY ? "זר מעוצב אישית (DIY)" : "";
       const paypalNote = `PayPal: ${paypalOrderId}`;
       const deliveryNotesText = formData.deliveryNotes?.trim() ? `הערות לשליח: ${formData.deliveryNotes.trim()}` : "";
-      const noteParts = [diyNote, timeSlotNote, deliveryNotesText, paypalNote].filter(Boolean).join(" | ");
+      const recipientPhoneNote = formData.recipientPhone?.trim() ? `טלפון מקבל/ת: ${formData.recipientPhone.trim()}` : "";
+      const noteParts = [diyNote, timeSlotNote, recipientPhoneNote, deliveryNotesText, paypalNote].filter(Boolean).join(" | ");
 
       const deliveryDateStr = format(deliveryDate!, "yyyy-MM-dd");
       const orderPayload = {
@@ -433,6 +436,25 @@ const Checkout = () => {
             />
             {errors.recipientName && (
               <p className="text-sm text-destructive font-body">{errors.recipientName}</p>
+            )}
+          </div>
+
+          {/* Recipient Phone */}
+          <div className="space-y-2">
+            <label className="flex items-center gap-2 text-sm font-medium text-foreground font-body">
+              <Phone className="w-4 h-4 text-primary/60" />
+              טלפון מקבל/ת המשלוח
+            </label>
+            <input
+              type="tel"
+              value={formData.recipientPhone}
+              onChange={(e) => setFormData((prev) => ({ ...prev, recipientPhone: e.target.value }))}
+              placeholder="050-1234567"
+              className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm font-body text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-ring transition-shadow"
+              dir="ltr"
+            />
+            {errors.recipientPhone && (
+              <p className="text-sm text-destructive font-body">{errors.recipientPhone}</p>
             )}
           </div>
 
