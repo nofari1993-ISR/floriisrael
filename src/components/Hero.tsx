@@ -101,17 +101,21 @@ const Hero = () => {
             transition={{ duration: 0.9, delay: 0.2, ease: "easeOut" }}
             className="space-y-6 lg:space-y-8 text-center"
           >
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.3 }}
-              className="space-y-4 lg:space-y-6"
-            >
-              <Logo size="lg" layout="vertical" className="mb-2 lg:mb-4 items-center" />
-              <p className="text-base md:text-lg lg:text-xl text-muted-foreground font-body max-w-lg leading-relaxed mx-auto lg:mx-0">
-                גלו חנויות פרחים באזור שלכם וקבלו את הזר המושלם ישירות עד הבית 🌷
-              </p>
-            </motion.div>
+            <div className="flex items-center justify-center gap-4 mb-2 lg:mb-4">
+              <Logo size="lg" showText={false} />
+              <motion.span
+                initial={{ opacity: 0 }}
+                animate={{ opacity: [0, 1, 0.7, 1] }}
+                transition={{ duration: 2, ease: "easeInOut" }}
+                className="text-5xl md:text-6xl lg:text-7xl text-foreground tracking-wide"
+                style={{ fontFamily: "'Pacifico', cursive" }}
+              >
+                Flori
+              </motion.span>
+            </div>
+            <p className="text-base md:text-lg lg:text-xl text-muted-foreground font-body max-w-lg leading-relaxed mx-auto lg:mx-0">
+              גלו חנויות פרחים באזור שלכם וקבלו את הזר המושלם ישירות עד הבית 🌷
+            </p>
 
             {/* Search Bar */}
             <motion.div
