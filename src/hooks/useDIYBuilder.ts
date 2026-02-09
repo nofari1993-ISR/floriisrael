@@ -5,17 +5,17 @@ import type { SelectedFlower } from "@/components/diy-builder/BouquetSummary";
 export function useDIYBuilder() {
   const [selectedFlowers, setSelectedFlowers] = useState<SelectedFlower[]>([]);
 
-  const handleAddFlower = useCallback((flower: FlowerData) => {
+  const handleAddFlower = useCallback((flower: FlowerData, addCount: number = 1) => {
     setSelectedFlowers((prev) => {
       const existing = prev.find((f) => f.flower.id === flower.id);
       if (existing) {
-        // Don't exceed stock
-        if (existing.quantity >= flower.quantity) return prev;
+        const newQty = Math.min(existing.quantity + addCount, flower.quantity);
+        if (newQty === existing.quantity) return prev;
         return prev.map((f) =>
-          f.flower.id === flower.id ? { ...f, quantity: f.quantity + 1 } : f
+          f.flower.id === flower.id ? { ...f, quantity: newQty } : f
         );
       }
-      return [...prev, { flower, quantity: 1 }];
+      return [...prev, { flower, quantity: Math.min(addCount, flower.quantity) }];
     });
   }, []);
 

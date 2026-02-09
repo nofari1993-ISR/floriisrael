@@ -25,7 +25,7 @@ interface ColorVariant {
 interface FlowerCardProps {
   flower: FlowerData;
   selectedQuantity: number;
-  onAdd: (flower: FlowerData) => void;
+  onAdd: (flower: FlowerData, count?: number) => void;
   onRemove: (flower: FlowerData) => void;
   colorVariants?: ColorVariant[];
 }
@@ -187,7 +187,7 @@ const FlowerCard = ({
                 color: variant?.color ?? flower.color,
                 price: variant?.price ?? flower.price,
                 quantity: variant?.quantity ?? flower.quantity,
-              } as FlowerData);
+              } as FlowerData, sel.quantity);
             }
             setIsColorSelectorOpen(false);
           }}
