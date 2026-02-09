@@ -1,7 +1,7 @@
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useState, useMemo, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import { ArrowRight, Palette, Search, Loader2 } from "lucide-react";
+import { ArrowRight, Palette, Search, Loader2, Store } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -52,6 +52,21 @@ const DIYBuilderPage = () => {
   } = useDIYBuilder();
 
   const queryClient = useQueryClient();
+
+  // Fetch shop name
+  const { data: shopName } = useQuery({
+    queryKey: ["shop-name", shopId],
+    queryFn: async () => {
+      if (!shopId) return null;
+      const { data } = await supabase
+        .from("shops")
+        .select("name")
+        .eq("id", shopId)
+        .single();
+      return data?.name || null;
+    },
+    enabled: !!shopId,
+  });
 
   // Fetch only in-stock flowers from database
   const { data: flowers = [], isLoading } = useQuery({
@@ -205,6 +220,12 @@ const DIYBuilderPage = () => {
             <p className="text-primary-foreground/80 font-body max-w-2xl mx-auto">
               בחרו מהמבחר הרחב ובנו את הזר המושלם בדיוק לפי הטעם שלכם
             </p>
+            {shopName && (
+              <div className="inline-flex items-center gap-2 bg-primary-foreground/15 backdrop-blur-sm rounded-full px-4 py-1.5 mt-3">
+                <Store className="w-3.5 h-3.5 text-primary-foreground/80" />
+                <span className="text-primary-foreground/90 text-sm font-body font-medium">{shopName}</span>
+              </div>
+            )}
           </motion.div>
         </div>
       </div>
