@@ -31,7 +31,7 @@ const Logo = ({ size = "md", showText = true, className = "", layout = "horizont
     >
       <img src={logoImage} alt="Flori" className={`${sizeMap[size]} object-contain mix-blend-multiply`} />
       {showText && (
-        <span className={`font-display font-extrabold ${textSizeMap[size]} text-foreground tracking-wide ${isVertical ? "text-center" : ""}`} style={{ fontWeight: 800 }}>
+        <span className={`font-extrabold ${textSizeMap[size]} text-foreground tracking-wide ${isVertical ? "text-center" : ""}`} style={{ fontFamily: "'Playfair Display', serif", fontWeight: 800 }}>
           Flori
         </span>
       )}
