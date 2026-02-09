@@ -44,7 +44,7 @@ const Footer = () => {
             <h4 className="font-display font-semibold text-primary-foreground mb-4">צרו קשר</h4>
             <ul className="space-y-2 font-body text-primary-foreground/60">
               <li>floristaisrael@gmail.com</li>
-              <li>054-1234567</li>
+              <li>052-6972020</li>
               <li>תל אביב, ישראל</li>
             </ul>
           </motion.div>
