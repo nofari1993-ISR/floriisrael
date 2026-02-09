@@ -1,8 +1,10 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
-import { Star, MapPin, Clock, Palette, Navigation, Trash2, Truck } from "lucide-react";
+import { Star, MapPin, Clock, Palette, Navigation, Trash2, Truck, MessageSquarePlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Shop } from "@/hooks/useShops";
+import ReviewModal from "@/components/ReviewModal";
 
 import shopPlaceholder1 from "@/assets/shop-placeholder-1.jpg";
 import shopPlaceholder2 from "@/assets/shop-placeholder-2.jpg";
@@ -20,6 +22,7 @@ interface ShopCardProps {
 
 const ShopCard = ({ shop, index, isAdmin, onRemove, formatDistance }: ShopCardProps) => {
   const navigate = useNavigate();
+  const [reviewOpen, setReviewOpen] = useState(false);
 
   // Generate star icons
   const renderStars = (rating: number) => {
@@ -145,12 +148,26 @@ const ShopCard = ({ shop, index, isAdmin, onRemove, formatDistance }: ShopCardPr
             <Clock className="w-3.5 h-3.5 text-primary/50" />
             <span>{shop.hours}</span>
           </div>
+          <button
+            onClick={() => setReviewOpen(true)}
+            className="flex items-center gap-1 text-xs text-primary font-medium font-body hover:underline transition-colors"
+          >
+            <MessageSquarePlus className="w-3.5 h-3.5" />
+            כתבו ביקורת
+          </button>
           <div className="flex items-center gap-1.5 text-xs text-primary font-medium mr-auto">
             <Truck className="w-3.5 h-3.5" />
             <span>משלוח עד הבית</span>
           </div>
         </div>
       </div>
+
+      <ReviewModal
+        open={reviewOpen}
+        onClose={() => setReviewOpen(false)}
+        shopId={shop.id}
+        shopName={shop.name}
+      />
     </motion.div>
   );
 };
