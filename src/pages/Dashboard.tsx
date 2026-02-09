@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Package, ClipboardList, Store, ArrowRight, LogOut, ChevronDown, Truck } from "lucide-react";
+import { Package, ClipboardList, Store, ArrowRight, LogOut, ChevronDown, Truck, Shield } from "lucide-react";
 import Logo from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { useShopOwner, type OwnedShop } from "@/hooks/useShopOwner";
@@ -156,7 +156,18 @@ const Dashboard = () => {
               )}
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            {isAdmin && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigate("/admin/permissions")}
+                className="text-muted-foreground hover:text-primary"
+                title="ניהול הרשאות"
+              >
+                <Shield className="w-4 h-4" />
+              </Button>
+            )}
             <Logo size="sm" />
             <Button
               variant="ghost"

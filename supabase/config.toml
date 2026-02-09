@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.generate-bouquet-image]
 verify_jwt = false
+
+[functions.manage-shop-owners]
+verify_jwt = false
