@@ -1,13 +1,14 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight, Shield, Store, UserPlus, UserMinus, Loader2, Search, Mail } from "lucide-react";
+import { ArrowRight, Shield, Store, UserPlus, UserMinus, Loader2, Search, Mail, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Logo from "@/components/Logo";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { useShops } from "@/hooks/useShops";
 
 interface ShopWithOwner {
   id: string;
@@ -20,6 +21,7 @@ interface ShopWithOwner {
 const AdminPermissions = () => {
   const navigate = useNavigate();
   const { user, isAdmin, loading: authLoading } = useAuth();
+  const { removeShop } = useShops();
   const [shops, setShops] = useState<ShopWithOwner[]>([]);
   const [loading, setLoading] = useState(true);
   const [assigningShopId, setAssigningShopId] = useState<string | null>(null);
@@ -97,6 +99,19 @@ const AdminPermissions = () => {
       fetchShops();
     } catch (err: any) {
       toast({ title: "שגיאה", description: err.message || "לא ניתן להסיר", variant: "destructive" });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleDeleteShop = async (shopId: string, shopName: string) => {
+    if (!confirm(`למחוק את החנות "${shopName}" וכל הנתונים שלה? פעולה זו בלתי הפיכה!`)) return;
+    setSubmitting(true);
+    try {
+      const success = await removeShop(shopId);
+      if (success) fetchShops();
+    } catch (err: any) {
+      toast({ title: "שגיאה", description: err.message || "לא ניתן למחוק", variant: "destructive" });
     } finally {
       setSubmitting(false);
     }
@@ -271,6 +286,18 @@ const AdminPermissions = () => {
                       {shop.owner_id ? "שנה בעל/ת חנות" : "שייך בעל/ת חנות"}
                     </Button>
                   )}
+
+                  {/* Delete shop */}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="rounded-xl gap-1.5 w-full text-destructive hover:text-destructive hover:bg-destructive/10 border border-destructive/20"
+                    onClick={() => handleDeleteShop(shop.id, shop.name)}
+                    disabled={submitting}
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    מחק חנות
+                  </Button>
                 </motion.div>
               ))}
             </div>
