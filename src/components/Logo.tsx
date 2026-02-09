@@ -15,9 +15,9 @@ const sizeMap = {
 };
 
 const textSizeMap = {
-  sm: "text-sm",
-  md: "text-base",
-  lg: "text-2xl md:text-3xl",
+  sm: "text-base",
+  md: "text-lg",
+  lg: "text-3xl md:text-4xl",
 };
 
 const Logo = ({ size = "md", showText = true, className = "", layout = "horizontal" }: LogoProps) => {
@@ -31,7 +31,7 @@ const Logo = ({ size = "md", showText = true, className = "", layout = "horizont
     >
       <img src={logoImage} alt="Flori" className={`${sizeMap[size]} object-contain mix-blend-multiply`} />
       {showText && (
-        <span className={`font-display font-bold ${textSizeMap[size]} text-foreground tracking-wide ${isVertical ? "text-center" : ""}`}>
+        <span className={`font-display font-extrabold ${textSizeMap[size]} text-foreground tracking-wide ${isVertical ? "text-center" : ""}`} style={{ fontWeight: 800 }}>
           Flori
         </span>
       )}
