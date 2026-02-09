@@ -1,5 +1,5 @@
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { ArrowRight, Palette, Search, Loader2 } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -30,7 +30,15 @@ const DIYBuilderPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedColor, setSelectedColor] = useState("הכל");
   const [isMobileSummaryOpen, setIsMobileSummaryOpen] = useState(false);
-  
+
+  const categoryRefs = {
+    filler: useRef<HTMLDivElement>(null),
+    greenery: useRef<HTMLDivElement>(null),
+  };
+
+  const handleScrollToCategory = (category: "filler" | "greenery") => {
+    categoryRefs[category]?.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
 
   const {
     selectedFlowers,
@@ -266,11 +274,15 @@ const DIYBuilderPage = () => {
               </div>
             ) : (
               <div className="space-y-6">
-                {categorizedFlowers.map((category) => (
-                  <div key={category.label}>
-                    <h2 className="text-base md:text-lg font-display font-bold text-foreground mb-3">
-                      {category.label}
-                    </h2>
+                {categorizedFlowers.map((category) => {
+                  const catKey = category.label.includes("מילוי") ? "filler"
+                    : category.label.includes("ירק") ? "greenery"
+                    : null;
+                  return (
+                  <div key={category.label} ref={catKey ? categoryRefs[catKey] : undefined}>
+                     <h2 className="text-base md:text-lg font-display font-bold text-foreground mb-3">
+                       {category.label}
+                     </h2>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
                       {category.flowers.map((flower) => {
                         const variants = flowerColorVariants[flower.name] || [];
@@ -299,7 +311,8 @@ const DIYBuilderPage = () => {
                       })}
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
@@ -312,6 +325,7 @@ const DIYBuilderPage = () => {
                 onRemove={handleRemoveFromSummary}
                 onClearAll={clearAll}
                 onCheckout={handleCheckout}
+                onScrollToCategory={handleScrollToCategory}
               />
             </div>
           </div>
@@ -342,6 +356,10 @@ const DIYBuilderPage = () => {
                   onCheckout={() => {
                     setIsMobileSummaryOpen(false);
                     handleCheckout();
+                  }}
+                  onScrollToCategory={(cat) => {
+                    setIsMobileSummaryOpen(false);
+                    setTimeout(() => handleScrollToCategory(cat), 300);
                   }}
                 />
               </div>
