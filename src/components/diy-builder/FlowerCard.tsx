@@ -180,8 +180,14 @@ const FlowerCard = ({
           onClose={() => setIsColorSelectorOpen(false)}
           onConfirm={(selections) => {
             for (const sel of selections) {
-              // This will be handled by the parent
-              onAdd({ ...flower, id: sel.variantId } as FlowerData);
+              const variant = colorVariants.find((v) => v.id === sel.variantId);
+              onAdd({
+                ...flower,
+                id: sel.variantId,
+                color: variant?.color ?? flower.color,
+                price: variant?.price ?? flower.price,
+                quantity: variant?.quantity ?? flower.quantity,
+              } as FlowerData);
             }
             setIsColorSelectorOpen(false);
           }}
