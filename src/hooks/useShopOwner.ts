@@ -26,10 +26,17 @@ export const useShopOwner = () => {
 
     const fetchOwnedShops = async () => {
       setShopsLoading(true);
-      const { data, error } = await supabase
+
+      let query = supabase
         .from("shops")
-        .select("id, name, location, speciality, hours")
-        .eq("owner_id", user.id);
+        .select("id, name, location, speciality, hours");
+
+      // Admins see all shops; shop owners see only their own
+      if (!isAdmin) {
+        query = query.eq("owner_id", user.id);
+      }
+
+      const { data, error } = await query.order("name");
 
       if (!error && data) {
         setShops(data);
@@ -40,7 +47,7 @@ export const useShopOwner = () => {
     };
 
     fetchOwnedShops();
-  }, [user, authLoading]);
+  }, [user, authLoading, isAdmin]);
 
   const isShopOwner = shops.length > 0;
   const loading = authLoading || shopsLoading;
