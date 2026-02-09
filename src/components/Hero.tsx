@@ -101,18 +101,20 @@ const Hero = () => {
             transition={{ duration: 0.9, delay: 0.2, ease: "easeOut" }}
             className="space-y-6 lg:space-y-8 text-center"
           >
-            <div className="flex items-center justify-center gap-4 mb-2 lg:mb-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 1.2, ease: "easeOut" }}
+              className="flex items-center justify-center gap-4 mb-2 lg:mb-4"
+            >
               <Logo size="lg" showText={false} />
-              <motion.span
-                initial={{ opacity: 0 }}
-                animate={{ opacity: [0, 1, 0.7, 1] }}
-                transition={{ duration: 2, ease: "easeInOut" }}
+              <span
                 className="text-5xl md:text-6xl lg:text-7xl text-foreground tracking-wide"
                 style={{ fontFamily: "'Pacifico', cursive" }}
               >
                 Flori
-              </motion.span>
-            </div>
+              </span>
+            </motion.div>
             <p className="text-base md:text-lg lg:text-xl text-muted-foreground font-body max-w-lg leading-relaxed mx-auto lg:mx-0">
               גלו חנויות פרחים באזור שלכם וקבלו את הזר המושלם ישירות עד הבית 🌷
             </p>
