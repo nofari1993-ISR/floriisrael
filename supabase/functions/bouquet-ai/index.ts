@@ -65,6 +65,9 @@ Deno.serve(async (req) => {
       if (answers.occasion && (typeof answers.occasion !== "string" || answers.occasion.length > 200)) {
         return new Response(JSON.stringify({ error: "Occasion text too long" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
+      if (answers.style && (typeof answers.style !== "string" || answers.style.length > 100)) {
+        return new Response(JSON.stringify({ error: "Style text too long" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
       if (answers.notes && (typeof answers.notes !== "string" || answers.notes.length > 500)) {
         return new Response(JSON.stringify({ error: "Notes too long" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
@@ -132,6 +135,11 @@ Deno.serve(async (req) => {
         ? `הלקוח ביקש זר צבעוני! חובה לשלב לפחות 3-4 צבעים שונים ומגוונים (למשל: אדום, צהוב, כתום, סגול, ורוד, לבן). אל תשתמש רק בגוונים דומים!`
         : `צבעים מועדפים: ${colorsRequested}`;
 
+      const styleRequested = answers.style || "לא צוין";
+      const styleInstruction = styleRequested !== "לא צוין"
+        ? `סגנון מועדף: ${styleRequested}. התאם את בחירת הפרחים, הכמויות והמראה הכללי לסגנון הזה.`
+        : "";
+
       prompt = `אתה מעצב זרי פרחים מקצועי. בנה זר מגוון עם מספר סוגי פרחים שונים.
 
 # פרחים זמינים במלאי:
@@ -141,6 +149,7 @@ ${boostedInstruction}
 - למי: ${answers.recipient || "לא צוין"}
 - אירוע: ${answers.occasion || "לא צוין"}
 - ${colorInstruction}
+${styleInstruction ? `- ${styleInstruction}` : ""}
 - תקציב לפרחים: ₪${Math.floor(budgetForFlowers)}
 - הערות: ${answers.notes && answers.notes !== "המשך" ? answers.notes : "אין"}
 
@@ -153,6 +162,7 @@ ${boostedInstruction}
 6. ${boostedFlowers.length > 0 ? "תעדף את הפרחים המקודמים (⭐) ותן להם כמות גבוהה יותר בזר" : "בחר פרחים שמתאימים לבקשה"}
 ${isColorful ? "7. **קריטי**: הזר חייב להיות צבעוני באמת — שלב פרחים מצבעים שונים לחלוטין (אדום + צהוב + סגול + כתום וכו'). לא רק ורוד ואדום!" : ""}
 ${budgetForFlowers <= 200 ? "8. **חובה**: בתקציב עד ₪200, הזר חייב לכלול צמחי מילוי וירק (כמו אקליפטוס, רוסקוס, שרך, גיבסנית) כדי לתת לזר נפח ומלאות. שלב לפחות 1-2 סוגי ירק/מילוי!" : ""}
+${styleRequested !== "לא צוין" ? `9. **סגנון**: התאם את הזר לסגנון "${styleRequested}" — בחר פרחים, כמויות ומבנה שמשדרים את האסתטיקה הזו.` : ""}
 
 # ההודעה שלך (message):
 כתוב הודעה חמה ואישית (2-3 משפטים) שמסבירה למה בחרת בפרחים האלה ואיך הם מתאימים לאירוע.

@@ -12,6 +12,7 @@ export const STEPS = {
   OCCASION: "occasion",
   BUDGET: "budget",
   COLORS: "colors",
+  STYLE: "style",
   NOTES: "notes",
   RECOMMEND: "recommend",
 } as const;
@@ -52,6 +53,15 @@ export const COLOR_OPTIONS = [
   "צבעוני",
 ];
 
+export const STYLE_OPTIONS = [
+  { emoji: "🌿", label: "קלאסי", value: "קלאסי" },
+  { emoji: "🌾", label: "כפרי / בוהו", value: "כפרי / בוהו" },
+  { emoji: "✨", label: "מודרני מינימלי", value: "מודרני מינימלי" },
+  { emoji: "🌹", label: "רומנטי", value: "רומנטי" },
+  { emoji: "🌻", label: "עליז וצבעוני", value: "עליז וצבעוני" },
+  { emoji: "🕊️", label: "אלגנטי", value: "אלגנטי" },
+];
+
 const INITIAL_MESSAGE = `🌸 ברוכים הבאים לבונה הזרים החכם!
 
 אני כאן כדי לעזור לכם ליצור את הזר המושלם, מותאם בדיוק לצרכים שלכם 💫
@@ -63,6 +73,7 @@ export interface WizardAnswers {
   occasion?: string;
   budget?: string;
   colors?: string;
+  style?: string;
   notes?: string;
 }
 
@@ -159,7 +170,11 @@ export function useBouquetWizard(shopId: string | null, mode?: string | null) {
         }
       } else if (currentStep === STEPS.COLORS) {
         newAnswers.colors = answer;
-        nextMessage = `יופי! הצבעים האלה יהיו מושלמים. ✨ **יש משהו נוסף שתרצו שאדע?** (או לחצו "המשך")`;
+        nextMessage = `יופי! 🎨 **איזה סגנון מתאים לכם?**`;
+        nextStep = STEPS.STYLE;
+      } else if (currentStep === STEPS.STYLE) {
+        newAnswers.style = answer;
+        nextMessage = `מושלם! ✨ **יש משהו נוסף שתרצו שאדע?** (או לחצו "המשך")`;
         nextStep = STEPS.NOTES;
       } else if (currentStep === STEPS.NOTES) {
         newAnswers.notes = answer;

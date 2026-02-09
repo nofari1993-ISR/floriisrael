@@ -14,6 +14,7 @@ import {
   RECIPIENT_OPTIONS,
   OCCASION_OPTIONS,
   COLOR_OPTIONS,
+  STYLE_OPTIONS,
 } from "@/hooks/useBouquetWizard";
 import { useShopOwner } from "@/hooks/useShopOwner";
 
@@ -90,6 +91,7 @@ const AIChatPage = () => {
   const showRecipientOptions = currentStep === STEPS.RECIPIENT && !recommendation;
   const showOccasionOptions = currentStep === STEPS.OCCASION && !recommendation;
   const showColorOptions = currentStep === STEPS.COLORS && !recommendation;
+  const showStyleOptions = currentStep === STEPS.STYLE && !recommendation;
   const showNotesSkip = currentStep === STEPS.NOTES && !recommendation;
 
   return (
@@ -153,6 +155,9 @@ const AIChatPage = () => {
                 </button>
               ))}
             </div>
+          )}
+          {showStyleOptions && (
+            <StepOptionButtons options={STYLE_OPTIONS} onSelect={handleStepAnswer} disabled={isLoading} />
           )}
           {showNotesSkip && (
             <Button
