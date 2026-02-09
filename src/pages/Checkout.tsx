@@ -31,7 +31,7 @@ const checkoutSchema = z.object({
   timeSlot: z.enum(["morning", "afternoon"], { required_error: "יש לבחור טווח שעות" }),
   greeting: z.string().max(500, "כרטיס ברכה עד 500 תווים").optional(),
   customerName: z.string().trim().min(2, "שם חייב להכיל לפחות 2 תווים").max(100),
-  customerPhone: z.string().trim().min(9, "מספר טלפון לא תקין").max(15).optional(),
+  customerPhone: z.string().trim().min(9, "מספר טלפון לא תקין").max(15, "מספר טלפון לא תקין"),
   deliveryMethod: z.enum(["delivery", "pickup"]),
 }).refine((data) => {
   if (data.deliveryMethod === "delivery") {
@@ -406,7 +406,7 @@ const Checkout = () => {
           <div className="space-y-2">
             <label className="flex items-center gap-2 text-sm font-medium text-foreground font-body">
               <MessageSquare className="w-4 h-4 text-primary/60" />
-              מספר טלפון (אופציונלי)
+              מספר טלפון
             </label>
             <input
               type="tel"
