@@ -76,7 +76,7 @@ const PayPalButton = ({ amount, currency = "ILS", onApprove, onError, disabled }
                 value: amount.toFixed(2),
                 currency_code: currency,
               },
-              description: "הזמנת זר פרחים - Bloom",
+              description: "הזמנת זר פרחים - Flori",
             },
           ],
         });

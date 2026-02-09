@@ -56,7 +56,7 @@ const Footer = () => {
           className="border-t border-primary-foreground/10 pt-8 flex flex-col md:flex-row items-center justify-between gap-4"
         >
           <p className="text-primary-foreground/40 text-sm font-body">
-            © 2026 FloristA - All Rights Reserved
+            © 2026 Flori - All Rights Reserved
           </p>
           <div className="flex gap-6 text-primary-foreground/40 text-sm font-body">
             <a href="/terms" className="hover:text-primary-foreground/70 transition-colors">תנאי שימוש</a>
