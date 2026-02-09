@@ -6,6 +6,7 @@ import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import type { FlowerData } from "./FlowerCard";
 import FullscreenImageModal from "./FullscreenImageModal";
+import BouquetTips from "./BouquetTips";
 
 export interface SelectedFlower {
   flower: FlowerData;
@@ -17,9 +18,13 @@ interface BouquetSummaryProps {
   onRemove: (flowerId: string) => void;
   onClearAll: () => void;
   onCheckout: () => void;
+  onScrollToCategory?: (category: "filler" | "greenery") => void;
 }
 
-const BouquetSummary = ({ selectedFlowers, onRemove, onClearAll, onCheckout }: BouquetSummaryProps) => {
+const GREENERY_NAMES = new Set(["אקליפטוס", "רוסקוס", "שרך"]);
+const FILLER_NAMES = new Set(["גיבסנית", "לבנדר"]);
+
+const BouquetSummary = ({ selectedFlowers, onRemove, onClearAll, onCheckout, onScrollToCategory }: BouquetSummaryProps) => {
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [generatedImageUrl, setGeneratedImageUrl] = useState<string | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -162,6 +167,14 @@ const BouquetSummary = ({ selectedFlowers, onRemove, onClearAll, onCheckout }: B
             </Button>
           )}
         </div>
+
+        {/* Smart tips */}
+        <BouquetTips
+          hasMainFlowers={selectedFlowers.some((f) => !GREENERY_NAMES.has(f.flower.name) && !FILLER_NAMES.has(f.flower.name))}
+          hasFillers={selectedFlowers.some((f) => FILLER_NAMES.has(f.flower.name))}
+          hasGreenery={selectedFlowers.some((f) => GREENERY_NAMES.has(f.flower.name))}
+          onScrollToCategory={onScrollToCategory}
+        />
 
         {/* Flowers list */}
         <div className="p-3 space-y-2 max-h-[40vh] overflow-y-auto">
