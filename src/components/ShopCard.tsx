@@ -130,7 +130,7 @@ const ShopCard = ({ shop, index, isAdmin, onRemove, formatDistance }: ShopCardPr
             onClick={() => navigate(`/diy-builder?shopId=${shop.id}`)}
           >
             <Palette className="w-4 h-4" />
-            שזור בעצמך
+            לשזור בעצמך
           </Button>
           <Button
             variant="hero-outline"
