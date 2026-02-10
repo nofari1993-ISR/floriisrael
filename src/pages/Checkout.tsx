@@ -68,10 +68,11 @@ const Checkout = () => {
   const shopId = searchParams.get("shopId");
 
   // DIY data from navigation state
-  const diyState = location.state as { diyItems?: DIYItem[]; totalPrice?: number; isDIY?: boolean } | null;
+  const diyState = location.state as { diyItems?: DIYItem[]; totalPrice?: number; isDIY?: boolean; bouquetImageUrl?: string | null } | null;
   const isDIY = diyState?.isDIY || false;
   const diyItems = diyState?.diyItems || [];
   const diyTotalPrice = diyState?.totalPrice || 0;
+  const bouquetImageUrl = diyState?.bouquetImageUrl || null;
 
   const [formData, setFormData] = useState({
     recipientName: "",
@@ -359,6 +360,14 @@ const Checkout = () => {
                 <ShoppingBag className="w-4 h-4 text-primary/60" />
                 הזר שלכם
               </label>
+              {bouquetImageUrl && (
+                <div className="relative rounded-xl overflow-hidden mb-2">
+                  <img src={bouquetImageUrl} alt="הזר שלכם" className="w-full h-48 object-cover rounded-xl" />
+                  <div className="absolute bottom-2 right-2 bg-black/60 backdrop-blur-sm text-white text-[10px] px-2 py-0.5 rounded-full">
+                    ✨ נוצר ב-AI
+                  </div>
+                </div>
+              )}
               <div className="bg-muted/30 rounded-xl p-4 space-y-2">
                 {diyItems.map((item, i) => (
                   <div key={i} className="flex items-center justify-between text-sm font-body">
