@@ -328,7 +328,19 @@ ${flowersContext}
     }
 
     for (const aiFlower of orderedFlowers) {
-      const realFlower = flowersList.find((f: any) => f.name === aiFlower.name);
+      // Try exact match first, then fuzzy match (includes / contained-in)
+      let realFlower = flowersList.find((f: any) => f.name === aiFlower.name);
+      if (!realFlower) {
+        realFlower = flowersList.find((f: any) =>
+          f.name.includes(aiFlower.name) || aiFlower.name.includes(f.name)
+        );
+      }
+      // Also try matching with color context (e.g. AI returns "ורד אדום" but inventory has "ורד")
+      if (!realFlower && aiFlower.color) {
+        realFlower = flowersList.find((f: any) =>
+          aiFlower.name.includes(f.name) && (!f.color || f.color === aiFlower.color)
+        );
+      }
       if (!realFlower) {
         console.warn(`"${aiFlower.name}" not found in inventory, skipping`);
         continue;
