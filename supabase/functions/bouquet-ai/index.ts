@@ -386,11 +386,11 @@ ${flowersContext}
           .map((f: any) => `${Math.max(1, Math.floor(f.quantity * 0.95))} ${f.color} ${f.name}`)
           .join(", ");
 
-        const imagePrompt = `Generate a realistic top-down flat-lay photograph of a single elegant bouquet on a white background.
+        const imagePrompt = `Generate a realistic photograph of a single beautiful florist bouquet, held upright as if on display in a flower shop. The bouquet is wrapped in elegant kraft paper with a ribbon.
 
 The bouquet contains: ${flowerDescriptions}.
 
-Style: Bird's eye view shot from directly above (90 degrees), bouquet wrapped in kraft paper, soft natural lighting, clean white surface. Show exactly one bouquet with fewer flowers rather than more. Do not add flowers not listed.`;
+Style: Front-facing view, the bouquet is standing upright with flowers visible at the top, professional product photography, soft studio lighting, clean white or light background. Show exactly one bouquet with fewer flowers rather than more. Do not add flowers not listed.`;
 
 
         console.log("[bouquet-ai] Generating bouquet image...");
