@@ -371,7 +371,7 @@ ${flowersContext}
       try {
         // Use reduced quantities to avoid showing MORE flowers than listed
         const flowerDescriptions = validatedFlowers
-          .map((f: any) => `${Math.max(1, Math.floor(f.quantity * 0.85))} ${f.color} ${f.name}`)
+          .map((f: any) => `${Math.max(1, Math.floor(f.quantity * 0.95))} ${f.color} ${f.name}`)
           .join(", ");
 
         const imagePrompt = `Create a beautiful, realistic DIRECTLY TOP-DOWN (bird's eye view, 90 degrees from above) photograph of exactly ONE single professional florist bouquet on a clean white background.
