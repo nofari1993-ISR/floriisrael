@@ -369,17 +369,22 @@ ${flowersContext}
 
     if (validatedFlowers.length > 0) {
       try {
+        // Use reduced quantities to avoid showing MORE flowers than listed
         const flowerDescriptions = validatedFlowers
-          .map((f: any) => `${f.quantity} ${f.color} ${f.name}`)
+          .map((f: any) => `${Math.max(1, Math.floor(f.quantity * 0.7))} ${f.color} ${f.name}`)
           .join(", ");
 
-        const imagePrompt = `Create a beautiful, realistic photograph of exactly ONE single professional florist bouquet. Show only ONE bouquet, not two, not multiple — just ONE.
+        const imagePrompt = `Create a beautiful, realistic photograph of exactly ONE single professional florist bouquet on a clean white background.
 
-The single bouquet contains: ${flowerDescriptions}.
+The bouquet contains approximately: ${flowerDescriptions}.
 
-CRITICAL: There must be exactly ONE bouquet in the image. Do NOT show two bouquets or multiple arrangements.
+IMPORTANT:
+- Show exactly ONE bouquet, not two or multiple.
+- Show FEWER flowers rather than more. It is much better to undercount than overcount.
+- Do NOT add extra flowers or greenery not listed above.
+- The bouquet is elegantly wrapped in kraft paper with a ribbon.
 
-The bouquet is elegantly wrapped in kraft paper with a ribbon. Studio lighting, clean white background, high quality product photography. Top-down overhead view. The flowers should be clearly identifiable and match their described colors precisely.`;
+Style: Studio lighting, white background, top-down overhead view, high quality product photography.`;
 
         console.log("[bouquet-ai] Generating bouquet image...");
 
