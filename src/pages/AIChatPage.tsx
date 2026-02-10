@@ -120,7 +120,7 @@ const AIChatPage = () => {
           {isLoading && (
             <div className="flex gap-2.5">
               <div className="w-8 h-8 rounded-full bg-sage-light flex items-center justify-center overflow-hidden">
-                <img src={nupharAvatar} alt="Flori" className="w-7 h-7 object-cover" />
+                <img src={nupharAvatar} alt="Flori" className="w-8 h-8 object-cover" />
               </div>
               <div className="bg-muted rounded-2xl px-4 py-3">
                 <div className="flex gap-1.5">

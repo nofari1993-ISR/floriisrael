@@ -25,7 +25,7 @@ const BouquetChatMessage = ({ role, content, isStreaming }: BouquetChatMessagePr
         }`}
       >
         {isBot ? (
-          <img src={nupharAvatar} alt="Flori" className="w-7 h-7 object-cover" />
+          <img src={nupharAvatar} alt="Flori" className="w-8 h-8 object-cover" />
         ) : (
           <User className="w-4 h-4 text-secondary-foreground" />
         )}
