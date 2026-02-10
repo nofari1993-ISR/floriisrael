@@ -130,7 +130,7 @@ const ShopCard = ({ shop, index, isAdmin, onRemove, formatDistance }: ShopCardPr
             onClick={() => navigate(`/diy-builder?shopId=${shop.id}`)}
           >
             <Palette className="w-4 h-4" />
-            עיצוב זר DIY
+            שזור בעצמך
           </Button>
           <Button
             variant="hero-outline"
@@ -138,7 +138,7 @@ const ShopCard = ({ shop, index, isAdmin, onRemove, formatDistance }: ShopCardPr
             className="rounded-xl gap-1.5"
             onClick={() => navigate(`/ai-chat?shopId=${shop.id}`)}
           >
-            ✨ זר עם AI
+            ✨ Flori השוזרת
           </Button>
         </div>
 
