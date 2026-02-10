@@ -83,6 +83,7 @@ const AIChatPage = () => {
         diyItems: items,
         totalPrice: recommendation.total_price,
         isDIY: true,
+        bouquetImageUrl: recommendation.image_url || null,
       },
     });
   };

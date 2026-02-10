@@ -2,6 +2,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useState, useMemo, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { ArrowRight, Palette, Search, Loader2, Store } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -163,8 +164,10 @@ const DIYBuilderPage = () => {
   }, [filteredFlowers]);
 
 
-  // Handle checkout - navigate to checkout page with flower data
-  const handleCheckout = () => {
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false);
+
+  // Handle checkout - generate image then navigate to checkout page
+  const handleCheckout = async () => {
     if (selectedFlowers.length === 0) return;
 
     const designFee = Math.round(totalPrice * 0.05);
@@ -178,11 +181,33 @@ const DIYBuilderPage = () => {
       color: item.flower.color || "",
     }));
 
+    // Generate bouquet image in background
+    setIsGeneratingImage(true);
+    let bouquetImageUrl: string | null = null;
+    try {
+      const flowers = selectedFlowers.map((item) => ({
+        name: item.flower.name,
+        quantity: item.quantity,
+        color: item.flower.color || "",
+      }));
+      const { data, error } = await supabase.functions.invoke("generate-bouquet-image", {
+        body: { flowers },
+      });
+      if (!error && data?.image_url) {
+        bouquetImageUrl = data.image_url;
+      }
+    } catch (err) {
+      console.error("Image generation error:", err);
+    } finally {
+      setIsGeneratingImage(false);
+    }
+
     navigate(`/checkout?shopId=${shopId}`, {
       state: {
         diyItems: items,
         totalPrice: grandTotal,
         isDIY: true,
+        bouquetImageUrl,
       },
     });
   };
@@ -358,8 +383,8 @@ const DIYBuilderPage = () => {
         <div className="fixed bottom-4 left-4 right-4 lg:hidden z-50">
           <Sheet open={isMobileSummaryOpen} onOpenChange={setIsMobileSummaryOpen}>
             <SheetTrigger asChild>
-              <Button variant="hero" className="w-full rounded-full py-6 text-base shadow-elevated gap-2">
-                צפה בזר ({totalItems} פרחים)
+              <Button variant="hero" className="w-full rounded-full py-6 text-base shadow-elevated gap-2" disabled={isGeneratingImage}>
+                {isGeneratingImage ? <><Loader2 className="w-4 h-4 animate-spin" /> מכינים את הזר...</> : <>צפה בזר ({totalItems} פרחים)</>}
                 <span className="bg-primary-foreground/20 px-3 py-1 rounded-full text-sm">
                   ₪{totalPrice}
                 </span>
@@ -386,6 +411,16 @@ const DIYBuilderPage = () => {
               </div>
             </SheetContent>
           </Sheet>
+        </div>
+      )}
+      {/* Image generation overlay */}
+      {isGeneratingImage && (
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-[100] flex items-center justify-center">
+          <div className="bg-card rounded-2xl border border-border/50 shadow-card p-8 text-center max-w-xs">
+            <Loader2 className="w-10 h-10 text-primary animate-spin mx-auto mb-4" />
+            <h3 className="font-display font-bold text-foreground mb-1">מכינים את הזר שלכם 🎨</h3>
+            <p className="text-sm text-muted-foreground font-body">יוצרים תמונה של הזר...</p>
+          </div>
         </div>
       )}
 
