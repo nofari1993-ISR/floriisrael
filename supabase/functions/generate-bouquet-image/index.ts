@@ -85,43 +85,34 @@ Deno.serve(async (req) => {
     // Build a precise, countable description
     const totalFlowers = flowers.reduce((sum: number, item: any) => sum + (item.quantity || 1), 0);
 
-    const flowerDescriptions = flowers.map((item: any) => {
+    // Request FEWER flowers than actual to avoid showing MORE than listed
+    const reducedFlowers = flowers.map((item: any) => {
+      const qty = item.quantity || 1;
+      // Use ~70% of quantity, minimum 1
+      const reducedQty = Math.max(1, Math.floor(qty * 0.7));
+      return { ...item, displayQty: reducedQty };
+    });
+    const displayTotal = reducedFlowers.reduce((sum: number, item: any) => sum + item.displayQty, 0);
+
+    const flowerDescriptions = reducedFlowers.map((item: any) => {
       const color = item.color || "";
       const name = item.name;
-      const qty = item.quantity || 1;
-      return `exactly ${qty} ${color} ${name}`.trim();
+      return `${item.displayQty} ${color} ${name}`.trim();
     });
 
-    const flowerListForPrompt = flowerDescriptions.join(", ");
+    const prompt = `Create a realistic top-down photograph of ONE single elegant bouquet wrapped in kraft paper on a clean white surface.
 
-    // Build a numbered list so the model "sees" each flower individually
-    const numberedList: string[] = [];
-    let counter = 1;
-    for (const item of flowers) {
-      const color = item.color || "";
-      const name = item.name;
-      const qty = item.quantity || 1;
-      for (let i = 0; i < qty; i++) {
-        numberedList.push(`${counter}. one ${color} ${name}`.trim());
-        counter++;
-      }
-    }
+The bouquet contains these flowers:
+${flowerDescriptions.map((d: string) => `• ${d}`).join("\n")}
 
-    const prompt = `Create a realistic top-down flat-lay photograph on a clean white surface.
+IMPORTANT RULES:
+- Show ONE single bouquet, not multiple.
+- Show FEWER flowers rather than more. It is much better to show too few than too many.
+- Do NOT add extra flowers or greenery that are not listed above.
+- Each flower type should be recognizable by its color and shape.
+- Keep it simple and elegant.
 
-Show EXACTLY ${totalFlowers} individual flower heads laid out neatly in organized rows, like a botanical catalog photo. Each flower is numbered below:
-
-${numberedList.join("\n")}
-
-CRITICAL RULES:
-1. There must be EXACTLY ${totalFlowers} flower heads visible. Not ${totalFlowers - 1}, not ${totalFlowers + 1}. Exactly ${totalFlowers}.
-2. Lay each flower SEPARATELY with space between them so they can be individually counted.
-3. Arrange them in neat rows (like a grid) — ${totalFlowers <= 6 ? "1-2 rows" : totalFlowers <= 12 ? "2-3 rows" : "3-5 rows"}.
-4. Each flower head must be FULLY visible from above, no overlapping, no hiding.
-5. DO NOT add ANY flowers, greenery, or decorations not in the list above.
-6. After arranging, a light ribbon or twine loosely groups them to suggest a bouquet.
-
-Style: Clean editorial flat-lay on white background, soft natural overhead lighting, each flower clearly distinct and countable.`;
+Style: Professional product photography, soft natural light, overhead view, clean white background.`;
 
     console.log(`[generate-bouquet-image] Generating image for ${totalFlowers} flowers, IP: ${clientIP}`);
 
