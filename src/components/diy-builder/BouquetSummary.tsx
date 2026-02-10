@@ -83,7 +83,7 @@ const BouquetSummary = ({ selectedFlowers, onRemove, onClearAll, onCheckout, onS
 
   return (
     <>
-      <div className="bg-card rounded-2xl border border-border/50 shadow-card overflow-hidden">
+      <div className="bg-card rounded-2xl border border-border/50 shadow-card overflow-hidden flex flex-col max-h-[calc(100vh-2rem)]">
         {/* Header */}
         <div className="bg-gradient-sage p-4 flex items-center justify-between">
           <h3 className="font-display font-semibold text-primary-foreground text-sm">
@@ -177,7 +177,7 @@ const BouquetSummary = ({ selectedFlowers, onRemove, onClearAll, onCheckout, onS
         />
 
         {/* Flowers list */}
-        <div className="p-3 space-y-2 max-h-[40vh] overflow-y-auto">
+        <div className="p-3 space-y-2 overflow-y-auto flex-1 min-h-0">
           <AnimatePresence>
             {selectedFlowers.map((item) => (
               <motion.div
