@@ -25,7 +25,7 @@ type TimeSlotId = typeof TIME_SLOTS[number]["id"];
 
 const checkoutSchema = z.object({
   recipientName: z.string().trim().min(2, "שם חייב להכיל לפחות 2 תווים").max(100),
-  recipientPhone: z.string().trim().min(9, "מספר טלפון לא תקין").max(15, "מספר טלפון לא תקין"),
+  recipientPhone: z.string().max(15, "מספר טלפון לא תקין").optional(),
   address: z.string().max(300).optional(),
   deliveryDate: z.date({ required_error: "יש לבחור תאריך" }),
   timeSlot: z.enum(["morning", "afternoon"], { required_error: "יש לבחור טווח שעות" }),
@@ -41,6 +41,14 @@ const checkoutSchema = z.object({
 }, {
   message: "כתובת חייבת להכיל לפחות 5 תווים",
   path: ["address"],
+}).refine((data) => {
+  if (data.deliveryMethod === "delivery") {
+    return data.recipientPhone && data.recipientPhone.trim().length >= 9;
+  }
+  return true;
+}, {
+  message: "מספר טלפון לא תקין",
+  path: ["recipientPhone"],
 });
 
 type CheckoutFormData = z.infer<typeof checkoutSchema>;
@@ -448,24 +456,26 @@ const Checkout = () => {
             )}
           </div>
 
-          {/* Recipient Phone */}
-          <div className="space-y-2">
-            <label className="flex items-center gap-2 text-sm font-medium text-foreground font-body">
-              <Phone className="w-4 h-4 text-primary/60" />
-              טלפון מקבל/ת המשלוח
-            </label>
-            <input
-              type="tel"
-              value={formData.recipientPhone}
-              onChange={(e) => setFormData((prev) => ({ ...prev, recipientPhone: e.target.value }))}
-              placeholder="050-1234567"
-              className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm font-body text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-ring transition-shadow"
-              dir="ltr"
-            />
-            {errors.recipientPhone && (
-              <p className="text-sm text-destructive font-body">{errors.recipientPhone}</p>
-            )}
-          </div>
+          {/* Recipient Phone (only for delivery) */}
+          {deliveryMethod === "delivery" && (
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-sm font-medium text-foreground font-body">
+                <Phone className="w-4 h-4 text-primary/60" />
+                טלפון מקבל/ת המשלוח
+              </label>
+              <input
+                type="tel"
+                value={formData.recipientPhone}
+                onChange={(e) => setFormData((prev) => ({ ...prev, recipientPhone: e.target.value }))}
+                placeholder="050-1234567"
+                className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm font-body text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-ring transition-shadow"
+                dir="ltr"
+              />
+              {errors.recipientPhone && (
+                <p className="text-sm text-destructive font-body">{errors.recipientPhone}</p>
+              )}
+            </div>
+          )}
 
           {/* Delivery Method Toggle */}
           <div className="space-y-3">
