@@ -49,7 +49,7 @@ const CTASection = () => {
               onClick={() => navigate("/ai-chat")}
             >
               <Sparkles className="w-4 h-4 md:w-5 md:h-5" />
-              בניית זר עם AI
+              Flori השוזרת
             </Button>
             <Button
               variant="hero-outline"
@@ -58,7 +58,7 @@ const CTASection = () => {
               onClick={() => navigate("/diy")}
             >
               <Flower2 className="w-4 h-4 md:w-5 md:h-5" />
-              עיצוב DIY
+              שזור בעצמך
             </Button>
           </div>
 

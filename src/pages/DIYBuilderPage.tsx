@@ -212,7 +212,7 @@ const DIYBuilderPage = () => {
           <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
             <div className="inline-flex items-center gap-2 bg-primary-foreground/20 backdrop-blur-sm rounded-full px-4 py-1.5 mb-3">
               <span>🌸</span>
-              <span className="text-primary-foreground text-sm font-body">עיצוב עצמאי</span>
+              <span className="text-primary-foreground text-sm font-body">שזור בעצמך</span>
             </div>
             <h1 className="text-2xl md:text-4xl font-display font-bold text-primary-foreground mb-2">
               סטודיו לעיצוב זרים
