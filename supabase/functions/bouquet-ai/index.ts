@@ -443,6 +443,9 @@ Style: Front-facing view, the bouquet is standing upright with flowers visible a
 
         console.log("[bouquet-ai] Generating bouquet image...");
 
+        const imgController = new AbortController();
+        const imgTimeout = setTimeout(() => imgController.abort(), 55000); // 55s timeout
+
         const imageResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
           method: "POST",
           headers: {
@@ -454,20 +457,27 @@ Style: Front-facing view, the bouquet is standing upright with flowers visible a
             messages: [{ role: "user", content: imagePrompt }],
             modalities: ["image", "text"],
           }),
+          signal: imgController.signal,
         });
+        clearTimeout(imgTimeout);
 
         if (imageResponse.ok) {
-          const imageData = await imageResponse.json();
-          const imageUrl = imageData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
-          if (imageUrl) {
-            bouquetImageUrl = imageUrl;
-            console.log("[bouquet-ai] Image generated successfully");
-          } else {
-            console.warn("[bouquet-ai] No image in response");
+          const rawText = await imageResponse.text();
+          try {
+            const imageData = JSON.parse(rawText);
+            const imageUrl = imageData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+            if (imageUrl) {
+              bouquetImageUrl = imageUrl;
+              console.log("[bouquet-ai] Image generated successfully");
+            } else {
+              console.warn("[bouquet-ai] No image in response");
+            }
+          } catch (parseErr) {
+            console.error("[bouquet-ai] Image response parse error, length:", rawText.length);
           }
         } else {
           const errText = await imageResponse.text();
-          console.error("[bouquet-ai] Image generation failed:", imageResponse.status, errText);
+          console.error("[bouquet-ai] Image generation failed:", imageResponse.status, errText.substring(0, 200));
         }
       } catch (imgErr) {
         console.error("[bouquet-ai] Image generation error:", imgErr);
