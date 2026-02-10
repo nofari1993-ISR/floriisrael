@@ -100,19 +100,19 @@ Deno.serve(async (req) => {
       return `${item.displayQty} ${color} ${name}`.trim();
     });
 
-    const prompt = `Create a realistic top-down photograph of ONE single elegant bouquet wrapped in kraft paper on a clean white surface.
+    const prompt = `Create a realistic DIRECTLY TOP-DOWN (bird's eye view, 90 degrees from above) photograph of ONE single elegant bouquet wrapped in kraft paper on a clean white surface.
 
 The bouquet contains these flowers:
 ${flowerDescriptions.map((d: string) => `• ${d}`).join("\n")}
 
 IMPORTANT RULES:
+- Camera angle MUST be directly from above (top-down, flat-lay). NOT from the side, NOT at an angle.
+- The bouquet should be centered and facing upward so all flower heads are visible from above.
 - Show ONE single bouquet, not multiple.
 - Show FEWER flowers rather than more. It is much better to show too few than too many.
 - Do NOT add extra flowers or greenery that are not listed above.
-- Each flower type should be recognizable by its color and shape.
-- Keep it simple and elegant.
 
-Style: Professional product photography, soft natural light, overhead view, clean white background.`;
+Style: Professional flat-lay product photography, camera pointing straight down, soft natural light, clean white background.`;
 
     console.log(`[generate-bouquet-image] Generating image for ${totalFlowers} flowers, IP: ${clientIP}`);
 
