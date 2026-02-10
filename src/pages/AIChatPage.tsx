@@ -154,6 +154,13 @@ const AIChatPage = () => {
                   {color}
                 </button>
               ))}
+              <button
+                onClick={() => inputRef.current?.focus()}
+                disabled={isLoading}
+                className="bg-card border border-dashed border-primary/40 hover:border-primary rounded-lg py-2 text-xs font-body font-medium text-primary transition-all disabled:opacity-50 hover:shadow-soft"
+              >
+                ✏️ צבע אחר
+              </button>
             </div>
           )}
           {showStyleOptions && (
