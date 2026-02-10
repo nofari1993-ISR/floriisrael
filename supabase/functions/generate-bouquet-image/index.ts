@@ -94,7 +94,19 @@ Deno.serve(async (req) => {
 
     const flowerListForPrompt = flowerDescriptions.join(", ");
 
-    const prompt = `Create a realistic top-down photograph of a small hand-tied bouquet on a clean white surface.
+    const sizeDescription = totalFlowers <= 3
+      ? "small hand-tied bouquet"
+      : totalFlowers <= 10
+        ? "medium hand-tied bouquet"
+        : "large, lush hand-tied bouquet spread wide";
+
+    const arrangementDescription = totalFlowers <= 3
+      ? "Simple and minimal, each stem clearly visible and separated"
+      : totalFlowers <= 10
+        ? "Neatly arranged in a round shape, each flower clearly visible and countable"
+        : "Spread out widely in a flat lay arrangement so every single flower head is fully visible from above. Space them out — do NOT stack or overlap flowers. Each flower must be individually distinguishable and countable";
+
+    const prompt = `Create a realistic top-down photograph of a ${sizeDescription} on a clean white surface.
 
 The bouquet contains EXACTLY ${totalFlowers} flowers total, no more, no less:
 ${flowerDescriptions.map((d: string) => `• ${d}`).join("\n")}
@@ -103,12 +115,14 @@ ABSOLUTE RULES:
 - The total number of flower heads visible must be EXACTLY ${totalFlowers}. Count them.
 - Each flower must be clearly distinguishable and countable individually.
 - DO NOT add any extra flowers, leaves, or filler greenery unless explicitly listed above.
-- If only ${totalFlowers} flowers are listed, show only ${totalFlowers} flower heads. A bouquet of 2 flowers is perfectly fine.
+- If only ${totalFlowers} flowers are listed, show only ${totalFlowers} flower heads.
 - NO artistic license to add more flowers for aesthetics.
+- EVERY single flower head must be fully visible from above — no hiding behind other flowers.
+${totalFlowers > 10 ? `- With ${totalFlowers} flowers, spread them out widely so none are hidden or overlapping.\n- Use a wider frame to fit all flowers clearly.` : ""}
 
-Arrangement: ${totalFlowers <= 3 ? "Simple and minimal, each stem clearly visible" : "Neatly arranged, each flower clearly visible and countable"}.
+Arrangement: ${arrangementDescription}.
 Wrapping: Light kraft paper or tissue, tied with a simple ribbon.
-Photography: Clean white background, soft natural light, overhead view so every flower head is visible and countable.`;
+Photography: Clean white background, soft natural light, overhead flat-lay view${totalFlowers > 10 ? ", wide angle to capture all flowers" : ""} so every flower head is visible and countable.`;
 
     console.log(`[generate-bouquet-image] Generating image for ${totalFlowers} flowers, IP: ${clientIP}`);
 
