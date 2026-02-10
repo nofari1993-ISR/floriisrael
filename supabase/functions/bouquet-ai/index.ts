@@ -373,7 +373,13 @@ ${flowersContext}
           .map((f: any) => `${f.quantity} ${f.color} ${f.name}`)
           .join(", ");
 
-        const imagePrompt = `Create a beautiful, realistic photograph of a professional florist bouquet containing exactly: ${flowerDescriptions}. The bouquet should be elegantly wrapped in kraft paper with a ribbon. Studio lighting, white background, high quality product photography. The flowers should be clearly identifiable and match their described colors precisely.`;
+        const imagePrompt = `Create a beautiful, realistic photograph of exactly ONE single professional florist bouquet. Show only ONE bouquet, not two, not multiple — just ONE.
+
+The single bouquet contains: ${flowerDescriptions}.
+
+CRITICAL: There must be exactly ONE bouquet in the image. Do NOT show two bouquets or multiple arrangements.
+
+The bouquet is elegantly wrapped in kraft paper with a ribbon. Studio lighting, clean white background, high quality product photography. Top-down overhead view. The flowers should be clearly identifiable and match their described colors precisely.`;
 
         console.log("[bouquet-ai] Generating bouquet image...");
 
