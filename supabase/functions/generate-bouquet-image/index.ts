@@ -85,32 +85,28 @@ Deno.serve(async (req) => {
     // Build a precise, countable description
     const totalFlowers = flowers.reduce((sum: number, item: any) => sum + (item.quantity || 1), 0);
 
-    // Request FEWER flowers than actual to avoid showing MORE than listed
-    const reducedFlowers = flowers.map((item: any) => {
+    const flowerDescriptions = flowers.map((item: any) => {
       const qty = item.quantity || 1;
-      // Use ~70% of quantity, minimum 1
-      const reducedQty = Math.max(1, Math.floor(qty * 0.99));
-      return { ...item, displayQty: reducedQty };
-    });
-    const displayTotal = reducedFlowers.reduce((sum: number, item: any) => sum + item.displayQty, 0);
-
-    const flowerDescriptions = reducedFlowers.map((item: any) => {
       const color = item.color || "";
       const name = item.name;
-      return `${item.displayQty} ${color} ${name}`.trim();
+      return `exactly ${qty} ${color} ${name}`.trim();
     });
 
     const prompt = `Create a realistic DIRECTLY TOP-DOWN (bird's eye view, 90 degrees from above) photograph of ONE single elegant bouquet wrapped in kraft paper on a clean white surface.
 
-The bouquet contains these flowers:
+The bouquet must contain EXACTLY these flowers (no more, no less):
 ${flowerDescriptions.map((d: string) => `• ${d}`).join("\n")}
 
-IMPORTANT RULES:
+Total flower count: exactly ${totalFlowers} flowers.
+
+CRITICAL RULES:
+- The number of each flower type MUST match the exact quantities listed above. Count carefully.
 - Camera angle MUST be directly from above (top-down, flat-lay). NOT from the side, NOT at an angle.
 - The bouquet should be centered and facing upward so all flower heads are visible from above.
 - Show ONE single bouquet, not multiple.
-- Show FEWER flowers rather than more. It is much better to show too few than too many.
-- Do NOT add extra flowers or greenery that are not listed above.
+- Do NOT add any extra flowers, greenery, or filler that are not listed above.
+- Do NOT omit any flowers from the list.
+- Each flower type must be clearly distinguishable by its color and shape.
 
 Style: Professional flat-lay product photography, camera pointing straight down, soft natural light, clean white background.`;
 
