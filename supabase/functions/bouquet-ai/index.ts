@@ -324,6 +324,45 @@ ${flowersContext}
     const greenNames = ["אקליפטוס", "רוסקוס", "שרך", "גיבסנית"];
     const aiFlowers = parsed.flowers || [];
 
+    // Normalize Hebrew flower names for fuzzy matching
+    const normalize = (s: string) => s.replace(/[ןםךףץ]/g, (c) => {
+      const map: Record<string, string> = { "ן": "נ", "ם": "מ", "ך": "כ", "ף": "פ", "ץ": "צ" };
+      return map[c] || c;
+    }).replace(/יי/g, "י").replace(/ות$/g, "").replace(/ים$/g, "").trim();
+
+    const findFlowerInInventory = (aiFlower: any) => {
+      // 1. Exact match
+      let match = flowersList.find((f: any) => f.name === aiFlower.name);
+      if (match) return match;
+
+      // 2. Normalized match
+      const normalizedAI = normalize(aiFlower.name);
+      match = flowersList.find((f: any) => normalize(f.name) === normalizedAI);
+      if (match) return match;
+
+      // 3. Contains match (either direction)
+      match = flowersList.find((f: any) =>
+        f.name.includes(aiFlower.name) || aiFlower.name.includes(f.name)
+      );
+      if (match) return match;
+
+      // 4. Normalized contains match
+      match = flowersList.find((f: any) =>
+        normalize(f.name).includes(normalizedAI) || normalizedAI.includes(normalize(f.name))
+      );
+      if (match) return match;
+
+      // 5. Color-qualified name (e.g. AI returns "ורד אדום" but inventory has "ורד")
+      if (aiFlower.color) {
+        match = flowersList.find((f: any) =>
+          aiFlower.name.includes(f.name) && (!f.color || f.color === aiFlower.color)
+        );
+        if (match) return match;
+      }
+
+      return null;
+    };
+
     const shouldPrioritizeGreens = budgetForFlowers <= 200;
     let orderedFlowers = aiFlowers;
     if (shouldPrioritizeGreens) {
@@ -333,21 +372,23 @@ ${flowersContext}
     }
 
     for (const aiFlower of orderedFlowers) {
-      // Try exact match first, then fuzzy match (includes / contained-in)
-      let realFlower = flowersList.find((f: any) => f.name === aiFlower.name);
+      const realFlower = findFlowerInInventory(aiFlower);
       if (!realFlower) {
-        realFlower = flowersList.find((f: any) =>
-          f.name.includes(aiFlower.name) || aiFlower.name.includes(f.name)
-        );
+        console.warn(`[bouquet-ai] "${aiFlower.name}" not found in inventory (normalized: "${normalize(aiFlower.name)}"), skipping`);
+        continue;
       }
-      // Also try matching with color context (e.g. AI returns "ורד אדום" but inventory has "ורד")
-      if (!realFlower && aiFlower.color) {
-        realFlower = flowersList.find((f: any) =>
-          aiFlower.name.includes(f.name) && (!f.color || f.color === aiFlower.color)
-        );
-      }
-      if (!realFlower) {
-        console.warn(`"${aiFlower.name}" not found in inventory, skipping`);
+
+      // Check if we already have this flower in validated list (avoid duplicates)
+      const existingIdx = validatedFlowers.findIndex((f: any) => f.name === realFlower.name && f.color === (aiFlower.color || realFlower.color || ""));
+      if (existingIdx !== -1) {
+        // Merge quantities
+        const existing = validatedFlowers[existingIdx];
+        const addQty = Math.min(Math.floor(aiFlower.quantity || 1), realFlower.quantity - existing.quantity);
+        if (addQty > 0) {
+          existing.quantity += addQty;
+          existing.line_total = existing.unit_price * existing.quantity;
+          totalCost += existing.unit_price * addQty;
+        }
         continue;
       }
 
@@ -366,7 +407,7 @@ ${flowersContext}
       totalCost += lineTotal;
 
       validatedFlowers.push({
-        name: aiFlower.name,
+        name: realFlower.name,  // Use inventory name, not AI name
         quantity,
         unit_price: realFlower.price,
         color: aiFlower.color || realFlower.color || "",
