@@ -386,20 +386,11 @@ ${flowersContext}
           .map((f: any) => `${Math.max(1, Math.floor(f.quantity * 0.95))} ${f.color} ${f.name}`)
           .join(", ");
 
-        const imagePrompt = `MANDATORY CAMERA ANGLE: Shoot DIRECTLY FROM ABOVE looking straight down at 90 degrees. This is a FLAT-LAY photo. The camera is mounted on the ceiling pointing down. You must NOT show any side view, 3/4 angle, or perspective — ONLY a perfectly flat top-down overhead shot.
+        const imagePrompt = `Generate a realistic top-down flat-lay photograph of a single elegant bouquet on a white background.
 
-Subject: ONE single florist bouquet lying flat on a clean white surface, wrapped in kraft paper with a ribbon.
+The bouquet contains: ${flowerDescriptions}.
 
-The bouquet contains approximately: ${flowerDescriptions}.
-
-Rules:
-- The camera is DIRECTLY ABOVE, looking STRAIGHT DOWN (like a drone shot or ceiling-mounted camera)
-- All flower heads face UP toward the camera
-- Show exactly ONE bouquet, not multiple
-- Show FEWER flowers rather than more
-- Do NOT add extra flowers not listed
-- No side view, no angled view, no 3D perspective — ONLY flat-lay overhead
-- Clean white background, soft studio lighting`;
+Style: Bird's eye view shot from directly above (90 degrees), bouquet wrapped in kraft paper, soft natural lighting, clean white surface. Show exactly one bouquet with fewer flowers rather than more. Do not add flowers not listed.`;
 
 
         console.log("[bouquet-ai] Generating bouquet image...");
