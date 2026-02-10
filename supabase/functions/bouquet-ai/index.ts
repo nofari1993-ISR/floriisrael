@@ -324,6 +324,7 @@ ${flowersContext}
 
     const greenNames = ["אקליפטוס", "רוסקוס", "שרך", "גיבסנית"];
     const aiFlowers = parsed.flowers || [];
+    const skipBudgetCap = action === "modify"; // Let frontend handle budget approval for modifications
 
     // Normalize Hebrew flower names for fuzzy matching
     const normalize = (s: string) => s.replace(/[ןםךףץ]/g, (c) => {
@@ -397,7 +398,7 @@ ${flowersContext}
       quantity = Math.min(quantity, realFlower.quantity);
 
       const potentialTotal = totalCost + (realFlower.price * quantity);
-      if (potentialTotal > budgetForFlowers) {
+      if (!skipBudgetCap && potentialTotal > budgetForFlowers) {
         const maxAffordable = Math.floor((budgetForFlowers - totalCost) / realFlower.price);
         quantity = Math.min(maxAffordable, realFlower.quantity);
       }
@@ -415,7 +416,7 @@ ${flowersContext}
         line_total: lineTotal,
       });
 
-      if (totalCost >= budgetForFlowers * 0.98) break;
+      if (!skipBudgetCap && totalCost >= budgetForFlowers * 0.98) break;
     }
 
     const digitalDesignFee = 0;
