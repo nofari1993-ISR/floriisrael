@@ -365,7 +365,7 @@ const DIYBuilderPage = () => {
 
           {/* Desktop summary */}
           <div className="hidden lg:block">
-            <div className="sticky top-24">
+            <div>
               <BouquetSummary
                 selectedFlowers={selectedFlowers}
                 onRemove={handleRemoveFromSummary}
