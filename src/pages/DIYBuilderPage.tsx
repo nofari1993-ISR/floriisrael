@@ -230,7 +230,7 @@ const DIYBuilderPage = () => {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-6">
+      <div className="max-w-7xl mx-auto px-4 py-6 pb-24 lg:pb-6">
         {/* Filters */}
         <div className="bg-card rounded-2xl border border-border/50 shadow-soft p-4 mb-6">
           <div className="flex flex-col sm:flex-row gap-3">
