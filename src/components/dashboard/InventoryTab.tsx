@@ -31,7 +31,13 @@ const InventoryTab = ({ shopId }: InventoryTabProps) => {
   const handleToggleBoost = async (flower: Flower) => {
     setTogglingBoostIds((prev) => new Set(prev).add(flower.id));
     const newBoosted = !flower.boosted;
-    const success = await updateFlower(flower.id, { boosted: newBoosted } as any);
+    const updateData: any = { boosted: newBoosted };
+    if (newBoosted) {
+      updateData.boosted_at = new Date().toISOString();
+    } else {
+      updateData.boosted_at = null;
+    }
+    const success = await updateFlower(flower.id, updateData);
     setTogglingBoostIds((prev) => {
       const next = new Set(prev);
       next.delete(flower.id);
@@ -40,7 +46,7 @@ const InventoryTab = ({ shopId }: InventoryTabProps) => {
     if (success) {
       toast({
         title: newBoosted
-          ? `✨ ${flower.name} מקודם! ה-AI יתעדף אותו בזרים`
+          ? `✨ ${flower.name} מקודם ל-5 ימים! ה-AI יתעדף אותו בזרים`
           : `${flower.name} הוסר מקידום`,
       });
     }
