@@ -89,7 +89,7 @@ Deno.serve(async (req) => {
     const reducedFlowers = flowers.map((item: any) => {
       const qty = item.quantity || 1;
       // Use ~70% of quantity, minimum 1
-      const reducedQty = Math.max(1, Math.floor(qty * 0.85));
+      const reducedQty = Math.max(1, Math.floor(qty * 0.95));
       return { ...item, displayQty: reducedQty };
     });
     const displayTotal = reducedFlowers.reduce((sum: number, item: any) => sum + item.displayQty, 0);
