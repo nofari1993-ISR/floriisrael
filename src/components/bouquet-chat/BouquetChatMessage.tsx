@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
-import { Bot, User } from "lucide-react";
+import { User } from "lucide-react";
 import ReactMarkdown from "react-markdown";
+import nupharAvatar from "@/assets/nuphar-avatar.png";
 
 interface BouquetChatMessageProps {
   role: "user" | "assistant";
@@ -19,12 +20,12 @@ const BouquetChatMessage = ({ role, content, isStreaming }: BouquetChatMessagePr
       className={`flex gap-2.5 ${isBot ? "" : "flex-row-reverse"}`}
     >
       <div
-        className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-1 ${
+        className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-1 overflow-hidden ${
           isBot ? "bg-sage-light" : "bg-secondary"
         }`}
       >
         {isBot ? (
-          <Bot className="w-4 h-4 text-primary" />
+          <img src={nupharAvatar} alt="Flori" className="w-7 h-7 object-cover" />
         ) : (
           <User className="w-4 h-4 text-secondary-foreground" />
         )}

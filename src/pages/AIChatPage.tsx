@@ -2,6 +2,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useRef, useEffect, useState } from "react";
 import { Loader2, RotateCcw, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import nupharAvatar from "@/assets/nuphar-avatar.png";
 
 import BouquetChatHeader from "@/components/bouquet-chat/BouquetChatHeader";
 import BouquetChatMessage from "@/components/bouquet-chat/BouquetChatMessage";
@@ -118,8 +119,8 @@ const AIChatPage = () => {
           ))}
           {isLoading && (
             <div className="flex gap-2.5">
-              <div className="w-8 h-8 rounded-full bg-sage-light flex items-center justify-center">
-                <Loader2 className="w-4 h-4 text-primary animate-spin" />
+              <div className="w-8 h-8 rounded-full bg-sage-light flex items-center justify-center overflow-hidden">
+                <img src={nupharAvatar} alt="Flori" className="w-7 h-7 object-cover" />
               </div>
               <div className="bg-muted rounded-2xl px-4 py-3">
                 <div className="flex gap-1.5">
