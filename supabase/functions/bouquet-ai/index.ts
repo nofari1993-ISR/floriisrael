@@ -140,7 +140,15 @@ Deno.serve(async (req) => {
         ? `סגנון מועדף: ${styleRequested}. התאם את בחירת הפרחים, הכמויות והמראה הכללי לסגנון הזה.`
         : "";
 
-      prompt = `אתה מעצב זרי פרחים מקצועי. בנה זר מגוון עם מספר סוגי פרחים שונים.
+      const flowerTypesRange = budgetForFlowers >= 500 ? "4-8" : budgetForFlowers >= 300 ? "3-6" : "2-4";
+      const bouquetSize = budgetForFlowers >= 500 ? "זר גדול ועשיר במיוחד" : budgetForFlowers >= 300 ? "זר בינוני-גדול" : "זר";
+      const quantityInstruction = budgetForFlowers >= 500
+        ? "השתמש בכמויות גדולות מכל פרח (5-15 יחידות מכל סוג) כדי ליצור זר עשיר ומרשים. נצל את מרבית התקציב!"
+        : budgetForFlowers >= 300
+          ? "השתמש בכמויות נדיבות (3-8 יחידות מכל סוג) כדי ליצור זר מלא ויפה."
+          : "";
+
+      prompt = `אתה מעצב זרי פרחים מקצועי. בנה ${bouquetSize} מגוון עם מספר סוגי פרחים שונים.
 
 # פרחים זמינים במלאי:
 ${flowersContext}
@@ -154,7 +162,7 @@ ${styleInstruction ? `- ${styleInstruction}` : ""}
 - הערות: ${answers.notes && answers.notes !== "המשך" ? answers.notes : "אין"}
 
 # חובה:
-1. בנה זר עם 2-4 סוגי פרחים שונים (לא רק סוג אחד!)
+1. בנה ${bouquetSize} עם ${flowerTypesRange} סוגי פרחים שונים (לא רק סוג אחד!)
 2. אל תחרוג מ-₪${Math.floor(budgetForFlowers)} - זה קריטי!
 3. השתמש רק בפרחים מהמלאי הזמין
 4. אם פרח לא זמין, הצע חלופה
@@ -163,6 +171,8 @@ ${styleInstruction ? `- ${styleInstruction}` : ""}
 ${isColorful ? "7. **קריטי**: הזר חייב להיות צבעוני באמת — שלב פרחים מצבעים שונים לחלוטין (אדום + צהוב + סגול + כתום וכו'). לא רק ורוד ואדום!" : ""}
 ${budgetForFlowers <= 200 ? "8. **חובה**: בתקציב עד ₪200, הזר חייב לכלול צמחי מילוי וירק (כמו אקליפטוס, רוסקוס, שרך, גיבסנית) כדי לתת לזר נפח ומלאות. שלב לפחות 1-2 סוגי ירק/מילוי!" : ""}
 ${styleRequested !== "לא צוין" ? `9. **סגנון**: התאם את הזר לסגנון "${styleRequested}" — בחר פרחים, כמויות ומבנה שמשדרים את האסתטיקה הזו.` : ""}
+${quantityInstruction ? `10. **כמויות**: ${quantityInstruction}` : ""}
+${budgetForFlowers >= 500 ? `11. **חשוב**: עם תקציב של ₪${Math.floor(budgetForFlowers)}, הזר חייב להיות גדול, מלא ומרשים. נצל לפחות 80% מהתקציב!` : ""}
 
 # ההודעה שלך (message):
 כתוב הודעה חמה ואישית (2-3 משפטים) שמסבירה למה בחרת בפרחים האלה ואיך הם מתאימים לאירוע.
@@ -346,7 +356,7 @@ ${flowersContext}
         line_total: lineTotal,
       });
 
-      if (totalCost >= budgetForFlowers * 0.95) break;
+      if (totalCost >= budgetForFlowers * 0.98) break;
     }
 
     const digitalDesignFee = 0;
@@ -374,7 +384,7 @@ ${flowersContext}
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            model: "google/gemini-2.5-flash-image",
+            model: "google/gemini-3-pro-image-preview",
             messages: [{ role: "user", content: imagePrompt }],
             modalities: ["image", "text"],
           }),
