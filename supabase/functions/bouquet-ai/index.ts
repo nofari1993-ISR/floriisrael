@@ -374,17 +374,19 @@ ${flowersContext}
           .map((f: any) => `${Math.max(1, Math.floor(f.quantity * 0.85))} ${f.color} ${f.name}`)
           .join(", ");
 
-        const imagePrompt = `Create a beautiful, realistic photograph of exactly ONE single professional florist bouquet on a clean white background.
+        const imagePrompt = `Create a beautiful, realistic DIRECTLY TOP-DOWN (bird's eye view, 90 degrees from above) photograph of exactly ONE single professional florist bouquet on a clean white background.
 
 The bouquet contains approximately: ${flowerDescriptions}.
 
 IMPORTANT:
+- Camera angle MUST be directly from above (top-down, flat-lay). NOT from the side, NOT at an angle.
+- The bouquet should be centered and facing upward.
 - Show exactly ONE bouquet, not two or multiple.
-- Show FEWER flowers rather than more. It is much better to undercount than overcount.
+- Show FEWER flowers rather than more.
 - Do NOT add extra flowers or greenery not listed above.
 - The bouquet is elegantly wrapped in kraft paper with a ribbon.
 
-Style: Studio lighting, white background, top-down overhead view, high quality product photography.`;
+Style: Flat-lay photography, camera pointing straight down, studio lighting, white background.`;
 
         console.log("[bouquet-ai] Generating bouquet image...");
 
