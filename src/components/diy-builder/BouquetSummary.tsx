@@ -17,7 +17,7 @@ interface BouquetSummaryProps {
   selectedFlowers: SelectedFlower[];
   onRemove: (flowerId: string) => void;
   onClearAll: () => void;
-  onCheckout: () => void;
+  onCheckout: (bouquetImageUrl?: string | null) => void;
   onScrollToCategory?: (category: "filler" | "greenery") => void;
 }
 
@@ -225,7 +225,7 @@ const BouquetSummary = ({ selectedFlowers, onRemove, onClearAll, onCheckout, onS
             <Button
               variant="hero"
               className="w-full rounded-xl gap-2"
-              onClick={onCheckout}
+              onClick={() => onCheckout(generatedImageUrl)}
             >
               <ShoppingBag className="w-4 h-4" />
               המשך להזמנה
