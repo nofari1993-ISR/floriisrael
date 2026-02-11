@@ -1,6 +1,6 @@
-import { useState, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Trash2, Edit2, Package, Flower2, Check, X, Sparkles, AlertTriangle, Search } from "lucide-react";
+import { Plus, Trash2, Edit2, Package, Flower2, Check, X, Sparkles, AlertTriangle, Search, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -28,7 +28,7 @@ const InventoryTab = ({ shopId }: InventoryTabProps) => {
   const [formData, setFormData] = useState({ name: "", color: "", price: "", quantity: "", shelf_life_days: "7" });
   const [editData, setEditData] = useState({ name: "", color: "", price: "", quantity: "", shelf_life_days: "7" });
   const [togglingBoostIds, setTogglingBoostIds] = useState<Set<string>>(new Set());
-  const [selectedColors, setSelectedColors] = useState<Record<string, string>>({});
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
 
   const filteredFlowers = useMemo(() => {
     if (!searchQuery.trim()) return flowers;
@@ -46,14 +46,13 @@ const InventoryTab = ({ shopId }: InventoryTabProps) => {
     return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b, "he"));
   }, [filteredFlowers]);
 
-  // Get the currently selected flower for a group
-  const getSelectedFlower = (name: string, group: Flower[]): Flower => {
-    const selectedColor = selectedColors[name];
-    if (selectedColor) {
-      const found = group.find((f) => f.id === selectedColor);
-      if (found) return found;
-    }
-    return group[0];
+  const toggleGroup = (name: string) => {
+    setExpandedGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(name)) next.delete(name);
+      else next.add(name);
+      return next;
+    });
   };
 
   const handleToggleBoost = async (flower: Flower) => {
@@ -267,184 +266,160 @@ const InventoryTab = ({ shopId }: InventoryTabProps) => {
           <Table>
             <TableHeader>
              <TableRow className="bg-muted/50 hover:bg-muted/50">
+                <TableHead className="text-right font-display font-semibold w-[40px]"></TableHead>
                 <TableHead className="text-right font-display font-semibold">שם</TableHead>
-                <TableHead className="text-right font-display font-semibold">צבע</TableHead>
-                <TableHead className="text-right font-display font-semibold">מחיר</TableHead>
-                <TableHead className="text-right font-display font-semibold">כמות</TableHead>
-                <TableHead className="text-right font-display font-semibold">תפוגה</TableHead>
+                <TableHead className="text-right font-display font-semibold">צבעים</TableHead>
+                <TableHead className="text-right font-display font-semibold">סה״כ כמות</TableHead>
                 <TableHead className="text-right font-display font-semibold">סטטוס</TableHead>
-                <TableHead className="text-right font-display font-semibold w-[140px]">פעולות</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {groupedFlowers.map(([name, group]) => {
-                const flower = getSelectedFlower(name, group);
-                const isLowStock = flower.quantity > 0 && flower.quantity <= LOW_STOCK_THRESHOLD;
-                const isOutOfStock = flower.quantity === 0 || !flower.in_stock;
                 const totalQuantity = group.reduce((sum, f) => sum + f.quantity, 0);
+                const isExpanded = expandedGroups.has(name);
+                const hasLowStock = group.some((f) => f.quantity > 0 && f.quantity <= LOW_STOCK_THRESHOLD);
+                const hasOutOfStock = group.some((f) => f.quantity === 0 || !f.in_stock);
 
                 return (
-                  <TableRow
-                    key={flower.id}
-                    className={`group ${isLowStock ? "bg-amber-50/50 dark:bg-amber-950/20" : ""} ${isOutOfStock ? "bg-destructive/5" : ""}`}
-                  >
-                    {editingId === flower.id ? (
-                      <>
-                        <TableCell>
-                          <Input
-                            value={editData.name}
-                            onChange={(e) => setEditData((p) => ({ ...p, name: e.target.value }))}
-                            className="rounded-lg h-8"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            value={editData.color}
-                            onChange={(e) => setEditData((p) => ({ ...p, color: e.target.value }))}
-                            className="rounded-lg h-8"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            type="number"
-                            value={editData.price}
-                            onChange={(e) => setEditData((p) => ({ ...p, price: e.target.value }))}
-                            className="rounded-lg h-8"
-                            min="0"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            type="number"
-                            value={editData.quantity}
-                            onChange={(e) => setEditData((p) => ({ ...p, quantity: e.target.value }))}
-                            className="rounded-lg h-8"
-                            min="0"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            type="number"
-                            value={editData.shelf_life_days}
-                            onChange={(e) => setEditData((p) => ({ ...p, shelf_life_days: e.target.value }))}
-                            className="rounded-lg h-8"
-                            min="1"
-                          />
-                        </TableCell>
-                        <TableCell />
-                        <TableCell>
-                          <div className="flex gap-1">
-                            <Button size="icon" variant="ghost" onClick={handleEdit} className="h-7 w-7 text-primary hover:text-primary">
-                              <Check className="w-4 h-4" />
-                            </Button>
-                            <Button size="icon" variant="ghost" onClick={() => setEditingId(null)} className="h-7 w-7 text-muted-foreground">
-                              <X className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </>
-                    ) : (
-                      <>
-                        <TableCell className="font-display font-semibold text-foreground">
-                          <div className="flex items-center gap-2">
-                            <Flower2 className="w-4 h-4 text-primary/60 shrink-0" />
-                            {flower.name}
-                            {group.length > 1 && (
-                              <span className="text-xs text-muted-foreground font-body font-normal">
-                                ({group.length} צבעים)
-                              </span>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          {group.length > 1 ? (
-                            <div className="flex flex-wrap gap-1">
-                              {group.map((f) => (
-                                <button
-                                  key={f.id}
-                                  onClick={() => setSelectedColors((prev) => ({ ...prev, [name]: f.id }))}
-                                  className={`text-xs px-2 py-1 rounded-lg font-body transition-all ${
-                                    f.id === flower.id
-                                      ? "bg-primary/15 text-primary font-semibold ring-1 ring-primary/30"
-                                      : "bg-muted text-muted-foreground hover:bg-muted/80"
-                                  }`}
-                                >
-                                  {f.color || "—"}
-                                </button>
-                              ))}
-                            </div>
+                  <React.Fragment key={name}>
+                    {/* Group header row */}
+                    <TableRow
+                      className={`cursor-pointer hover:bg-muted/30 ${hasLowStock ? "bg-amber-50/30 dark:bg-amber-950/10" : ""} ${hasOutOfStock ? "bg-destructive/5" : ""}`}
+                      onClick={() => toggleGroup(name)}
+                    >
+                      <TableCell className="w-[40px]">
+                        {isExpanded ? (
+                          <ChevronUp className="w-4 h-4 text-muted-foreground" />
+                        ) : (
+                          <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                        )}
+                      </TableCell>
+                      <TableCell className="font-display font-semibold text-foreground">
+                        <div className="flex items-center gap-2">
+                          <Flower2 className="w-4 h-4 text-primary/60 shrink-0" />
+                          {name}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-wrap gap-1">
+                          {group.map((f) => (
+                            <span key={f.id} className="text-xs px-2 py-0.5 rounded-lg bg-muted text-muted-foreground font-body">
+                              {f.color || "—"}
+                            </span>
+                          ))}
+                        </div>
+                      </TableCell>
+                      <TableCell className="font-semibold text-foreground font-body">{totalQuantity}</TableCell>
+                      <TableCell>
+                        {hasOutOfStock ? (
+                          <span className="text-xs px-3 py-1 rounded-full font-medium bg-destructive/10 text-destructive">יש אזל</span>
+                        ) : hasLowStock ? (
+                          <span className="text-xs px-3 py-1 rounded-full font-medium bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300">מלאי נמוך</span>
+                        ) : (
+                          <span className="text-xs px-3 py-1 rounded-full font-medium bg-sage-light text-sage">במלאי</span>
+                        )}
+                      </TableCell>
+                    </TableRow>
+
+                    {/* Expanded color rows */}
+                    {isExpanded && group.map((flower) => {
+                      const isLowStock = flower.quantity > 0 && flower.quantity <= LOW_STOCK_THRESHOLD;
+                      const isOutOfStock = flower.quantity === 0 || !flower.in_stock;
+
+                      return (
+                        <TableRow
+                          key={flower.id}
+                          className={`group border-r-4 border-r-primary/20 ${isLowStock ? "bg-amber-50/50 dark:bg-amber-950/20" : ""} ${isOutOfStock ? "bg-destructive/5" : "bg-muted/10"}`}
+                        >
+                          {editingId === flower.id ? (
+                            <>
+                              <TableCell />
+                              <TableCell colSpan={2}>
+                                <div className="flex gap-2">
+                                  <Input value={editData.color} onChange={(e) => setEditData((p) => ({ ...p, color: e.target.value }))} className="rounded-lg h-8" placeholder="צבע" />
+                                  <Input type="number" value={editData.price} onChange={(e) => setEditData((p) => ({ ...p, price: e.target.value }))} className="rounded-lg h-8 w-20" placeholder="מחיר" min="0" />
+                                  <Input type="number" value={editData.quantity} onChange={(e) => setEditData((p) => ({ ...p, quantity: e.target.value }))} className="rounded-lg h-8 w-20" placeholder="כמות" min="0" />
+                                  <Input type="number" value={editData.shelf_life_days} onChange={(e) => setEditData((p) => ({ ...p, shelf_life_days: e.target.value }))} className="rounded-lg h-8 w-20" placeholder="מדף" min="1" />
+                                </div>
+                              </TableCell>
+                              <TableCell colSpan={2}>
+                                <div className="flex gap-1">
+                                  <Button size="icon" variant="ghost" onClick={handleEdit} className="h-7 w-7 text-primary hover:text-primary">
+                                    <Check className="w-4 h-4" />
+                                  </Button>
+                                  <Button size="icon" variant="ghost" onClick={() => setEditingId(null)} className="h-7 w-7 text-muted-foreground">
+                                    <X className="w-4 h-4" />
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </>
                           ) : (
-                            <span className="text-muted-foreground font-body">{flower.color || "—"}</span>
+                            <>
+                              <TableCell />
+                              <TableCell>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-sm font-body font-medium text-foreground/80">{flower.color || "—"}</span>
+                                  {flower.boosted && <Sparkles className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />}
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-3 text-sm font-body">
+                                  <span className="text-muted-foreground">₪{flower.price}</span>
+                                  <span className="text-muted-foreground">•</span>
+                                  <div className="flex items-center gap-1">
+                                    {isLowStock && <AlertTriangle className="w-3 h-3 text-amber-500 shrink-0" />}
+                                    <span className={isLowStock ? "text-amber-600 dark:text-amber-400 font-semibold" : isOutOfStock ? "text-destructive font-semibold" : "text-muted-foreground"}>
+                                      {flower.quantity} יח׳
+                                    </span>
+                                  </div>
+                                  <span className="text-muted-foreground">•</span>
+                                  {(() => {
+                                    if (isOutOfStock) return <span className="text-xs text-muted-foreground">—</span>;
+                                    const restocked = flower.last_restocked_at ? new Date(flower.last_restocked_at) : null;
+                                    if (!restocked) return <span className="text-xs text-muted-foreground">—</span>;
+                                    const expiryDate = new Date(restocked.getTime() + (flower.shelf_life_days || 7) * 24 * 60 * 60 * 1000);
+                                    const daysLeft = Math.ceil((expiryDate.getTime() - Date.now()) / (24 * 60 * 60 * 1000));
+                                    if (daysLeft <= 0) return <span className="text-xs px-2 py-0.5 rounded-full bg-destructive/10 text-destructive font-medium">פג תוקף</span>;
+                                    if (daysLeft <= 2) return <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 font-medium">{daysLeft} ימים</span>;
+                                    return <span className="text-xs text-muted-foreground">{daysLeft} ימים</span>;
+                                  })()}
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                {isOutOfStock ? (
+                                  <span className="text-xs px-3 py-1 rounded-full font-medium bg-destructive/10 text-destructive">אזל</span>
+                                ) : isLowStock ? (
+                                  <span className="text-xs px-3 py-1 rounded-full font-medium bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300">נמוך</span>
+                                ) : (
+                                  <span className="text-xs px-3 py-1 rounded-full font-medium bg-sage-light text-sage">במלאי</span>
+                                )}
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex gap-1">
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    onClick={(e) => { e.stopPropagation(); handleToggleBoost(flower); }}
+                                    disabled={togglingBoostIds.has(flower.id)}
+                                    className={`h-7 w-7 ${flower.boosted ? "text-amber-500 hover:text-amber-600" : "text-primary/60 hover:text-primary"}`}
+                                    title={flower.boosted ? `הסר קידום` : `קדם בזרים`}
+                                  >
+                                    <Sparkles className={`w-4 h-4 ${flower.boosted ? "fill-amber-500" : ""}`} />
+                                  </Button>
+                                  <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); startEdit(flower); }} className="h-7 w-7 text-muted-foreground hover:text-primary">
+                                    <Edit2 className="w-4 h-4" />
+                                  </Button>
+                                  <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); removeFlower(flower.id); }} className="h-7 w-7 text-muted-foreground hover:text-destructive">
+                                    <Trash2 className="w-4 h-4" />
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </>
                           )}
-                        </TableCell>
-                        <TableCell className="font-semibold text-foreground">₪{flower.price}</TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1.5">
-                            {isLowStock && (
-                              <AlertTriangle className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                            )}
-                            <span className={`font-body ${isLowStock ? "text-amber-600 dark:text-amber-400 font-semibold" : "text-muted-foreground"}`}>
-                              {flower.quantity}
-                            </span>
-                            {group.length > 1 && (
-                              <span className="text-xs text-muted-foreground">(סה״כ {totalQuantity})</span>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          {(() => {
-                            if (isOutOfStock) return <span className="text-xs text-muted-foreground">—</span>;
-                            const restocked = flower.last_restocked_at ? new Date(flower.last_restocked_at) : null;
-                            if (!restocked) return <span className="text-xs text-muted-foreground">—</span>;
-                            const expiryDate = new Date(restocked.getTime() + (flower.shelf_life_days || 7) * 24 * 60 * 60 * 1000);
-                            const daysLeft = Math.ceil((expiryDate.getTime() - Date.now()) / (24 * 60 * 60 * 1000));
-                            if (daysLeft <= 0) {
-                              return <span className="text-xs px-2 py-0.5 rounded-full bg-destructive/10 text-destructive font-medium">פג תוקף</span>;
-                            }
-                            if (daysLeft <= 2) {
-                              return <span className="text-xs px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 font-medium">{daysLeft} ימים</span>;
-                            }
-                            return <span className="text-xs text-muted-foreground">{daysLeft} ימים</span>;
-                          })()}
-                        </TableCell>
-                        <TableCell>
-                          {isOutOfStock ? (
-                            <span className="text-xs px-3 py-1 rounded-full font-medium bg-destructive/10 text-destructive">
-                              אזל
-                            </span>
-                          ) : isLowStock ? (
-                            <span className="text-xs px-3 py-1 rounded-full font-medium bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300">
-                              מלאי נמוך
-                            </span>
-                          ) : (
-                            <span className="text-xs px-3 py-1 rounded-full font-medium bg-sage-light text-sage">
-                              במלאי
-                            </span>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              onClick={() => handleToggleBoost(flower)}
-                              disabled={togglingBoostIds.has(flower.id)}
-                              className={`h-7 w-7 ${flower.boosted ? "text-amber-500 hover:text-amber-600" : "text-primary/60 hover:text-primary"}`}
-                              title={flower.boosted ? `הסר קידום מ-${flower.name}` : `קדם את ${flower.name} בזרים`}
-                            >
-                              <Sparkles className={`w-4 h-4 ${flower.boosted ? "fill-amber-500" : ""}`} />
-                            </Button>
-                            <Button size="icon" variant="ghost" onClick={() => startEdit(flower)} className="h-7 w-7 text-muted-foreground hover:text-primary">
-                              <Edit2 className="w-4 h-4" />
-                            </Button>
-                            <Button size="icon" variant="ghost" onClick={() => removeFlower(flower.id)} className="h-7 w-7 text-muted-foreground hover:text-destructive">
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </>
-                    )}
-                  </TableRow>
+                        </TableRow>
+                      );
+                    })}
+                  </React.Fragment>
                 );
               })}
             </TableBody>
