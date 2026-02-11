@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Package, ClipboardList, Store, ArrowRight, LogOut, ChevronDown, Truck, Shield } from "lucide-react";
+import { Package, ClipboardList, Store, ArrowRight, LogOut, ChevronDown, Truck, Shield, Settings, Globe, Save } from "lucide-react";
 import Logo from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { useShopOwner, type OwnedShop } from "@/hooks/useShopOwner";
@@ -12,7 +12,7 @@ import InventoryTab from "@/components/dashboard/InventoryTab";
 import OrdersTab from "@/components/dashboard/OrdersTab";
 import RestockTab from "@/components/dashboard/RestockTab";
 
-type Tab = "inventory" | "orders" | "restock";
+type Tab = "inventory" | "orders" | "restock" | "settings";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -23,6 +23,8 @@ const Dashboard = () => {
   const [selectedShop, setSelectedShop] = useState<OwnedShop | null>(null);
   const [showShopPicker, setShowShopPicker] = useState(false);
   const [newOrderCount, setNewOrderCount] = useState(0);
+  const [shopWebsite, setShopWebsite] = useState("");
+  const [savingWebsite, setSavingWebsite] = useState(false);
   
 
   useEffect(() => {
@@ -31,12 +33,34 @@ const Dashboard = () => {
     }
   }, [loading, user, navigate]);
 
-  // Auto-select first shop
+  // Auto-select first shop and load website
   useEffect(() => {
     if (shops.length > 0 && !selectedShop) {
       setSelectedShop(shops[0]);
     }
   }, [shops, selectedShop]);
+
+  // Load website when shop changes
+  useEffect(() => {
+    if (!selectedShop) return;
+    const loadWebsite = async () => {
+      const { data } = await supabase.from("shops").select("website").eq("id", selectedShop.id).single();
+      setShopWebsite(data?.website || "");
+    };
+    loadWebsite();
+  }, [selectedShop]);
+
+  const handleSaveWebsite = async () => {
+    if (!selectedShop) return;
+    setSavingWebsite(true);
+    const { error } = await supabase.from("shops").update({ website: shopWebsite || null }).eq("id", selectedShop.id);
+    setSavingWebsite(false);
+    if (error) {
+      toast({ title: "שגיאה בשמירה", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "אתר החנות עודכן בהצלחה ✅" });
+    }
+  };
 
   // Real-time subscription for new orders
   useEffect(() => {
@@ -108,6 +132,7 @@ const Dashboard = () => {
     { key: "orders", label: "הזמנות", icon: <ClipboardList className="w-4 h-4" /> },
     { key: "inventory", label: "מלאי", icon: <Package className="w-4 h-4" /> },
     { key: "restock", label: "הזמנה מספק", icon: <Truck className="w-4 h-4" /> },
+    { key: "settings", label: "הגדרות", icon: <Settings className="w-4 h-4" /> },
   ];
 
   return (
@@ -222,6 +247,40 @@ const Dashboard = () => {
           {activeTab === "inventory" && selectedShop && <InventoryTab shopId={selectedShop.id} />}
           {activeTab === "orders" && selectedShop && <OrdersTab shopId={selectedShop.id} />}
           {activeTab === "restock" && selectedShop && <RestockTab shopId={selectedShop.id} />}
+          {activeTab === "settings" && selectedShop && (
+            <div className="max-w-xl space-y-6" dir="rtl">
+              <h2 className="font-display text-2xl font-bold text-foreground">הגדרות חנות</h2>
+              <div className="bg-card rounded-2xl p-6 border border-border/50 shadow-card space-y-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold font-body text-foreground flex items-center gap-2">
+                    <Globe className="w-4 h-4 text-primary" />
+                    קישור לאתר החנות
+                  </label>
+                  <input
+                    type="url"
+                    placeholder="https://www.example.com"
+                    value={shopWebsite}
+                    onChange={(e) => setShopWebsite(e.target.value)}
+                    className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm font-body text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-ring"
+                    dir="ltr"
+                  />
+                  <p className="text-xs text-muted-foreground font-body">הקישור יופיע בכרטיסיית החנות ללקוחות</p>
+                </div>
+                <div className="flex justify-end">
+                  <Button
+                    variant="hero"
+                    size="sm"
+                    className="rounded-xl gap-2"
+                    onClick={handleSaveWebsite}
+                    disabled={savingWebsite}
+                  >
+                    <Save className="w-4 h-4" />
+                    {savingWebsite ? "שומר..." : "שמור"}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
         </motion.div>
       </div>
     </div>

@@ -84,6 +84,7 @@ export interface Shop {
   tags: string[];
   latitude: number | null;
   longitude: number | null;
+  website: string | null;
   distance?: number; // km
 }
 
@@ -134,6 +135,7 @@ export const useShops = (searchQuery?: string) => {
           tags: s.tags || [],
           latitude: s.latitude != null ? Number(s.latitude) : null,
           longitude: s.longitude != null ? Number(s.longitude) : null,
+          website: s.website || null,
         }))
       );
     }
