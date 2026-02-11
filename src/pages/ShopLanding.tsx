@@ -107,7 +107,7 @@ const ShopLanding = () => {
             className="flex items-center justify-between py-6"
           >
             <button onClick={() => navigate("/")} className="opacity-80 hover:opacity-100 transition-opacity">
-              <Logo size="md" className="[&_img]:brightness-0 [&_img]:invert [&_img]:mix-blend-normal [&_span]:text-white" />
+              <Logo size="md" className="[&_img]:mix-blend-normal [&_img]:drop-shadow-md" />
             </button>
             <Button
               variant="ghost"
