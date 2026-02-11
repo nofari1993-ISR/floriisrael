@@ -13,6 +13,7 @@ import Dashboard from "./pages/Dashboard";
 import AdminPermissions from "./pages/AdminPermissions";
 import Terms from "./pages/Terms";
 import ResetPassword from "./pages/ResetPassword";
+import ShopLanding from "./pages/ShopLanding";
 
 const queryClient = new QueryClient();
 
@@ -32,6 +33,7 @@ const App = () => (
           <Route path="/admin/permissions" element={<AdminPermissions />} />
           <Route path="/terms" element={<Terms />} />
           <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/shop/:shopId" element={<ShopLanding />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

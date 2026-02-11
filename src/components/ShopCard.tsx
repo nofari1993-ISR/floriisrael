@@ -95,7 +95,10 @@ const ShopCard = ({ shop, index, isAdmin, onRemove, formatDistance }: ShopCardPr
       <div className="p-5 space-y-3">
         {/* Name & Rating Row */}
         <div className="flex items-start justify-between gap-2">
-          <h3 className="font-display text-lg font-bold text-foreground leading-tight">
+          <h3
+            className="font-display text-lg font-bold text-foreground leading-tight cursor-pointer hover:text-primary transition-colors"
+            onClick={() => navigate(`/shop/${shop.id}`)}
+          >
             {shop.name}
           </h3>
           <div className="flex flex-col items-end shrink-0">
