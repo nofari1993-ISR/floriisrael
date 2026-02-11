@@ -192,14 +192,9 @@ export const useShops = (searchQuery?: string) => {
     ? [...shopsWithDistance].sort((a, b) => (a.distance ?? Infinity) - (b.distance ?? Infinity))
     : shopsWithDistance;
 
-  const filteredShops = searchQuery
-    ? sortedShops.filter(
-        (shop) =>
-          shop.name.includes(searchQuery) ||
-          shop.location.includes(searchQuery) ||
-          shop.speciality.includes(searchQuery)
-      )
-    : sortedShops;
+  // TODO: Re-enable filtering when more shops are added
+  // For now, show all shops regardless of search query since there's only one shop
+  const filteredShops = sortedShops;
 
   const addShop = async (shopData: {
     name: string;
