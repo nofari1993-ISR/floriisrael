@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Star, MapPin, Clock, Palette, Navigation, Trash2, Truck, MessageSquarePlus } from "lucide-react";
+import { Star, MapPin, Clock, Palette, Navigation, Trash2, Truck, MessageSquarePlus, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Shop } from "@/hooks/useShops";
@@ -143,7 +143,7 @@ const ShopCard = ({ shop, index, isAdmin, onRemove, formatDistance }: ShopCardPr
         </div>
 
         {/* Bottom Info Row */}
-        <div className="flex items-center gap-3 pt-1 border-t border-border/40">
+        <div className="flex items-center flex-wrap gap-3 pt-1 border-t border-border/40">
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <Clock className="w-3.5 h-3.5 text-primary/50" />
             <span>{shop.hours}</span>
@@ -155,6 +155,17 @@ const ShopCard = ({ shop, index, isAdmin, onRemove, formatDistance }: ShopCardPr
             <MessageSquarePlus className="w-3.5 h-3.5" />
             כתבו ביקורת
           </button>
+          {shop.website && (
+            <a
+              href={shop.website.startsWith("http") ? shop.website : `https://${shop.website}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1 text-xs text-primary font-medium font-body hover:underline transition-colors"
+            >
+              <Globe className="w-3.5 h-3.5" />
+              אתר החנות
+            </a>
+          )}
           <div className="flex items-center gap-1.5 text-xs text-primary font-medium mr-auto">
             <Truck className="w-3.5 h-3.5" />
             <span>משלוח עד הבית</span>
