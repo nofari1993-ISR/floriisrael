@@ -113,7 +113,7 @@ const ShopLanding = () => {
               variant="ghost"
               size="sm"
               className="text-white/80 hover:text-white hover:bg-white/10 gap-2"
-              onClick={() => navigate("/")}
+              onClick={() => navigate("/?shops=open")}
             >
               <ArrowRight className="w-4 h-4" />
               חזרה
