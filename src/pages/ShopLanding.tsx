@@ -174,9 +174,9 @@ const ShopLanding = () => {
                   href={shop.website.startsWith("http") ? shop.website : `https://${shop.website}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 text-white/70 hover:text-white transition-colors text-sm font-body"
+                  className="flex items-center gap-2 text-foreground hover:text-foreground/80 transition-colors text-lg font-body font-semibold"
                 >
-                  <Globe className="w-4 h-4" />
+                  <Globe className="w-5 h-5" />
                   אתר החנות
                 </a>
               )}
