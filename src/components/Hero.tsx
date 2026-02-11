@@ -1,8 +1,9 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, MapPin, LogOut, LayoutDashboard, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import ISRAELI_CITIES from "@/data/israeliCities";
 import ShopSearchResults from "@/components/ShopSearchResults";
 import { useAuth } from "@/hooks/useAuth";
 import { useShopOwner } from "@/hooks/useShopOwner";
@@ -28,6 +29,31 @@ const Hero = () => {
   const { isShopOwner } = useShopOwner();
   const navigate = useNavigate();
   const [currentImage, setCurrentImage] = useState(0);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const suggestionsRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const filteredCities = useMemo(() => {
+    if (!searchQuery || searchQuery.length < 1) return [];
+    const q = searchQuery.trim();
+    return [...new Set(ISRAELI_CITIES.filter((city) => city.includes(q)))].slice(0, 6);
+  }, [searchQuery]);
+
+  const selectCity = (city: string) => {
+    setSearchQuery(city);
+    setShowSuggestions(false);
+    inputRef.current?.focus();
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (suggestionsRef.current && !suggestionsRef.current.contains(e.target as Node)) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   useEffect(() => {
     const q = searchParams.get("q");
@@ -126,22 +152,44 @@ const Hero = () => {
               transition={{ duration: 0.7, delay: 0.6, ease: "easeOut" }}
               className="relative max-w-lg mx-auto lg:mx-0"
             >
-              <div className="glass-card rounded-2xl p-2 shadow-elevated flex items-center gap-2">
-                <div className="flex items-center gap-2 flex-1 pr-4">
-                  <MapPin className="w-5 h-5 text-blush-dark shrink-0" />
-                  <input
-                    type="text"
-                    placeholder="הזינו כתובת או עיר..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === "Enter") openResults(); }}
-                    className="w-full bg-transparent outline-none font-body text-foreground placeholder:text-muted-foreground"
-                  />
+              <div className="relative" ref={suggestionsRef}>
+                <div className="glass-card rounded-2xl p-2 shadow-elevated flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-1 pr-4">
+                    <MapPin className="w-5 h-5 text-blush-dark shrink-0" />
+                    <input
+                      ref={inputRef}
+                      type="text"
+                      placeholder="הזינו כתובת או עיר..."
+                      value={searchQuery}
+                      onChange={(e) => {
+                        setSearchQuery(e.target.value);
+                        setShowSuggestions(true);
+                      }}
+                      onFocus={() => searchQuery.length >= 1 && setShowSuggestions(true)}
+                      onKeyDown={(e) => { if (e.key === "Enter") { setShowSuggestions(false); openResults(); } }}
+                      className="w-full bg-transparent outline-none font-body text-foreground placeholder:text-muted-foreground"
+                    />
+                  </div>
+                  <Button variant="hero" size="lg" className="rounded-xl gap-2" onClick={() => { setShowSuggestions(false); openResults(); }}>
+                    <Search className="w-4 h-4" />
+                    חיפוש
+                  </Button>
                 </div>
-                <Button variant="hero" size="lg" className="rounded-xl gap-2" onClick={openResults}>
-                  <Search className="w-4 h-4" />
-                  חיפוש
-                </Button>
+                {/* Autocomplete dropdown */}
+                {showSuggestions && filteredCities.length > 0 && (
+                  <div className="absolute top-full left-0 right-0 mt-2 bg-card border border-border/50 rounded-xl shadow-elevated z-50 overflow-hidden">
+                    {filteredCities.map((city) => (
+                      <button
+                        key={city}
+                        onClick={() => selectCity(city)}
+                        className="w-full text-right px-4 py-3 text-sm font-body text-foreground hover:bg-primary/10 transition-colors flex items-center gap-2"
+                      >
+                        <MapPin className="w-3.5 h-3.5 text-primary/60 shrink-0" />
+                        {city}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             </motion.div>
           </motion.div>
