@@ -61,7 +61,7 @@ const ShopCard = ({ shop, index, isAdmin, onRemove, formatDistance }: ShopCardPr
       className="group relative bg-card rounded-2xl overflow-hidden border border-border/50 hover:border-primary/30 shadow-soft hover:shadow-elevated transition-all duration-300"
     >
       {/* Image Section */}
-      <div className="relative h-48 overflow-hidden bg-muted">
+      <div className="relative h-48 overflow-hidden bg-muted cursor-pointer" onClick={() => navigate(`/shop/${shop.id}`)}>
         <img
           src={shopImage}
           alt={shop.name}
