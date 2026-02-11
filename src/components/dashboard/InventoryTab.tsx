@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Trash2, Edit2, Package, Flower2, Check, X, Sparkles, AlertTriangle } from "lucide-react";
+import { Plus, Trash2, Edit2, Package, Flower2, Check, X, Sparkles, AlertTriangle, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,9 +24,16 @@ const InventoryTab = ({ shopId }: InventoryTabProps) => {
   const { toast } = useToast();
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const [formData, setFormData] = useState({ name: "", color: "", price: "", quantity: "", shelf_life_days: "7" });
   const [editData, setEditData] = useState({ name: "", color: "", price: "", quantity: "", shelf_life_days: "7" });
   const [togglingBoostIds, setTogglingBoostIds] = useState<Set<string>>(new Set());
+
+  const filteredFlowers = useMemo(() => {
+    if (!searchQuery.trim()) return flowers;
+    const q = searchQuery.trim().toLowerCase();
+    return flowers.filter((f) => f.name.includes(q) || (f.color && f.color.includes(q)));
+  }, [flowers, searchQuery]);
 
   const handleToggleBoost = async (flower: Flower) => {
     setTogglingBoostIds((prev) => new Set(prev).add(flower.id));
@@ -115,7 +122,16 @@ const InventoryTab = ({ shopId }: InventoryTabProps) => {
         </Button>
       </div>
 
-      {/* Low Stock Warning Banner */}
+      {/* Search */}
+      <div className="relative max-w-sm">
+        <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+        <Input
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="חיפוש לפי שם או צבע..."
+          className="rounded-xl pr-9"
+        />
+      </div>
       {(lowStockFlowers.length > 0 || outOfStockFlowers.length > 0) && (
         <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 rounded-2xl p-4 space-y-2">
           <div className="flex items-center gap-2">
@@ -240,7 +256,7 @@ const InventoryTab = ({ shopId }: InventoryTabProps) => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {flowers.map((flower) => {
+              {filteredFlowers.map((flower) => {
                 const isLowStock = flower.quantity > 0 && flower.quantity <= LOW_STOCK_THRESHOLD;
                 const isOutOfStock = flower.quantity === 0 || !flower.in_stock;
 

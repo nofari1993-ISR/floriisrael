@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Truck, Package, Check, AlertTriangle, Flower2, Plus, Minus } from "lucide-react";
+import { useState, useMemo } from "react";
+import { Truck, Package, Check, AlertTriangle, Flower2, Plus, Minus, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -26,6 +26,13 @@ const RestockTab = ({ shopId }: RestockTabProps) => {
   const [restockAmounts, setRestockAmounts] = useState<Record<string, number>>({});
   const [restockingIds, setRestockingIds] = useState<Set<string>>(new Set());
   const [restockedIds, setRestockedIds] = useState<Set<string>>(new Set());
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredFlowers = useMemo(() => {
+    if (!searchQuery.trim()) return flowers;
+    const q = searchQuery.trim().toLowerCase();
+    return flowers.filter((f) => f.name.includes(q) || (f.color && f.color.includes(q)));
+  }, [flowers, searchQuery]);
 
   const getRestockAmount = (flowerId: string) => {
     return restockAmounts[flowerId] ?? DEFAULT_RESTOCK_AMOUNT;
@@ -159,6 +166,17 @@ const RestockTab = ({ shopId }: RestockTabProps) => {
         </div>
       </div>
 
+      {/* Search */}
+      <div className="relative max-w-sm">
+        <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+        <Input
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="חיפוש לפי שם או צבע..."
+          className="rounded-xl pr-9"
+        />
+      </div>
+
       {/* Flowers Table */}
       {loading ? (
         <div className="text-center py-16 text-muted-foreground font-body">
@@ -197,7 +215,7 @@ const RestockTab = ({ shopId }: RestockTabProps) => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {flowers
+              {filteredFlowers
                 .sort((a, b) => {
                   // Low stock first, then alphabetical by name, then by color
                   if (a.quantity !== b.quantity) return a.quantity - b.quantity;
