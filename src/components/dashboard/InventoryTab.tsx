@@ -28,12 +28,33 @@ const InventoryTab = ({ shopId }: InventoryTabProps) => {
   const [formData, setFormData] = useState({ name: "", color: "", price: "", quantity: "", shelf_life_days: "7" });
   const [editData, setEditData] = useState({ name: "", color: "", price: "", quantity: "", shelf_life_days: "7" });
   const [togglingBoostIds, setTogglingBoostIds] = useState<Set<string>>(new Set());
+  const [selectedColors, setSelectedColors] = useState<Record<string, string>>({});
 
   const filteredFlowers = useMemo(() => {
     if (!searchQuery.trim()) return flowers;
     const q = searchQuery.trim().toLowerCase();
     return flowers.filter((f) => f.name.includes(q) || (f.color && f.color.includes(q)));
   }, [flowers, searchQuery]);
+
+  // Group flowers by name
+  const groupedFlowers = useMemo(() => {
+    const groups: Record<string, Flower[]> = {};
+    for (const f of filteredFlowers) {
+      if (!groups[f.name]) groups[f.name] = [];
+      groups[f.name].push(f);
+    }
+    return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b, "he"));
+  }, [filteredFlowers]);
+
+  // Get the currently selected flower for a group
+  const getSelectedFlower = (name: string, group: Flower[]): Flower => {
+    const selectedColor = selectedColors[name];
+    if (selectedColor) {
+      const found = group.find((f) => f.id === selectedColor);
+      if (found) return found;
+    }
+    return group[0];
+  };
 
   const handleToggleBoost = async (flower: Flower) => {
     setTogglingBoostIds((prev) => new Set(prev).add(flower.id));
@@ -256,9 +277,11 @@ const InventoryTab = ({ shopId }: InventoryTabProps) => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredFlowers.map((flower) => {
+              {groupedFlowers.map(([name, group]) => {
+                const flower = getSelectedFlower(name, group);
                 const isLowStock = flower.quantity > 0 && flower.quantity <= LOW_STOCK_THRESHOLD;
                 const isOutOfStock = flower.quantity === 0 || !flower.in_stock;
+                const totalQuantity = group.reduce((sum, f) => sum + f.quantity, 0);
 
                 return (
                   <TableRow
@@ -326,9 +349,34 @@ const InventoryTab = ({ shopId }: InventoryTabProps) => {
                           <div className="flex items-center gap-2">
                             <Flower2 className="w-4 h-4 text-primary/60 shrink-0" />
                             {flower.name}
+                            {group.length > 1 && (
+                              <span className="text-xs text-muted-foreground font-body font-normal">
+                                ({group.length} צבעים)
+                              </span>
+                            )}
                           </div>
                         </TableCell>
-                        <TableCell className="text-muted-foreground font-body">{flower.color || "—"}</TableCell>
+                        <TableCell>
+                          {group.length > 1 ? (
+                            <div className="flex flex-wrap gap-1">
+                              {group.map((f) => (
+                                <button
+                                  key={f.id}
+                                  onClick={() => setSelectedColors((prev) => ({ ...prev, [name]: f.id }))}
+                                  className={`text-xs px-2 py-1 rounded-lg font-body transition-all ${
+                                    f.id === flower.id
+                                      ? "bg-primary/15 text-primary font-semibold ring-1 ring-primary/30"
+                                      : "bg-muted text-muted-foreground hover:bg-muted/80"
+                                  }`}
+                                >
+                                  {f.color || "—"}
+                                </button>
+                              ))}
+                            </div>
+                          ) : (
+                            <span className="text-muted-foreground font-body">{flower.color || "—"}</span>
+                          )}
+                        </TableCell>
                         <TableCell className="font-semibold text-foreground">₪{flower.price}</TableCell>
                         <TableCell>
                           <div className="flex items-center gap-1.5">
@@ -338,6 +386,9 @@ const InventoryTab = ({ shopId }: InventoryTabProps) => {
                             <span className={`font-body ${isLowStock ? "text-amber-600 dark:text-amber-400 font-semibold" : "text-muted-foreground"}`}>
                               {flower.quantity}
                             </span>
+                            {group.length > 1 && (
+                              <span className="text-xs text-muted-foreground">(סה״כ {totalQuantity})</span>
+                            )}
                           </div>
                         </TableCell>
                         <TableCell>
