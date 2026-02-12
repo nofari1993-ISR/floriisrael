@@ -47,7 +47,7 @@ const Hero = () => {
       if (data && data.length >= 2) {
         const newImages = (data as { image_url: string; occasion: string | null; style: string | null }[]).map((b) => ({
           src: b.image_url,
-          label: b.occasion || b.style || "זר מהקהילה",
+          label: b.style || b.occasion || "זר מהקהילה",
         }));
         setBouquetImages(newImages);
         setCurrentImage(0);
