@@ -233,7 +233,7 @@ const Hero = () => {
                       <span className="font-body font-semibold text-foreground text-sm">
                         {bouquetImages[currentImage].label}
                       </span>
-                      <span className="text-xs text-muted-foreground mr-auto">נוצר ע״י AI ✨</span>
+                      <span className="text-xs text-muted-foreground mr-auto">✨</span>
                     </div>
                   </motion.div>
                 </AnimatePresence>
