@@ -18,7 +18,7 @@ interface BouquetSummaryProps {
   onRemove: (flowerId: string) => void;
   onClearAll: () => void;
   onCheckout: (bouquetImageUrl?: string | null) => void;
-  onScrollToCategory?: (category: "filler" | "greenery") => void;
+  onScrollToCategory?: (category: "filler" | "greenery" | "accessories") => void;
 }
 
 const GREENERY_NAMES = new Set(["אקליפטוס", "רוסקוס", "שרך"]);
