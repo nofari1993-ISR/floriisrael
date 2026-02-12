@@ -1,4 +1,5 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { BouquetRecommendation, BouquetFlower } from "@/components/bouquet-chat/BouquetCard";
 
@@ -115,6 +116,24 @@ export function useBouquetWizard(shopId: string | null, mode?: string | null) {
   const [pendingBouquet, setPendingBouquet] = useState<PendingBouquet | null>(null);
   const [autoTriggered, setAutoTriggered] = useState(false);
 
+  // Check if shop has vases in inventory
+  const { data: hasVases } = useQuery({
+    queryKey: ["shop-has-vases", shopId],
+    queryFn: async () => {
+      if (!shopId) return false;
+      const { data } = await supabase
+        .from("flowers")
+        .select("id")
+        .eq("shop_id", shopId)
+        .eq("name", "אגרטל")
+        .eq("in_stock", true)
+        .gt("quantity", 0)
+        .limit(1);
+      return (data?.length || 0) > 0;
+    },
+    enabled: !!shopId,
+  });
+
   // Auto-trigger high-stock mode
   const triggerHighStock = useCallback(async () => {
     if (autoTriggered || isLoading) return;
@@ -203,8 +222,49 @@ export function useBouquetWizard(shopId: string | null, mode?: string | null) {
         nextStep = STEPS.NOTES;
       } else if (currentStep === STEPS.NOTES) {
         newAnswers.notes = answer;
-        nextMessage = `כמעט סיימנו! 🎁 **איך תרצו לקבל את הזר?**\n(אגרטל בתוספת מחיר, המידה נקבעת לפי גודל הזר)`;
-        nextStep = STEPS.WRAPPING;
+        if (hasVases) {
+          nextMessage = `כמעט סיימנו! 🎁 **איך תרצו לקבל את הזר?**\n(אגרטל בתוספת מחיר, המידה נקבעת לפי גודל הזר)`;
+          nextStep = STEPS.WRAPPING;
+        } else {
+          // No vases in shop — skip wrapping step and go straight to generate
+          newAnswers.wrapping = "נייר עטיפה";
+          setAnswers(newAnswers);
+          setCurrentStep(STEPS.RECOMMEND);
+          setIsLoading(true);
+          setMessages((prev) => [
+            ...prev,
+            { role: "assistant", content: "🪄 מעצב/ת את הזר המושלם עבורכם..." },
+          ]);
+
+          try {
+            const { data, error } = await supabase.functions.invoke("bouquet-ai", {
+              body: { action: "generate", shopId, answers: newAnswers },
+            });
+            if (error) throw error;
+
+            const rec: BouquetRecommendation = {
+              flowers: data.flowers,
+              total_price: data.total_price,
+              flowers_cost: data.flowers_cost,
+              digital_design_fee: data.digital_design_fee,
+              message: data.message,
+              image_url: data.image_url || null,
+            };
+
+            setRecommendation(rec);
+            setMessages((prev) => [...prev, { role: "assistant", content: data.message }]);
+          } catch (err: any) {
+            console.error("Generate error:", err);
+            setMessages((prev) => [
+              ...prev,
+              { role: "assistant", content: "מצטער/ת, נתקלתי בבעיה טכנית. נסו שוב 😔" },
+            ]);
+            setCurrentStep(STEPS.NOTES);
+          } finally {
+            setIsLoading(false);
+          }
+          return;
+        }
       } else if (currentStep === STEPS.WRAPPING) {
         newAnswers.wrapping = answer;
 
@@ -282,7 +342,7 @@ export function useBouquetWizard(shopId: string | null, mode?: string | null) {
         setIsLoading(false);
       }, 400);
     },
-    [isLoading, answers, currentStep, shopId]
+    [isLoading, answers, currentStep, shopId, hasVases]
   );
 
   const handleModify = useCallback(
