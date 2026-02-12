@@ -15,6 +15,7 @@ import Terms from "./pages/Terms";
 import ResetPassword from "./pages/ResetPassword";
 import ShopLanding from "./pages/ShopLanding";
 import ShopsPage from "./pages/ShopsPage";
+import Gallery from "./pages/Gallery";
 
 const queryClient = new QueryClient();
 
@@ -36,6 +37,7 @@ const App = () => (
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/shop/:shopId" element={<ShopLanding />} />
           <Route path="/shops" element={<ShopsPage />} />
+          <Route path="/gallery" element={<Gallery />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

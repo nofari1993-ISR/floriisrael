@@ -484,6 +484,24 @@ Style: Front-facing view, the bouquet is standing upright with flowers visible a
       }
     }
 
+    // Save to gallery if we have an image
+    if (bouquetImageUrl && SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
+      try {
+        const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+        await supabaseAdmin.from("gallery_bouquets").insert({
+          image_url: bouquetImageUrl,
+          flowers: validatedFlowers,
+          total_price: Math.round(totalPrice),
+          shop_id: shopId || null,
+          occasion: answers?.occasion || null,
+          style: answers?.style || null,
+        });
+        console.log("[bouquet-ai] Saved bouquet to gallery");
+      } catch (galleryErr) {
+        console.error("[bouquet-ai] Failed to save to gallery:", galleryErr);
+      }
+    }
+
     return new Response(
       JSON.stringify({
         message: parsed.message || "הנה הזר שלכם! 💐",
