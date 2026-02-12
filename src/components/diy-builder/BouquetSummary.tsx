@@ -150,19 +150,20 @@ const BouquetSummary = ({ selectedFlowers, onRemove, onClearAll, onCheckout, onS
               </div>
             ) : (
               <Button
-                variant="outline"
-                className="w-full gap-2 rounded-xl border-dashed border-primary/40 text-primary hover:bg-primary/5"
+                variant="hero"
+                size="lg"
+                className="w-full gap-3 rounded-xl text-base py-6 font-bold shadow-elevated"
                 onClick={handleGenerateImage}
                 disabled={isGeneratingImage}
               >
                 {isGeneratingImage ? (
                   <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <Loader2 className="w-5 h-5 animate-spin" />
                     יוצר תמונה...
                   </>
                 ) : (
                   <>
-                    <Sparkles className="w-4 h-4" />
+                    <Sparkles className="w-5 h-5" />
                     צור תמונה של הזר ✨
                   </>
                 )}
