@@ -495,6 +495,7 @@ Style: Front-facing view, the bouquet is standing upright with flowers visible a
           shop_id: shopId || null,
           occasion: answers?.occasion || null,
           style: answers?.style || null,
+          message: parsed.message || null,
         });
         console.log("[bouquet-ai] Saved bouquet to gallery");
       } catch (galleryErr) {

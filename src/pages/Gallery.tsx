@@ -15,6 +15,7 @@ interface GalleryBouquet {
   total_price: number;
   occasion: string | null;
   style: string | null;
+  message: string | null;
   created_at: string;
 }
 
@@ -105,7 +106,7 @@ const Gallery = () => {
                 </div>
                 <div className="p-3 space-y-1.5">
                   <div className="flex flex-wrap gap-1">
-                    {bouquet.flowers.slice(0, 3).map((f, j) => (
+                    {bouquet.flowers.map((f, j) => (
                       <span
                         key={j}
                         className="text-[11px] font-body bg-primary/10 text-primary rounded-full px-2 py-0.5"
@@ -113,22 +114,12 @@ const Gallery = () => {
                         {f.color ? `${f.color} ` : ""}{f.name}
                       </span>
                     ))}
-                    {bouquet.flowers.length > 3 && (
-                      <span className="text-[11px] font-body text-muted-foreground">
-                        +{bouquet.flowers.length - 3}
-                      </span>
-                    )}
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-body text-muted-foreground">
-                      ₪{bouquet.total_price}
-                    </span>
-                    {bouquet.occasion && (
-                      <span className="text-[11px] font-body text-muted-foreground">
-                        {bouquet.occasion}
-                      </span>
-                    )}
-                  </div>
+                  {bouquet.message && (
+                    <p className="text-xs font-body text-muted-foreground leading-relaxed line-clamp-3">
+                      {bouquet.message}
+                    </p>
+                  )}
                 </div>
               </motion.div>
             ))}
