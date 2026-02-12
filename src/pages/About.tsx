@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import Logo from "@/components/Logo";
 import Footer from "@/components/Footer";
+import logoImage from "@/assets/logo.png";
 
 const About = () => {
   const navigate = useNavigate();
@@ -30,8 +31,13 @@ const About = () => {
           transition={{ duration: 0.7 }}
           className="max-w-2xl mx-auto glass-card rounded-3xl p-8 md:p-12 shadow-elevated space-y-8 font-body text-foreground leading-relaxed"
         >
-          <h1 className="text-3xl md:text-4xl font-display font-bold text-center">
-            נעים להכיר, אנחנו Flori. 🌸
+          <h1 className="text-3xl md:text-4xl font-display font-bold text-center flex items-center justify-center gap-3 flex-wrap">
+            נעים להכיר, אנחנו
+            <span className="inline-flex items-center gap-2">
+              <img src={logoImage} alt="Flori" className="w-10 h-10 object-contain mix-blend-multiply inline-block" />
+              <span style={{ fontFamily: "'Pacifico', cursive" }}>Flori</span>
+            </span>
+            . 🌸
           </h1>
 
           <p className="text-lg text-center text-muted-foreground">
