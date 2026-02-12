@@ -116,7 +116,7 @@ const Hero = () => {
           className="flex items-center justify-between py-3 px-5 glass-nav rounded-2xl"
         >
           <Logo size="md" />
-          <div className="hidden md:flex items-center gap-8 font-body text-muted-foreground">
+          <div className="flex items-center gap-4 md:gap-8 font-body text-muted-foreground text-xs md:text-sm">
             <a href="#how-it-works" className="hover:text-foreground transition-colors">איך זה עובד</a>
             <button onClick={() => navigate("/shops")} className="hover:text-foreground transition-colors cursor-pointer">חנויות</button>
             <button onClick={() => navigate("/gallery")} className="hover:text-foreground transition-colors cursor-pointer">גלריה</button>
