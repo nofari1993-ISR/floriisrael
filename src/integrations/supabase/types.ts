@@ -79,6 +79,7 @@ export type Database = {
           flowers: Json
           id: string
           image_url: string
+          message: string | null
           occasion: string | null
           shop_id: string | null
           style: string | null
@@ -89,6 +90,7 @@ export type Database = {
           flowers?: Json
           id?: string
           image_url: string
+          message?: string | null
           occasion?: string | null
           shop_id?: string | null
           style?: string | null
@@ -99,6 +101,7 @@ export type Database = {
           flowers?: Json
           id?: string
           image_url?: string
+          message?: string | null
           occasion?: string | null
           shop_id?: string | null
           style?: string | null
