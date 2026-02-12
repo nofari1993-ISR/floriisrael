@@ -199,10 +199,7 @@ const DIYBuilderPage = () => {
             <ArrowRight className="w-4 h-4" />
             חזרה לחנויות
           </button>
-          <div className="flex items-center gap-2">
-            <Palette className="w-4 h-4 text-primary" />
-            <Logo size="sm" />
-          </div>
+          <Logo size="sm" />
         </div>
       </div>
 
