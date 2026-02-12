@@ -97,6 +97,7 @@ const Hero = () => {
             <a href="#how-it-works" className="hover:text-foreground transition-colors">איך זה עובד</a>
             <button onClick={() => navigate("/shops")} className="hover:text-foreground transition-colors cursor-pointer">חנויות</button>
             <button onClick={() => navigate("/gallery")} className="hover:text-foreground transition-colors cursor-pointer">גלריה 🌸</button>
+            <button onClick={() => navigate("/about")} className="hover:text-foreground transition-colors cursor-pointer">אודות</button>
           </div>
           {user ? (
             <div className="flex items-center gap-2">
