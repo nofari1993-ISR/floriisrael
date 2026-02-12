@@ -16,6 +16,7 @@ import ResetPassword from "./pages/ResetPassword";
 import ShopLanding from "./pages/ShopLanding";
 import ShopsPage from "./pages/ShopsPage";
 import Gallery from "./pages/Gallery";
+import About from "./pages/About";
 
 const queryClient = new QueryClient();
 
@@ -38,6 +39,7 @@ const App = () => (
           <Route path="/shop/:shopId" element={<ShopLanding />} />
           <Route path="/shops" element={<ShopsPage />} />
           <Route path="/gallery" element={<Gallery />} />
+          <Route path="/about" element={<About />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
