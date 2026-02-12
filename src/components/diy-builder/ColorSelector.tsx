@@ -82,7 +82,7 @@ const ColorSelector = ({ flowerName, variants, isOpen, onClose, onConfirm }: Col
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-sm rounded-2xl" dir="rtl">
+      <DialogContent className="max-w-sm max-h-[85vh] rounded-2xl overflow-y-auto" dir="rtl">
         <DialogHeader>
           <DialogTitle className="font-display text-center">
             בחרו צבעים וכמויות - {flowerName}
