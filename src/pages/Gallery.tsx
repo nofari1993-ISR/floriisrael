@@ -2,12 +2,14 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import logoImage from "@/assets/logo.png";
-import { ArrowRight, Loader2 } from "lucide-react";
+import { ArrowRight, Loader2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import Logo from "@/components/Logo";
 import Footer from "@/components/Footer";
 import FullscreenImageModal from "@/components/diy-builder/FullscreenImageModal";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "@/hooks/use-toast";
 
 interface GalleryBouquet {
   id: string;
@@ -24,7 +26,9 @@ const Gallery = () => {
   const [bouquets, setBouquets] = useState<GalleryBouquet[]>([]);
   const [loading, setLoading] = useState(true);
   const [fullscreenUrl, setFullscreenUrl] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const navigate = useNavigate();
+  const { isAdmin } = useAuth();
 
   useEffect(() => {
     const fetchGallery = async () => {
@@ -41,6 +45,21 @@ const Gallery = () => {
     };
     fetchGallery();
   }, []);
+
+  const handleDelete = async (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    if (!confirm("האם למחוק את התמונה מהגלריה?")) return;
+    
+    setDeletingId(id);
+    const { error } = await supabase.from("gallery_bouquets").delete().eq("id", id);
+    if (error) {
+      toast({ title: "שגיאה במחיקה", description: error.message, variant: "destructive" });
+    } else {
+      setBouquets((prev) => prev.filter((b) => b.id !== id));
+      toast({ title: "התמונה נמחקה בהצלחה" });
+    }
+    setDeletingId(null);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-hero">
@@ -108,6 +127,20 @@ const Gallery = () => {
                     loading="lazy"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-foreground/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                  {isAdmin && (
+                    <button
+                      onClick={(e) => handleDelete(e, bouquet.id)}
+                      disabled={deletingId === bouquet.id}
+                      className="absolute top-2 left-2 bg-destructive/90 hover:bg-destructive text-destructive-foreground rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity shadow-md z-10"
+                      title="מחק מהגלריה"
+                    >
+                      {deletingId === bouquet.id ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="w-4 h-4" />
+                      )}
+                    </button>
+                  )}
                 </div>
                 <div className="p-3 space-y-1.5">
                   <div className="flex flex-wrap gap-1">
