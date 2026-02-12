@@ -133,7 +133,7 @@ const ShopCard = ({ shop, index, isAdmin, onRemove, formatDistance }: ShopCardPr
             onClick={() => navigate(`/ai-chat?shopId=${shop.id}`)}
           >
             <Sparkles className="w-4 h-4" />
-            ✨ פלורי תשזור עבורכם
+            ✨ Flori השוזרת
           </Button>
           <Button
             variant="hero-outline"
