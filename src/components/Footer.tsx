@@ -34,6 +34,7 @@ const Footer = () => {
             <ul className="space-y-2 font-body">
               <li><a href="#how-it-works" className="text-primary-foreground/60 hover:text-primary-foreground transition-colors">איך זה עובד</a></li>
               <li><a href="#shops" className="text-primary-foreground/60 hover:text-primary-foreground transition-colors">חנויות</a></li>
+              <li><a href="/about" className="text-primary-foreground/60 hover:text-primary-foreground transition-colors">אודות</a></li>
             </ul>
           </motion.div>
 
