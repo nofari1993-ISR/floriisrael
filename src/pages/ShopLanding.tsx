@@ -245,7 +245,7 @@ const ShopLanding = () => {
                   onClick={() => navigate(`/ai-chat?shopId=${shop.id}`)}
                 >
                   <Sparkles className="w-5 h-5" />
-                  התחילו שיחה עם פלורי
+                  התחילו שיחה עם Flori
                 </Button>
               </div>
             </motion.div>
