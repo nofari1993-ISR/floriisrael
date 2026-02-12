@@ -159,7 +159,7 @@ const Hero = () => {
                     <input
                       ref={inputRef}
                       type="text"
-                      placeholder="הזינו כתובת או עיר..."
+                      placeholder="הזינו עיר..."
                       value={searchQuery}
                       onChange={(e) => {
                         setSearchQuery(e.target.value);
