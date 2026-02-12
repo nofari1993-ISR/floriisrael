@@ -17,10 +17,7 @@ const BouquetChatHeader = ({ onBack, backLabel = "חזרה" }: BouquetChatHeader
           <ArrowRight className="w-4 h-4" />
           {backLabel}
         </button>
-        <div className="flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-primary" />
-          <Logo size="sm" />
-        </div>
+        <Logo size="sm" />
       </div>
     </div>
   );
