@@ -73,6 +73,47 @@ export type Database = {
           },
         ]
       }
+      gallery_bouquets: {
+        Row: {
+          created_at: string
+          flowers: Json
+          id: string
+          image_url: string
+          occasion: string | null
+          shop_id: string | null
+          style: string | null
+          total_price: number
+        }
+        Insert: {
+          created_at?: string
+          flowers?: Json
+          id?: string
+          image_url: string
+          occasion?: string | null
+          shop_id?: string | null
+          style?: string | null
+          total_price?: number
+        }
+        Update: {
+          created_at?: string
+          flowers?: Json
+          id?: string
+          image_url?: string
+          occasion?: string | null
+          shop_id?: string | null
+          style?: string | null
+          total_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gallery_bouquets_shop_id_fkey"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shops"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       order_items: {
         Row: {
           created_at: string | null
