@@ -120,11 +120,6 @@ const Gallery = () => {
                       </span>
                     ))}
                   </div>
-                  {bouquet.message && (
-                    <p className="text-xs font-body text-muted-foreground leading-relaxed line-clamp-3">
-                      {bouquet.message}
-                    </p>
-                  )}
                 </div>
               </motion.div>
             ))}
