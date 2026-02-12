@@ -224,9 +224,9 @@ const Hero = () => {
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 1, delay: 0.4 }}
-            className="relative hidden lg:flex items-center justify-center"
+            className="relative flex items-center justify-center order-first lg:order-none mb-6 lg:mb-0"
           >
-            <div className="relative w-80 h-80 xl:w-96 xl:h-96">
+            <div className="relative w-56 h-56 sm:w-64 sm:h-64 lg:w-80 lg:h-80 xl:w-96 xl:h-96">
               {/* Glass frame */}
               <div className="absolute inset-0 rounded-3xl glass-card shadow-elevated overflow-hidden">
                 <AnimatePresence mode="wait">
