@@ -112,7 +112,7 @@ const BouquetSummary = ({ selectedFlowers, onRemove, onClearAll, onCheckout, onS
                   />
                   <div className="absolute bottom-2 right-2 bg-black/60 backdrop-blur-sm text-white text-[10px] px-2 py-0.5 rounded-full flex items-center gap-1">
                     <Sparkles className="w-3 h-3" />
-                    נוצר ב-AI
+                    נוצר ע״י Flori
                   </div>
                   <button
                     onClick={() => setIsFullscreen(true)}
