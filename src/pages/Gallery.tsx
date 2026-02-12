@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
+import logoImage from "@/assets/logo.png";
 import { ArrowRight, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -63,8 +64,12 @@ const Gallery = () => {
           transition={{ duration: 0.7 }}
           className="text-center mb-10"
         >
-          <h1 className="text-3xl md:text-4xl font-display font-bold text-foreground mb-3">
-            🌸 גלריית הזרים של Flori
+          <h1 className="text-3xl md:text-4xl font-display font-bold text-foreground mb-3 flex items-center justify-center gap-3 flex-wrap">
+            גלריית הזרים של
+            <span className="inline-flex items-center gap-2">
+              <img src={logoImage} alt="Flori" className="w-10 h-10 object-contain mix-blend-multiply inline-block" />
+              <span style={{ fontFamily: "'Pacifico', cursive" }}>Flori</span>
+            </span>
           </h1>
           <p className="text-muted-foreground font-body text-base md:text-lg max-w-md mx-auto">
             הזרים שנוצרו על ידי הקהילה שלנו
