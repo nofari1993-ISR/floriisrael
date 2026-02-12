@@ -163,6 +163,9 @@ export function useBouquetWizard(shopId: string | null, mode?: string | null) {
         if (isNaN(budgetAmount) || budgetAmount <= 0) {
           nextMessage = `מצטער/ת, לא הבנתי את הסכום. אפשר לכתוב מספר בשקלים? לדוגמה: 300 או ₪250`;
           nextStep = STEPS.BUDGET;
+        } else if (budgetAmount < 70) {
+          nextMessage = `⚠️ מינימום ההזמנה הוא **₪70**. אנא הזינו סכום של ₪70 ומעלה כדי שנוכל להרכיב עבורכם זר יפה 🌸`;
+          nextStep = STEPS.BUDGET;
         } else {
           newAnswers.budget = String(budgetAmount);
           nextMessage = `מצוין! אצור משהו יפה מאוד. 🎨 **איזה צבעים אתם אוהבים?**`;
