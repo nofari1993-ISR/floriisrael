@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Star, MapPin, Clock, Palette, Navigation, Trash2, Truck, MessageSquarePlus, Globe } from "lucide-react";
+import { Star, MapPin, Clock, Palette, Navigation, Trash2, Truck, MessageSquarePlus, Globe, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Shop } from "@/hooks/useShops";
@@ -125,23 +125,24 @@ const ShopCard = ({ shop, index, isAdmin, onRemove, formatDistance }: ShopCardPr
         )}
 
         {/* Action Buttons */}
-        <div className="flex gap-2 pt-1">
+        <div className="flex flex-col gap-2 pt-1">
           <Button
             variant="hero"
             size="sm"
-            className="flex-1 rounded-xl gap-2"
-            onClick={() => navigate(`/diy-builder?shopId=${shop.id}`)}
+            className="w-full rounded-xl gap-2 py-3 text-sm font-semibold shadow-md"
+            onClick={() => navigate(`/ai-chat?shopId=${shop.id}`)}
           >
-            <Palette className="w-4 h-4" />
-            לשזור בעצמך
+            <Sparkles className="w-4 h-4" />
+            ✨ פלורי תשזור עבורכם
           </Button>
           <Button
             variant="hero-outline"
             size="sm"
-            className="rounded-xl gap-1.5"
-            onClick={() => navigate(`/ai-chat?shopId=${shop.id}`)}
+            className="w-full rounded-xl gap-2"
+            onClick={() => navigate(`/diy-builder?shopId=${shop.id}`)}
           >
-            ✨ Flori השוזרת
+            <Palette className="w-4 h-4" />
+            לשזור בעצמך
           </Button>
         </div>
 
