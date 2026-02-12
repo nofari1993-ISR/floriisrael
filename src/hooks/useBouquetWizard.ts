@@ -14,6 +14,7 @@ export const STEPS = {
   COLORS: "colors",
   STYLE: "style",
   NOTES: "notes",
+  WRAPPING: "wrapping",
   RECOMMEND: "recommend",
 } as const;
 
@@ -62,6 +63,24 @@ export const STYLE_OPTIONS = [
   { emoji: "🕊️", label: "אלגנטי", value: "אלגנטי" },
 ];
 
+export const WRAPPING_OPTIONS = [
+  { emoji: "📦", label: "נייר עטיפה", value: "נייר עטיפה" },
+  { emoji: "🏺", label: "אגרטל", value: "אגרטל" },
+];
+
+const VASE_SIZES: { max: number; size: string; price: number }[] = [
+  { max: 150, size: "S", price: 20 },
+  { max: 250, size: "M", price: 30 },
+  { max: 400, size: "L", price: 40 },
+];
+
+function getVaseForBudget(budget: number): { size: string; price: number } {
+  for (const v of VASE_SIZES) {
+    if (budget <= v.max) return { size: v.size, price: v.price };
+  }
+  return VASE_SIZES[VASE_SIZES.length - 1]; // L for anything above 400
+}
+
 const INITIAL_MESSAGE = `🌸 ברוכים הבאים לבונה הזרים החכם!
 
 אני כאן כדי לעזור לכם ליצור את הזר המושלם, מותאם בדיוק לצרכים שלכם 💫
@@ -75,6 +94,9 @@ export interface WizardAnswers {
   colors?: string;
   style?: string;
   notes?: string;
+  wrapping?: string;
+  vaseSize?: string;
+  vasePrice?: number;
 }
 
 interface PendingBouquet {
@@ -181,6 +203,19 @@ export function useBouquetWizard(shopId: string | null, mode?: string | null) {
         nextStep = STEPS.NOTES;
       } else if (currentStep === STEPS.NOTES) {
         newAnswers.notes = answer;
+        nextMessage = `כמעט סיימנו! 🎁 **איך תרצו לקבל את הזר?**`;
+        nextStep = STEPS.WRAPPING;
+      } else if (currentStep === STEPS.WRAPPING) {
+        newAnswers.wrapping = answer;
+
+        // If vase, calculate size based on budget
+        if (answer === "אגרטל") {
+          const budget = parseFloat(newAnswers.budget || "0");
+          const vase = getVaseForBudget(budget);
+          newAnswers.vaseSize = vase.size;
+          newAnswers.vasePrice = vase.price;
+        }
+
         setAnswers(newAnswers);
         setCurrentStep(STEPS.RECOMMEND);
 
@@ -198,24 +233,39 @@ export function useBouquetWizard(shopId: string | null, mode?: string | null) {
 
           if (error) throw error;
 
+          let totalPrice = data.total_price;
+          const flowers = data.flowers;
+
+          // Add vase to flowers list if selected
+          if (newAnswers.wrapping === "אגרטל" && newAnswers.vaseSize && newAnswers.vasePrice) {
+            flowers.push({
+              name: "אגרטל",
+              quantity: 1,
+              unit_price: newAnswers.vasePrice,
+              color: newAnswers.vaseSize,
+              line_total: newAnswers.vasePrice,
+            });
+            totalPrice += newAnswers.vasePrice;
+          }
+
           const rec: BouquetRecommendation = {
-            flowers: data.flowers,
-            total_price: data.total_price,
+            flowers,
+            total_price: totalPrice,
             flowers_cost: data.flowers_cost,
             digital_design_fee: data.digital_design_fee,
-            message: data.message,
+            message: data.message + (newAnswers.wrapping === "אגרטל" ? `\n\n🏺 הזר יגיע בתוך אגרטל מידה ${newAnswers.vaseSize} (₪${newAnswers.vasePrice})` : ""),
             image_url: data.image_url || null,
           };
 
           setRecommendation(rec);
-          setMessages((prev) => [...prev, { role: "assistant", content: data.message }]);
+          setMessages((prev) => [...prev, { role: "assistant", content: rec.message }]);
         } catch (err: any) {
           console.error("Generate error:", err);
           setMessages((prev) => [
             ...prev,
             { role: "assistant", content: "מצטער/ת, נתקלתי בבעיה טכנית. נסו שוב 😔" },
           ]);
-          setCurrentStep(STEPS.NOTES);
+          setCurrentStep(STEPS.WRAPPING);
         } finally {
           setIsLoading(false);
         }

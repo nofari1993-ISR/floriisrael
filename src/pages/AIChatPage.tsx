@@ -16,6 +16,7 @@ import {
   OCCASION_OPTIONS,
   COLOR_OPTIONS,
   STYLE_OPTIONS,
+  WRAPPING_OPTIONS,
 } from "@/hooks/useBouquetWizard";
 import { useShopOwner } from "@/hooks/useShopOwner";
 
@@ -95,6 +96,7 @@ const AIChatPage = () => {
   const showColorOptions = currentStep === STEPS.COLORS && !recommendation;
   const showStyleOptions = currentStep === STEPS.STYLE && !recommendation;
   const showNotesSkip = currentStep === STEPS.NOTES && !recommendation;
+  const showWrappingOptions = currentStep === STEPS.WRAPPING && !recommendation;
 
   return (
     <div className="h-screen flex flex-col bg-gradient-hero">
@@ -175,8 +177,11 @@ const AIChatPage = () => {
               variant="hero"
               className="w-full rounded-xl mb-2"
             >
-              המשך ליצירת הזר ✨
+              המשך ✨
             </Button>
+          )}
+          {showWrappingOptions && (
+            <StepOptionButtons options={WRAPPING_OPTIONS} onSelect={handleStepAnswer} disabled={isLoading} />
           )}
 
           {/* Text input */}
