@@ -113,10 +113,10 @@ const Hero = () => {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="flex items-center justify-between py-3 px-5 glass-nav rounded-2xl"
+          className="flex flex-wrap items-center justify-between py-3 px-5 glass-nav rounded-2xl gap-2"
         >
           <Logo size="md" />
-          <div className="flex items-center gap-4 md:gap-8 font-body text-muted-foreground text-xs md:text-sm">
+          <div className="order-last w-full flex items-center justify-center gap-4 md:gap-8 font-body text-muted-foreground text-xs md:text-sm md:order-none md:w-auto">
             <a href="#how-it-works" className="hover:text-foreground transition-colors">איך זה עובד</a>
             <button onClick={() => navigate("/shops")} className="hover:text-foreground transition-colors cursor-pointer">חנויות</button>
             <button onClick={() => navigate("/gallery")} className="hover:text-foreground transition-colors cursor-pointer">גלריה</button>
