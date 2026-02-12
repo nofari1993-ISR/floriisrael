@@ -130,7 +130,7 @@ const DIYBuilderPage = () => {
 
   // Categorize flowers
   const GREENERY = new Set(["אקליפטוס", "רוסקוס", "שרך"]);
-  const FILLER = new Set(["גיבסנית", "לבנדר"]);
+  const FILLER = new Set(["גיבסנית", "לבנדר", "עלי דפנה"]);
   const ACCESSORIES = new Set(["אגרטל"]);
 
   // Deduplicate flowers by name – show one card per name with color variants
