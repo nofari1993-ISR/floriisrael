@@ -5,7 +5,7 @@ interface BouquetTipsProps {
   hasMainFlowers: boolean;
   hasFillers: boolean;
   hasGreenery: boolean;
-  onScrollToCategory?: (category: "filler" | "greenery") => void;
+  onScrollToCategory?: (category: "filler" | "greenery" | "accessories") => void;
 }
 
 const BouquetTips = ({ hasMainFlowers, hasFillers, hasGreenery, onScrollToCategory }: BouquetTipsProps) => {

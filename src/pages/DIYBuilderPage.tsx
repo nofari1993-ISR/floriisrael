@@ -34,9 +34,10 @@ const DIYBuilderPage = () => {
   const categoryRefs = {
     filler: useRef<HTMLDivElement>(null),
     greenery: useRef<HTMLDivElement>(null),
+    accessories: useRef<HTMLDivElement>(null),
   };
 
-  const handleScrollToCategory = (category: "filler" | "greenery") => {
+  const handleScrollToCategory = (category: "filler" | "greenery" | "accessories") => {
     categoryRefs[category]?.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
@@ -130,6 +131,7 @@ const DIYBuilderPage = () => {
   // Categorize flowers
   const GREENERY = new Set(["אקליפטוס", "רוסקוס", "שרך"]);
   const FILLER = new Set(["גיבסנית", "לבנדר"]);
+  const ACCESSORIES = new Set(["אגרטל"]);
 
   // Deduplicate flowers by name – show one card per name with color variants
   const uniqueFlowers = useMemo(() => {
@@ -152,13 +154,15 @@ const DIYBuilderPage = () => {
 
   // Group into categories
   const categorizedFlowers = useMemo(() => {
-    const main = filteredFlowers.filter((f) => !GREENERY.has(f.name) && !FILLER.has(f.name));
+    const main = filteredFlowers.filter((f) => !GREENERY.has(f.name) && !FILLER.has(f.name) && !ACCESSORIES.has(f.name));
     const filler = filteredFlowers.filter((f) => FILLER.has(f.name));
     const greenery = filteredFlowers.filter((f) => GREENERY.has(f.name));
+    const accessories = filteredFlowers.filter((f) => ACCESSORIES.has(f.name));
     return [
       { label: "פרחים עיקריים 🌸", flowers: main },
       { label: "פרחי מילוי 🌿", flowers: filler },
       { label: "ירק ועלווה 🍃", flowers: greenery },
+      { label: "אביזרים 🏺", flowers: accessories },
     ].filter((cat) => cat.flowers.length > 0);
   }, [filteredFlowers]);
 
@@ -295,6 +299,7 @@ const DIYBuilderPage = () => {
                 {categorizedFlowers.map((category) => {
                   const catKey = category.label.includes("מילוי") ? "filler"
                     : category.label.includes("ירק") ? "greenery"
+                    : category.label.includes("אביזרים") ? "accessories"
                     : null;
                   return (
                   <div key={category.label} ref={catKey ? categoryRefs[catKey] : undefined}>
