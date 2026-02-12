@@ -8,13 +8,14 @@ import ShopSearchResults from "@/components/ShopSearchResults";
 import { useAuth } from "@/hooks/useAuth";
 import { useShopOwner } from "@/hooks/useShopOwner";
 import Logo from "@/components/Logo";
+import { supabase } from "@/integrations/supabase/client";
 
 import galleryRomantic from "@/assets/gallery-romantic.jpg";
 import gallerySunny from "@/assets/gallery-sunny.jpg";
 import galleryPastel from "@/assets/gallery-pastel.jpg";
 import galleryTropical from "@/assets/gallery-tropical.jpg";
 
-const bouquetImages = [
+const fallbackImages = [
   { src: galleryRomantic, label: "זר רומנטי" },
   { src: gallerySunny, label: "זר שמש" },
   { src: galleryPastel, label: "זר פסטל" },
@@ -32,6 +33,28 @@ const Hero = () => {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const suggestionsRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [bouquetImages, setBouquetImages] = useState(fallbackImages);
+
+  // Fetch gallery images
+  useEffect(() => {
+    const fetchGallery = async () => {
+      const { data } = await supabase
+        .from("gallery_bouquets")
+        .select("image_url, occasion, style")
+        .order("created_at", { ascending: false })
+        .limit(8);
+
+      if (data && data.length >= 2) {
+        setBouquetImages(
+          (data as { image_url: string; occasion: string | null; style: string | null }[]).map((b) => ({
+            src: b.image_url,
+            label: b.occasion || b.style || "זר מהקהילה",
+          }))
+        );
+      }
+    };
+    fetchGallery();
+  }, []);
 
   const filteredCities = useMemo(() => {
     if (!searchQuery || searchQuery.length < 1) return [];
