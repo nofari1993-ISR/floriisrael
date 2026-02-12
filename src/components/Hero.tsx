@@ -45,12 +45,12 @@ const Hero = () => {
         .limit(8);
 
       if (data && data.length >= 2) {
-        setBouquetImages(
-          (data as { image_url: string; occasion: string | null; style: string | null }[]).map((b) => ({
-            src: b.image_url,
-            label: b.occasion || b.style || "זר מהקהילה",
-          }))
-        );
+        const newImages = (data as { image_url: string; occasion: string | null; style: string | null }[]).map((b) => ({
+          src: b.image_url,
+          label: b.occasion || b.style || "זר מהקהילה",
+        }));
+        setBouquetImages(newImages);
+        setCurrentImage(0);
       }
     };
     fetchGallery();
@@ -88,7 +88,7 @@ const Hero = () => {
       setCurrentImage((prev) => (prev + 1) % bouquetImages.length);
     }, 4000);
     return () => clearInterval(interval);
-  }, []);
+  }, [bouquetImages.length]);
 
   const openResults = () => {
     setSearchParams({ shops: "open", q: searchQuery });
