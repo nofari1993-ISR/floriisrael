@@ -37,7 +37,7 @@ const About = () => {
               <img src={logoImage} alt="Flori" className="w-10 h-10 object-contain mix-blend-multiply inline-block" />
               <span style={{ fontFamily: "'Pacifico', cursive" }}>Flori</span>
             </span>
-            . 🌸
+            .
           </h1>
 
           <p className="text-lg text-center text-muted-foreground">
