@@ -129,7 +129,7 @@ const ShopCard = ({ shop, index, isAdmin, onRemove, formatDistance }: ShopCardPr
           <Button
             variant="hero"
             size="sm"
-            className="w-full rounded-xl gap-2 py-3 text-sm font-semibold shadow-md"
+            className="w-full rounded-xl gap-2 py-3 text-base font-semibold shadow-md"
             onClick={() => navigate(`/ai-chat?shopId=${shop.id}`)}
           >
             ✨ Flori השוזרת
