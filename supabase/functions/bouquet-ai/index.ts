@@ -434,7 +434,16 @@ ${flowersContext}
           .map((f: any) => `${Math.max(1, Math.floor(f.quantity * 0.95))} ${f.color} ${f.name}`)
           .join(", ");
 
-        const imagePrompt = `Generate a realistic photograph of a single beautiful florist bouquet, held upright as if on display in a flower shop. The bouquet is wrapped in elegant kraft paper with a ribbon.
+        const wantsVase = answers?.wrapping === "אגרטל" && answers?.vaseSize;
+        const vaseSizeLabel = wantsVase ? (answers.vaseSize === "S" ? "small" : answers.vaseSize === "L" ? "large" : "medium") : "";
+
+        const imagePrompt = wantsVase
+          ? `Generate a realistic photograph of a single beautiful florist bouquet arranged in a clear glass ${vaseSizeLabel} vase. The photo is taken from a slight angle (30-45 degrees).
+
+The bouquet contains: ${flowerDescriptions}.
+
+Style: Front-facing view, professional product photography, soft studio lighting, clean white or light background. Show exactly one bouquet in one clear glass vase with fewer flowers rather than more. Do not add flowers not listed.`
+          : `Generate a realistic photograph of a single beautiful florist bouquet, held upright as if on display in a flower shop. The bouquet is wrapped in elegant kraft paper with a ribbon.
 
 The bouquet contains: ${flowerDescriptions}.
 
