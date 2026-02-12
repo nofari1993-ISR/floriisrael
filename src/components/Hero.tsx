@@ -119,7 +119,7 @@ const Hero = () => {
           <div className="order-last w-full flex items-center justify-center gap-4 md:gap-8 font-body text-muted-foreground text-xs md:text-sm md:order-none md:w-auto">
             <a href="#how-it-works" className="hover:text-foreground transition-colors">איך זה עובד</a>
             <button onClick={() => navigate("/shops")} className="hover:text-foreground transition-colors cursor-pointer">חנויות</button>
-            <button onClick={() => navigate("/gallery")} className="hover:text-foreground transition-colors cursor-pointer">גלריה</button>
+            <button onClick={() => navigate("/gallery")} className="hover:text-foreground transition-colors cursor-pointer">נוצרו לאחרונה</button>
             <button onClick={() => navigate("/about")} className="hover:text-foreground transition-colors cursor-pointer">אודות</button>
           </div>
           {user ? (
