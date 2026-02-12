@@ -203,7 +203,7 @@ export function useBouquetWizard(shopId: string | null, mode?: string | null) {
         nextStep = STEPS.NOTES;
       } else if (currentStep === STEPS.NOTES) {
         newAnswers.notes = answer;
-        nextMessage = `כמעט סיימנו! 🎁 **איך תרצו לקבל את הזר?**`;
+        nextMessage = `כמעט סיימנו! 🎁 **איך תרצו לקבל את הזר?**\n(אגרטל בתוספת מחיר, המידה נקבעת לפי גודל הזר)`;
         nextStep = STEPS.WRAPPING;
       } else if (currentStep === STEPS.WRAPPING) {
         newAnswers.wrapping = answer;
