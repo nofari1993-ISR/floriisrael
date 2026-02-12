@@ -23,6 +23,7 @@ interface BouquetSummaryProps {
 
 const GREENERY_NAMES = new Set(["אקליפטוס", "רוסקוס", "שרך"]);
 const FILLER_NAMES = new Set(["גיבסנית", "לבנדר"]);
+const ACCESSORY_NAMES = new Set(["אגרטל"]);
 
 const BouquetSummary = ({ selectedFlowers, onRemove, onClearAll, onCheckout, onScrollToCategory }: BouquetSummaryProps) => {
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
@@ -39,14 +40,21 @@ const BouquetSummary = ({ selectedFlowers, onRemove, onClearAll, onCheckout, onS
   const handleGenerateImage = async () => {
     setIsGeneratingImage(true);
     try {
-      const flowers = selectedFlowers.map((item) => ({
-        name: item.flower.name,
-        quantity: item.quantity,
-        color: item.flower.color || "",
-      }));
+      const flowers = selectedFlowers
+        .filter((item) => !ACCESSORY_NAMES.has(item.flower.name))
+        .map((item) => ({
+          name: item.flower.name,
+          quantity: item.quantity,
+          color: item.flower.color || "",
+        }));
+
+      const hasVase = selectedFlowers.some((item) => ACCESSORY_NAMES.has(item.flower.name));
+      const vaseSize = hasVase
+        ? selectedFlowers.find((item) => ACCESSORY_NAMES.has(item.flower.name))?.flower.color || "M"
+        : null;
 
       const { data, error } = await supabase.functions.invoke("generate-bouquet-image", {
-        body: { flowers },
+        body: { flowers, vase: hasVase ? { size: vaseSize } : null },
       });
 
       if (error) throw error;

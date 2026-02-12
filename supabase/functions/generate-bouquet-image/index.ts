@@ -41,7 +41,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    const { flowers } = await req.json();
+    const { flowers, vase } = await req.json();
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
@@ -92,7 +92,27 @@ Deno.serve(async (req) => {
       return `exactly ${qty} ${color} ${name}`.trim();
     });
 
-    const prompt = `Create a realistic DIRECTLY TOP-DOWN (bird's eye view, 90 degrees from above) photograph of ONE single elegant bouquet wrapped in kraft paper on a clean white surface.
+    const hasVase = vase && vase.size;
+    const vaseSizeLabel = hasVase ? (vase.size === "S" ? "small" : vase.size === "L" ? "large" : "medium") : "";
+
+    const prompt = hasVase
+      ? `Create a realistic photograph of ONE single elegant bouquet arranged in a clear glass ${vaseSizeLabel} vase on a clean white surface. The photo should be taken from a slight angle (about 30-45 degrees from above) to beautifully show the flowers in the vase.
+
+The bouquet must contain EXACTLY these flowers (no more, no less):
+${flowerDescriptions.map((d: string) => `• ${d}`).join("\n")}
+
+Total flower count: exactly ${totalFlowers} flowers.
+
+CRITICAL RULES:
+- The number of each flower type MUST match the exact quantities listed above. Count carefully.
+- The flowers should be beautifully arranged in a clear glass vase.
+- Show ONE single bouquet in ONE vase, not multiple.
+- Do NOT add any extra flowers, greenery, or filler that are not listed above.
+- Do NOT omit any flowers from the list.
+- Each flower type must be clearly distinguishable by its color and shape.
+
+Style: Professional product photography, soft natural light, clean white background, elegant clear glass vase.`
+      : `Create a realistic DIRECTLY TOP-DOWN (bird's eye view, 90 degrees from above) photograph of ONE single elegant bouquet wrapped in kraft paper on a clean white surface.
 
 The bouquet must contain EXACTLY these flowers (no more, no less):
 ${flowerDescriptions.map((d: string) => `• ${d}`).join("\n")}
