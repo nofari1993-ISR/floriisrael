@@ -125,17 +125,6 @@ const FlowerCard = ({
           </span>
 
           <div className="flex items-center gap-0.5 md:gap-1 shrink-0">
-              {hasColors && (
-                <Button
-                  size="icon"
-                  variant="outline"
-                  className="h-6 w-6 md:h-8 md:w-8 rounded-full shrink-0 border-primary/30 text-primary"
-                  onClick={() => setIsColorSelectorOpen(true)}
-                  title="בחר צבעים"
-                >
-                  <Palette className="w-3 h-3 md:w-4 md:h-4" />
-                </Button>
-              )}
 
               {selectedQuantity > 0 ? (
                 <div className="flex items-center gap-0.5 shrink-0">
