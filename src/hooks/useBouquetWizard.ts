@@ -219,7 +219,7 @@ export function useBouquetWizard(shopId: string | null, mode?: string | null) {
         nextStep = STEPS.STYLE;
       } else if (currentStep === STEPS.STYLE) {
         newAnswers.style = answer;
-        nextMessage = `מושלם! ✨ **יש משהו נוסף שתרצו שאדע?** (או לחצו "המשך")`;
+        nextMessage = `מושלם! ✨ **יש משהו נוסף שתרצו שאדע?**\n\nהאם יש אלרגיות לפרחים מסוימים / חתול בבית? 🐱\n(או לחצו "המשך")`;
         nextStep = STEPS.NOTES;
       } else if (currentStep === STEPS.NOTES) {
         newAnswers.notes = answer;
