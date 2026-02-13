@@ -161,6 +161,20 @@ ${styleInstruction ? `- ${styleInstruction}` : ""}
 - תקציב לפרחים: ₪${Math.floor(budgetForFlowers)}
 - הערות: ${answers.notes && answers.notes !== "המשך" ? answers.notes : "אין"}
 
+# הגבלות בריאות/בטיחות (קריטי!):
+${(() => {
+  const notes = (answers.notes || "").toLowerCase();
+  const restrictions: string[] = [];
+  if (notes.includes("חתול") || notes.includes("חתולה") || notes.includes("חתולים")) {
+    restrictions.push("⚠️ יש חתול בבית! **אסור בהחלט** לכלול שושן צחור (לילי) וגיבסנית בזר — גם אם יש עליהם בוסט! פרחים אלה רעילים לחתולים.");
+  }
+  if (notes.includes("אלרג")) {
+    // Try to extract specific flower allergies
+    restrictions.push("⚠️ הלקוח ציין אלרגיה! בדוק אילו פרחים הוזכרו בהערות והימנע מהם לחלוטין.");
+  }
+  return restrictions.length > 0 ? restrictions.join("\n") : "אין הגבלות מיוחדות.";
+})()}
+
 # חובה:
 1. בנה ${bouquetSize} עם ${flowerTypesRange} סוגי פרחים שונים (לא רק סוג אחד!)
 2. אל תחרוג מ-₪${Math.floor(budgetForFlowers)} - זה קריטי!
@@ -201,6 +215,21 @@ ${currentFlowersList}
 ${flowersContext}
 ${boostedModifyInstruction}
 # תקציב מקסימלי: ₪${Math.floor(budgetForFlowers)}
+
+# הערות הלקוח: ${answers?.notes && answers.notes !== "המשך" ? answers.notes : "אין"}
+
+# הגבלות בריאות/בטיחות (קריטי!):
+${(() => {
+  const notes = (answers?.notes || "").toLowerCase();
+  const restrictions: string[] = [];
+  if (notes.includes("חתול") || notes.includes("חתולה") || notes.includes("חתולים")) {
+    restrictions.push("⚠️ יש חתול בבית! **אסור בהחלט** לכלול שושן צחור (לילי) וגיבסנית בזר — גם אם יש עליהם בוסט!");
+  }
+  if (notes.includes("אלרג")) {
+    restrictions.push("⚠️ הלקוח ציין אלרגיה! בדוק אילו פרחים הוזכרו בהערות והימנע מהם.");
+  }
+  return restrictions.length > 0 ? restrictions.join("\n") : "אין הגבלות.";
+})()}
 
 # הלקוח ביקש:
 "${userMessage}"
