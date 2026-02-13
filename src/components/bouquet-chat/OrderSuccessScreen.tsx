@@ -41,13 +41,9 @@ const OrderSuccessScreen = ({ order, onGoHome }: OrderSuccessScreenProps) => {
           <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring" }}>
             <CheckCircle2 className="w-20 h-20 text-primary mx-auto mb-6" />
           </motion.div>
-          <h1 className="text-2xl font-display font-bold text-foreground mb-2">ההזמנה התקבלה!</h1>
-          <p className="text-muted-foreground font-body mb-2">
-            {order.recipientName && `הזר ל${order.recipientName} `}
-            {order.deliveryDate && `ישלח בתאריך ${order.deliveryDate}`}
-          </p>
-          <p className="text-xs text-muted-foreground font-body mb-8">
-            מספר הזמנה: {order.orderId?.slice(0, 8)}
+          <h1 className="text-2xl font-display font-bold text-foreground mb-2">הפרחים כבר בדרך! 💐</h1>
+          <p className="text-muted-foreground font-body mb-8">
+            הזמנתכם התקבלה בהצלחה ✨
           </p>
           <div className="space-y-3">
             {waUrl && (
