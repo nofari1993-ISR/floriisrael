@@ -83,7 +83,7 @@ function getVaseForBudget(budget: number): { size: string; price: number } {
   return VASE_SIZES[VASE_SIZES.length - 1]; // L for anything above 400
 }
 
-const INITIAL_MESSAGE = `🌸 ברוכים הבאים לבונה הזרים החכם!
+const INITIAL_MESSAGE = `🌸 ברוכים הבאים לבונה הזרים החכמה!
 
 אני כאן כדי לעזור לכם ליצור את הזר המושלם, מותאם בדיוק לצרכים שלכם 💫
 
@@ -165,7 +165,7 @@ export function useBouquetWizard(shopId: string | null, mode?: string | null) {
       console.error("High-stock generate error:", err);
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: "מצטער/ת, נתקלתי בבעיה טכנית. נסו שוב 😔" },
+        { role: "assistant", content: "מצטערת, נתקלתי בבעיה טכנית. נסו שוב 😔" },
       ]);
     } finally {
       setIsLoading(false);
@@ -197,20 +197,20 @@ export function useBouquetWizard(shopId: string | null, mode?: string | null) {
         newAnswers.occasion = answer;
         const isSensitive = answer.includes("הלוויה") || answer.includes("אבל");
         nextMessage = isSensitive
-          ? `אני מבינ/ה ומעריכ/ה. אצור זר יפה שמבטא כבוד וקרבה. **מה התקציב שלכם? (בשקלים)**`
+          ? `אני מבינה ומעריכה. אצור זר יפה שמבטא כבוד וקרבה. **מה התקציב שלכם? (בשקלים)**`
           : `יפה! 💚 **עכשיו בואו נדבר על התקציב — כמה אתם רוצים להשקיע? (בשקלים)**`;
         nextStep = STEPS.BUDGET;
       } else if (currentStep === STEPS.BUDGET) {
         const budgetAmount = parseFloat(answer.replace(/[^\d.]/g, ""));
         if (isNaN(budgetAmount) || budgetAmount <= 0) {
-          nextMessage = `מצטער/ת, לא הבנתי את הסכום. אפשר לכתוב מספר בשקלים? לדוגמה: 300 או ₪250`;
+          nextMessage = `מצטערת, לא הבנתי את הסכום. אפשר לכתוב מספר בשקלים? לדוגמה: 300 או ₪250`;
           nextStep = STEPS.BUDGET;
         } else if (budgetAmount < 70) {
           nextMessage = `⚠️ מינימום ההזמנה הוא **₪70**. אנא הזינו סכום של ₪70 ומעלה כדי שנוכל להרכיב עבורכם זר יפה 🌸`;
           nextStep = STEPS.BUDGET;
         } else {
           newAnswers.budget = String(budgetAmount);
-          nextMessage = `מצוין! אצור משהו יפה מאוד. 🎨 **איזה צבעים אתם אוהבים?**`;
+          nextMessage = `מצוין! אצור משהו יפה מאוד 🎨 **איזה צבעים אתם אוהבים?**`;
           nextStep = STEPS.COLORS;
         }
       } else if (currentStep === STEPS.COLORS) {
@@ -234,7 +234,7 @@ export function useBouquetWizard(shopId: string | null, mode?: string | null) {
           setIsLoading(true);
           setMessages((prev) => [
             ...prev,
-            { role: "assistant", content: "🪄 מעצב/ת את הזר המושלם עבורכם..." },
+           { role: "assistant", content: "🪄 מעצבת את הזר המושלם עבורכם..." },
           ]);
 
           try {
@@ -258,7 +258,7 @@ export function useBouquetWizard(shopId: string | null, mode?: string | null) {
             console.error("Generate error:", err);
             setMessages((prev) => [
               ...prev,
-              { role: "assistant", content: "מצטער/ת, נתקלתי בבעיה טכנית. נסו שוב 😔" },
+              { role: "assistant", content: "מצטערת, נתקלתי בבעיה טכנית. נסו שוב 😔" },
             ]);
             setCurrentStep(STEPS.NOTES);
           } finally {
@@ -284,7 +284,7 @@ export function useBouquetWizard(shopId: string | null, mode?: string | null) {
         setIsLoading(true);
         setMessages((prev) => [
           ...prev,
-          { role: "assistant", content: "🪄 מעצב/ת את הזר המושלם עבורכם..." },
+          { role: "assistant", content: "🪄 מעצבת את הזר המושלם עבורכם..." },
         ]);
 
         try {
@@ -324,7 +324,7 @@ export function useBouquetWizard(shopId: string | null, mode?: string | null) {
           console.error("Generate error:", err);
           setMessages((prev) => [
             ...prev,
-            { role: "assistant", content: "מצטער/ת, נתקלתי בבעיה טכנית. נסו שוב 😔" },
+            { role: "assistant", content: "מצטערת, נתקלתי בבעיה טכנית. נסו שוב 😔" },
           ]);
           setCurrentStep(STEPS.WRAPPING);
         } finally {
@@ -392,7 +392,7 @@ export function useBouquetWizard(shopId: string | null, mode?: string | null) {
         console.error("Modify error:", err);
         setMessages((prev) => [
           ...prev,
-          { role: "assistant", content: "מצטער/ת, נתקלתי בבעיה. נסו שוב 😔" },
+          { role: "assistant", content: "מצטערת, נתקלתי בבעיה. נסו שוב 😔" },
         ]);
       } finally {
         setIsLoading(false);
