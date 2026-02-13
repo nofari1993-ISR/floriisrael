@@ -6,7 +6,7 @@ import { Send, Sparkles, Bot, User } from "lucide-react";
 const sampleMessages = [
   {
     role: "bot" as const,
-    text: "שלום! 🌸 אני העוזר החכם של בלום. אשמח לעזור לכם לבנות את הזר המושלם. ספרו לי, מה האירוע?",
+    text: "שלום! 🌸 אני פלורי, המעצבת החכמה של בלום. אשמח לעזור לכם לבנות את הזר המושלם. ספרו לי, מה האירוע?",
   },
   {
     role: "user" as const,
@@ -88,7 +88,7 @@ const AIChat = () => {
                 <Sparkles className="w-5 h-5 text-primary-foreground" />
               </div>
               <div>
-                <h4 className="font-display font-semibold text-primary-foreground">העוזר החכם של בלום</h4>
+                <h4 className="font-display font-semibold text-primary-foreground">פלורי — המעצבת החכמה</h4>
                 <span className="text-xs text-primary-foreground/70">מקוון עכשיו</span>
               </div>
             </div>
