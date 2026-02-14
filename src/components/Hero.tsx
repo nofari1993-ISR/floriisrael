@@ -152,22 +152,11 @@ const Hero = () => {
             transition={{ duration: 0.9, delay: 0.2, ease: "easeOut" }}
             className="space-y-6 lg:space-y-8 text-center"
           >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 1.2, ease: "easeOut" }}
-              className="flex items-center justify-center gap-4 mb-2 lg:mb-4"
-            >
-              <Logo size="lg" showText={false} />
-              <span
-                className="text-5xl md:text-6xl lg:text-7xl text-foreground tracking-wide"
-                style={{ fontFamily: "'Pacifico', cursive" }}
-              >
-                Flori
-              </span>
-            </motion.div>
-            <p className="text-base md:text-lg lg:text-xl text-muted-foreground font-body max-w-lg leading-relaxed mx-auto lg:mx-0">
-              גלו חנויות פרחים באזור שלכם וקבלו את הזר המושלם ישירות עד הבית 🌷
+            <h1 className="text-2xl md:text-3xl lg:text-4xl font-display font-bold text-foreground leading-tight text-center">
+              Flori: אתם בוחרים את המרכיבים, החנות שוזרת.
+            </h1>
+            <p className="text-base md:text-lg lg:text-xl text-muted-foreground font-body max-w-xl leading-relaxed mx-auto text-center">
+              הפלטפורמה היחידה שמתרגמת את העיצוב שלכם לרשימת פרחים מדויקת עבור החנות. ככה אתם יודעים בדיוק על מה שילמתם.
             </p>
 
             {/* Search Bar */}
@@ -197,7 +186,7 @@ const Hero = () => {
                   </div>
                   <Button variant="hero" size="lg" className="rounded-xl gap-2" onClick={() => { setShowSuggestions(false); openResults(); }}>
                     <Search className="w-4 h-4" />
-                    חיפוש
+                    התחילו לעצב
                   </Button>
                 </div>
                 {/* Autocomplete dropdown */}
