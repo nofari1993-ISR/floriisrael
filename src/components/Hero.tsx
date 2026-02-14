@@ -153,7 +153,7 @@ const Hero = () => {
             className="space-y-6 lg:space-y-8 text-center"
           >
             <h1 className="text-2xl md:text-3xl lg:text-4xl font-display font-bold text-foreground leading-tight text-center">
-              Flori: אתם בוחרים את המרכיבים, החנות שוזרת.
+              <span style={{ fontFamily: "'Pacifico', cursive" }}>Flori</span>: אתם בוחרים את המרכיבים, החנות שוזרת.
             </h1>
             <p className="text-base md:text-lg lg:text-xl text-muted-foreground font-body max-w-xl leading-relaxed mx-auto text-center">
               הפלטפורמה היחידה שמתרגמת את העיצוב שלכם לרשימת פרחים מדויקת עבור החנות. ככה אתם יודעים בדיוק על מה שילמתם.
