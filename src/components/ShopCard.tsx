@@ -153,7 +153,7 @@ const ShopCard = ({ shop, index, isAdmin, onRemove, formatDistance }: ShopCardPr
           </div>
           <button
             onClick={() => setReviewOpen(true)}
-            className="flex items-center gap-1 text-xs text-primary font-medium font-body hover:underline transition-colors"
+            className="flex items-center gap-1 text-xs text-foreground font-medium font-body hover:underline transition-colors"
           >
             <MessageSquarePlus className="w-3.5 h-3.5" />
             כתבו ביקורת
@@ -163,13 +163,13 @@ const ShopCard = ({ shop, index, isAdmin, onRemove, formatDistance }: ShopCardPr
               href={shop.website.startsWith("http") ? shop.website : `https://${shop.website}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1 text-xs text-primary font-medium font-body hover:underline transition-colors"
+              className="flex items-center gap-1 text-xs text-foreground font-medium font-body hover:underline transition-colors"
             >
               <Globe className="w-3.5 h-3.5" />
               אתר החנות
             </a>
           )}
-          <div className="flex items-center gap-1.5 text-xs text-primary font-medium mr-auto">
+          <div className="flex items-center gap-1.5 text-xs text-foreground font-medium mr-auto">
             <Truck className="w-3.5 h-3.5" />
             <span>משלוח עד הבית</span>
           </div>
