@@ -29,7 +29,7 @@ const Logo = ({ size = "md", showText = true, className = "", layout = "horizont
       className={`flex ${isVertical ? "flex-col items-center gap-2" : "items-center gap-3"} cursor-pointer ${className}`}
       onClick={() => navigate("/")}
     >
-      <img src={logoImage} alt="Flori" className={`${sizeMap[size]} object-contain`} style={{ background: 'transparent', mixBlendMode: 'multiply' }} />
+      <img src={logoImage} alt="Flori" className={`${sizeMap[size]} object-contain`} />
       {showText && (
         <span className={`${textSizeMap[size]} text-foreground tracking-wide ${isVertical ? "text-center" : ""}`} style={{ fontFamily: "'Pacifico', cursive" }}>
           Flori
