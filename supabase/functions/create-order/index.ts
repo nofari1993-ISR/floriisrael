@@ -199,6 +199,56 @@ Deno.serve(async (req) => {
       .eq("id", shop_id)
       .single();
 
+    // ── Send WhatsApp notification to shop owner ──
+    try {
+      const waToken = Deno.env.get("WHATSAPP_ACCESS_TOKEN");
+      const waPhoneId = Deno.env.get("WHATSAPP_PHONE_NUMBER_ID");
+      const shopPhone = shop?.phone;
+
+      if (waToken && waPhoneId && shopPhone) {
+        // Format phone for WhatsApp API (Israel: 05x -> 9725x)
+        const rawPhone = shopPhone.replace(/[^0-9]/g, "");
+        const waRecipient = rawPhone.startsWith("0") ? `972${rawPhone.slice(1)}` : rawPhone;
+
+        const itemsSummary = items && Array.isArray(items) && items.length > 0
+          ? items.map((i: any) => `${i.flower_name || i.name} x${i.quantity || 1}`).join(", ")
+          : "ללא פירוט";
+
+        const waBody = JSON.stringify({
+          messaging_product: "whatsapp",
+          to: waRecipient,
+          type: "text",
+          text: {
+            body: `🌸 הזמנה חדשה התקבלה!\n\nלקוח: ${customer_name}\nנמען: ${recipient_name}\nתאריך משלוח: ${delivery_date}\nכתובת: ${delivery_address}\nסה״כ: ₪${total_price || 0}\n\nפריטים: ${itemsSummary}\n\nמספר הזמנה: ${order.id.slice(0, 8)}`
+          }
+        });
+
+        const waRes = await fetch(
+          `https://graph.facebook.com/v21.0/${waPhoneId}/messages`,
+          {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${waToken}`,
+              "Content-Type": "application/json",
+            },
+            body: waBody,
+          }
+        );
+
+        if (!waRes.ok) {
+          const waErr = await waRes.text();
+          console.error(`[create-order] WhatsApp send failed [${waRes.status}]:`, waErr);
+        } else {
+          console.log("[create-order] WhatsApp notification sent to shop owner");
+        }
+      } else {
+        console.log("[create-order] WhatsApp not configured or shop has no phone, skipping notification");
+      }
+    } catch (waError) {
+      // Don't fail the order if WhatsApp fails
+      console.error("[create-order] WhatsApp notification error:", waError);
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
