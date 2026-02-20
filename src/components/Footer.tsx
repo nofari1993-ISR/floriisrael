@@ -1,6 +1,5 @@
 import { Heart } from "lucide-react";
 import { motion } from "framer-motion";
-import Logo from "@/components/Logo";
 
 const fadeInUp = {
   initial: { opacity: 0, y: 30 },
@@ -18,9 +17,6 @@ const Footer = () => {
             transition={{ duration: 0.6 }}
             className="md:col-span-2"
           >
-            <div className="mb-4">
-              <Logo size="md" />
-            </div>
             <p className="text-primary-foreground/60 font-body max-w-sm leading-relaxed">
               מרקטפלייס פרחים חכם. מחברים בין לקוחות לחנויות פרחים באמצעות טכנולוגיה חכמה ועיצוב DIY.
             </p>
