@@ -33,11 +33,11 @@ const ShopCard = ({ shop, index, isAdmin, onRemove, formatDistance }: ShopCardPr
     for (let i = 0; i < 5; i++) {
       if (i < fullStars) {
         stars.push(
-          <Star key={i} className="w-3.5 h-3.5 fill-primary text-primary" />
+          <Star key={i} className="w-3.5 h-3.5 fill-[hsl(330_80%_55%)] text-[hsl(330_80%_55%)]" />
         );
       } else if (i === fullStars && hasHalf) {
         stars.push(
-          <Star key={i} className="w-3.5 h-3.5 fill-primary/50 text-primary" />
+          <Star key={i} className="w-3.5 h-3.5 fill-[hsl(330_80%_55%)]/50 text-[hsl(330_80%_55%)]" />
         );
       } else {
         stars.push(
