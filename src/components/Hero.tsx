@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, MapPin, LogOut, LayoutDashboard, Sparkles } from "lucide-react";
+import { Search, MapPin, LogOut, LayoutDashboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -243,11 +243,9 @@ const Hero = () => {
                     className="absolute bottom-4 right-4 left-4"
                   >
                     <div className="glass-card rounded-xl px-4 py-2.5 flex items-center gap-2">
-                      <Sparkles className="w-4 h-4 text-primary" />
                       <span className="font-body font-semibold text-foreground text-sm">
                         {bouquetImages[currentImage].label}
                       </span>
-                      <span className="text-xs text-muted-foreground mr-auto">✨</span>
                     </div>
                   </motion.div>
                 </AnimatePresence>
