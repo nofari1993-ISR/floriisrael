@@ -258,7 +258,7 @@ const Hero = () => {
                     key={i}
                     onClick={() => setCurrentImage(i)}
                     className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                      i === currentImage ? "bg-primary w-6" : "bg-primary/30"
+                      i === currentImage ? "bg-[hsl(330_80%_55%)] w-6" : "bg-[hsl(330_80%_55%)]/30"
                     }`}
                   />
                 ))}
