@@ -242,8 +242,8 @@ const Hero = () => {
                     transition={{ duration: 0.5, delay: 0.3 }}
                     className="absolute bottom-4 right-4 left-4"
                   >
-                    <div className="glass-card rounded-xl px-4 py-2.5 flex items-center gap-2">
-                      <span className="font-body font-semibold text-foreground text-sm">
+                    <div className="glass-card rounded-xl px-4 py-2.5 flex items-center justify-center">
+                      <span className="font-body font-semibold text-foreground text-sm text-center">
                         {bouquetImages[currentImage].label}
                       </span>
                     </div>
