@@ -577,6 +577,7 @@ const Checkout = () => {
                   onSelect={setDeliveryDate}
                   disabled={(date) => date < new Date()}
                   initialFocus
+                  locale={he}
                   className={cn("p-3 pointer-events-auto")}
                 />
               </PopoverContent>
@@ -628,7 +629,7 @@ const Checkout = () => {
               maxLength={500}
               className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm font-body text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-ring transition-shadow resize-none"
             />
-            <p className="text-xs text-muted-foreground text-left">{formData.greeting.length}/500</p>
+            <p className="text-xs text-muted-foreground text-right">{formData.greeting.length}/500</p>
           </div>
 
           {/* Payment Section */}

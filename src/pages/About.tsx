@@ -54,19 +54,19 @@ const About = () => {
 
             <div className="space-y-4">
               <div className="glass-card rounded-2xl p-5 border border-primary/10">
-                <h3 className="font-display font-bold text-primary mb-1">You Design It</h3>
+                <h3 className="font-display font-bold text-primary mb-1">אתם מעצבים</h3>
                 <p className="text-sm text-muted-foreground">
                   מערכת חכמה שמאפשרת לכם לבחור, להזיז ולעצב את הזר בדיוק לפי הטעם האישי שלכם.
                 </p>
               </div>
               <div className="glass-card rounded-2xl p-5 border border-primary/10">
-                <h3 className="font-display font-bold text-primary mb-1">What You See Is What You Get</h3>
+                <h3 className="font-display font-bold text-primary mb-1">מה שרואים - זה מה שמקבלים</h3>
                 <p className="text-sm text-muted-foreground">
                   בלי הפתעות. הזר שעיצבתם על המסך הוא הזר שיגיע לדלת.
                 </p>
               </div>
               <div className="glass-card rounded-2xl p-5 border border-primary/10">
-                <h3 className="font-display font-bold text-primary mb-1">Zero Effort, Maximum Style</h3>
+                <h3 className="font-display font-bold text-primary mb-1">מינימום מאמץ, מקסימום סטייל</h3>
                 <p className="text-sm text-muted-foreground">
                   חוויה טכנולוגית חלקה שהופכת את תהליך ההזמנה לכיפי, מהיר ומלא בסטייל.
                 </p>
