@@ -2,11 +2,6 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "framework": "vite",
-  "functions": {
-    "api/*.php": {
-      "runtime": "vercel-php@0.7.1"
-    }
-  },
   "redirects": [
     {
       "source": "/(.*)",
@@ -16,7 +11,7 @@
     }
   ],
   "rewrites": [
-    { "source": "/(.*)", "destination": "/api/index.php" }
+    { "source": "/(.*)", "destination": "/index.html" }
   ],
   "headers": [
     {
