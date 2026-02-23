@@ -68,11 +68,7 @@ const ShopCard = ({ shop, index, isAdmin, onRemove, formatDistance }: ShopCardPr
     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 cursor-pointer"
     onClick={() => navigate(`/shop/${shop.id}`)}
   />
-        <img
-          src={shopImage}
-          alt={shop.name}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-        />
+        
 
         {/* Gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-foreground/30 via-transparent to-transparent" />
