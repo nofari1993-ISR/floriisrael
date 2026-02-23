@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Star, MapPin, Clock, Palette, Navigation, Trash2, Truck, MessageSquarePlus, Globe, Sparkles } from "lucide-react";
+import { Star, MapPin, Clock, Palette, Navigation, Trash2, Truck, MessageSquarePlus, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Shop } from "@/hooks/useShops";
@@ -24,32 +24,23 @@ const ShopCard = ({ shop, index, isAdmin, onRemove, formatDistance }: ShopCardPr
   const navigate = useNavigate();
   const [reviewOpen, setReviewOpen] = useState(false);
 
-  // Generate star icons
   const renderStars = (rating: number) => {
     const stars = [];
     const fullStars = Math.floor(rating);
     const hasHalf = rating - fullStars >= 0.5;
-
     for (let i = 0; i < 5; i++) {
       if (i < fullStars) {
-        stars.push(
-          <Star key={i} className="w-3.5 h-3.5 fill-[hsl(330_80%_55%)] text-[hsl(330_80%_55%)]" />
-        );
+        stars.push(<Star key={i} className="w-3.5 h-3.5 fill-[hsl(330_80%_55%)] text-[hsl(330_80%_55%)]" />);
       } else if (i === fullStars && hasHalf) {
-        stars.push(
-          <Star key={i} className="w-3.5 h-3.5 fill-[hsl(330_80%_55%)]/50 text-[hsl(330_80%_55%)]" />
-        );
+        stars.push(<Star key={i} className="w-3.5 h-3.5 fill-[hsl(330_80%_55%)]/50 text-[hsl(330_80%_55%)]" />);
       } else {
-        stars.push(
-          <Star key={i} className="w-3.5 h-3.5 text-border" />
-        );
+        stars.push(<Star key={i} className="w-3.5 h-3.5 text-border" />);
       }
     }
     return stars;
   };
 
-  // Use shop image if available, otherwise cycle through placeholders based on index
-  const shopImage = shop.image && shop.image !== "🌼"
+  const shopImage = shop.image && !shop.image.match(/\p{Emoji}/u)
     ? shop.image
     : placeholderImages[index % placeholderImages.length];
 
@@ -62,18 +53,17 @@ const ShopCard = ({ shop, index, isAdmin, onRemove, formatDistance }: ShopCardPr
     >
       {/* Image Section */}
       <div className="relative h-48 overflow-hidden bg-muted">
-  <img
-    src={shopImage}
-    alt={shop.name}
-    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 cursor-pointer"
-    onClick={() => navigate(`/shop/${shop.id}`)}
-  />
-        
+        <img
+          src={shopImage}
+          alt={shop.name}
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 cursor-pointer"
+          onClick={() => navigate(`/shop/${shop.id}`)}
+        />
 
         {/* Gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-foreground/30 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-foreground/30 via-transparent to-transparent pointer-events-none" />
 
-        {/* Distance Badge - overlaid on image */}
+        {/* Distance Badge */}
         {shop.distance !== undefined && (
           <div className="absolute bottom-3 right-3 z-10 bg-primary text-primary-foreground text-xs font-body font-semibold px-3 py-1.5 rounded-xl shadow-md flex items-center gap-1.5">
             <Navigation className="w-3.5 h-3.5" />
@@ -85,7 +75,7 @@ const ShopCard = ({ shop, index, isAdmin, onRemove, formatDistance }: ShopCardPr
         {isAdmin && (
           <button
             onClick={(e) => { e.stopPropagation(); onRemove(shop.id, shop.name); }}
-            className="absolute top-3 left-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-full bg-background/80 hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
+            className="absolute top-3 left-3 z-20 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-full bg-background/80 hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
             title="מחק חנות"
           >
             <Trash2 className="w-4 h-4" />
@@ -104,12 +94,8 @@ const ShopCard = ({ shop, index, isAdmin, onRemove, formatDistance }: ShopCardPr
             {shop.name}
           </h3>
           <div className="flex flex-col items-end shrink-0">
-            <div className="flex items-center gap-0.5">
-              {renderStars(shop.rating)}
-            </div>
-            <span className="text-xs text-muted-foreground mt-0.5">
-              {shop.rating} ({shop.reviews})
-            </span>
+            <div className="flex items-center gap-0.5">{renderStars(shop.rating)}</div>
+            <span className="text-xs text-muted-foreground mt-0.5">{shop.rating} ({shop.reviews})</span>
           </div>
         </div>
 
@@ -121,9 +107,7 @@ const ShopCard = ({ shop, index, isAdmin, onRemove, formatDistance }: ShopCardPr
 
         {/* Speciality */}
         {shop.speciality && shop.speciality !== "כללי" && (
-          <p className="text-sm text-foreground/80 font-body leading-relaxed">
-            {shop.speciality}
-          </p>
+          <p className="text-sm text-foreground/80 font-body leading-relaxed">{shop.speciality}</p>
         )}
 
         {/* Action Buttons */}
