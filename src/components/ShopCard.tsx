@@ -61,12 +61,16 @@ const ShopCard = ({ shop, index, isAdmin, onRemove, formatDistance }: ShopCardPr
       className="group relative bg-card rounded-2xl overflow-hidden border border-border/50 hover:border-primary/30 shadow-soft hover:shadow-elevated transition-all duration-300"
     >
       {/* Image Section */}
-      <div className="relative h-48 overflow-hidden bg-muted cursor-pointer" onClick={() => navigate(`/shop/${shop.id}`)}>
-        <img
-          src={shopImage}
-          alt={shop.name}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-        />
+     <div className="relative h-48 overflow-hidden bg-muted">
+       {/* Remove Button - Admin only */}
+{isAdmin && (
+  <button
+    onClick={(e) => { e.stopPropagation(); onRemove(shop.id, shop.name); }}
+    className="absolute top-3 left-3 z-20 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-full bg-background/80 hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
+  >
+    <Trash2 className="w-4 h-4" />
+  </button>
+)}
 
         {/* Gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-foreground/30 via-transparent to-transparent" />
