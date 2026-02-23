@@ -81,7 +81,8 @@ const ShopCard = ({ shop, index, isAdmin, onRemove, formatDistance }: ShopCardPr
 
         {/* Remove Button - Admin only */}
         {isAdmin && (
-          <buttononClick={(e) => { e.stopPropagation(); onRemove(shop.id, shop.name); }}
+          <button
+            onClick={(e) => { e.stopPropagation(); onRemove(shop.id, shop.name); }}
             className="absolute top-3 left-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-full bg-background/80 hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
             title="מחק חנות"
           >
