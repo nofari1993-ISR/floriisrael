@@ -24,7 +24,6 @@ const ShopCard = ({ shop, index, isAdmin, onRemove, formatDistance }: ShopCardPr
   const navigate = useNavigate();
   const [reviewOpen, setReviewOpen] = useState(false);
 
-  // Generate star icons
   const renderStars = (rating: number) => {
     const stars = [];
     const fullStars = Math.floor(rating);
@@ -48,7 +47,6 @@ const ShopCard = ({ shop, index, isAdmin, onRemove, formatDistance }: ShopCardPr
     return stars;
   };
 
-  // Use shop image if available, otherwise cycle through placeholders based on index
   const shopImage = shop.image && shop.image !== "🌼"
     ? shop.image
     : placeholderImages[index % placeholderImages.length];
@@ -60,33 +58,35 @@ const ShopCard = ({ shop, index, isAdmin, onRemove, formatDistance }: ShopCardPr
       transition={{ delay: 0.1 + index * 0.06 }}
       className="group relative bg-card rounded-2xl overflow-hidden border border-border/50 hover:border-primary/30 shadow-soft hover:shadow-elevated transition-all duration-300"
     >
-     <div className="relative h-48 overflow-hidden bg-muted">
+      {/* Image Section */}
+      <div className="relative h-48 overflow-hidden bg-muted">
         <img
           src={shopImage}
           alt={shop.name}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 cursor-pointer"
           onClick={() => navigate(`/shop/${shop.id}`)}
         />
-       {/* Remove Button - Admin only */}
-{isAdmin && (
-{isAdmin && (
-  <button
-    onClick={(e) => { e.stopPropagation(); onRemove(shop.id, shop.name); }}
-    className="absolute top-3 left-3 z-20 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-full bg-background/80 hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
-  >
-    <Trash2 className="w-4 h-4" />
-  </button>
-)}
 
         {/* Gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-foreground/30 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-foreground/30 via-transparent to-transparent pointer-events-none" />
 
-        {/* Distance Badge - overlaid on image */}
+        {/* Distance Badge */}
         {shop.distance !== undefined && (
           <div className="absolute bottom-3 right-3 z-10 bg-primary text-primary-foreground text-xs font-body font-semibold px-3 py-1.5 rounded-xl shadow-md flex items-center gap-1.5">
             <Navigation className="w-3.5 h-3.5" />
             {formatDistance(shop.distance)}
           </div>
+        )}
+
+        {/* Remove Button - Admin only */}
+        {isAdmin && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onRemove(shop.id, shop.name); }}
+            className="absolute top-3 left-3 z-20 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-full bg-background/80 hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
+            title="מחק חנות"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
         )}
       </div>
 
