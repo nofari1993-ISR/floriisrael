@@ -60,9 +60,15 @@ const ShopCard = ({ shop, index, isAdmin, onRemove, formatDistance }: ShopCardPr
       transition={{ delay: 0.1 + index * 0.06 }}
       className="group relative bg-card rounded-2xl overflow-hidden border border-border/50 hover:border-primary/30 shadow-soft hover:shadow-elevated transition-all duration-300"
     >
-      {/* Image Section */}
      <div className="relative h-48 overflow-hidden bg-muted">
+        <img
+          src={shopImage}
+          alt={shop.name}
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 cursor-pointer"
+          onClick={() => navigate(`/shop/${shop.id}`)}
+        />
        {/* Remove Button - Admin only */}
+{isAdmin && (
 {isAdmin && (
   <button
     onClick={(e) => { e.stopPropagation(); onRemove(shop.id, shop.name); }}
@@ -81,17 +87,6 @@ const ShopCard = ({ shop, index, isAdmin, onRemove, formatDistance }: ShopCardPr
             <Navigation className="w-3.5 h-3.5" />
             {formatDistance(shop.distance)}
           </div>
-        )}
-
-        {/* Remove Button - Admin only */}
-        {isAdmin && (
-          <button
-            onClick={(e) => { e.stopPropagation(); onRemove(shop.id, shop.name); }}
-            className="absolute top-3 left-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity p-1.5 rounded-full bg-background/80 hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
-            title="מחק חנות"
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
         )}
       </div>
 
