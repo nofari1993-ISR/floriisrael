@@ -1,410 +1,530 @@
-import { useState, useCallback, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import type { BouquetRecommendation } from "@/components/bouquet-chat/BouquetCard";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-export interface ChatMessage {
-  role: "user" | "assistant";
-  content: string;
-}
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+};
 
-export const STEPS = {
-  RECIPIENT: "recipient",
-  OCCASION: "occasion",
-  BUDGET: "budget",
-  COLORS: "colors",
-  STYLE: "style",
-  NOTES: "notes",
-  WRAPPING: "wrapping",
-  RECOMMEND: "recommend",
-} as const;
+// ── Rate Limiting (per-instance) ──
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
 
-export type StepKey = (typeof STEPS)[keyof typeof STEPS];
-
-export const RECIPIENT_OPTIONS = [
-  { emoji: "🌸", label: "זר לעצמי", value: "זר לעצמי" },
-  { emoji: "💕", label: "בן/בת זוג", value: "בן/בת זוג" },
-  { emoji: "👨‍👩‍👧", label: "בן/בת משפחה", value: "בן/בת משפחה" },
-  { emoji: "🤝", label: "חבר/ה", value: "חבר/ה" },
-  { emoji: "👔", label: "עמית/ה בעבודה", value: "עמית/ה בעבודה" },
-];
-
-export const OCCASION_OPTIONS = [
-  { emoji: "🎂", label: "יום הולדת", value: "יום הולדת" },
-  { emoji: "💍", label: "יום נישואין", value: "יום נישואין" },
-  { emoji: "👰", label: "חתונה", value: "חתונה" },
-  { emoji: "🍼", label: "לידה", value: "לידה" },
-  { emoji: "🕯️", label: "הלוויה", value: "הלוויה" },
-  { emoji: "🏥", label: "החלמה", value: "החלמה" },
-  { emoji: "🙏", label: "תודה", value: "תודה" },
-  { emoji: "🎓", label: "סיום לימודים", value: "סיום לימודים" },
-  { emoji: "🏆", label: "הצלחה/קידום", value: "הצלחה/קידום" },
-  { emoji: "❤️", label: "רומנטי", value: "רומנטי" },
-  { emoji: "🌟", label: "סתם כך", value: "סתם כך" },
-];
-
-export const COLOR_OPTIONS = [
-  "אדום, ורוד",
-  "אדום, לבן",
-  "צהוב, כתום",
-  "לבן, ירוק",
-  "סגול, ורוד",
-  "לבן, ורוד",
-  "לבן, סגול",
-  "לבן, ורוד, סגול",
-  "כחול, לבן",
-  "צבעוני",
-];
-
-export const STYLE_OPTIONS = [
-  { emoji: "🌿", label: "קלאסי", value: "קלאסי" },
-  { emoji: "🌾", label: "כפרי / בוהו", value: "כפרי / בוהו" },
-  { emoji: "✨", label: "מודרני מינימלי", value: "מודרני מינימלי" },
-  { emoji: "🌹", label: "רומנטי", value: "רומנטי" },
-  { emoji: "🌻", label: "עליז וצבעוני", value: "עליז וצבעוני" },
-  { emoji: "🕊️", label: "אלגנטי", value: "אלגנטי" },
-];
-
-export const WRAPPING_OPTIONS = [
-  { emoji: "📦", label: "נייר עטיפה", value: "נייר עטיפה" },
-  { emoji: "🏺", label: "אגרטל", value: "אגרטל" },
-];
-
-const VASE_SIZES: { max: number; size: string; price: number }[] = [
-  { max: 150, size: "S", price: 20 },
-  { max: 250, size: "M", price: 30 },
-  { max: 400, size: "L", price: 40 },
-];
-
-function getVaseForBudget(budget: number): { size: string; price: number } {
-  for (const v of VASE_SIZES) {
-    if (budget <= v.max) return { size: v.size, price: v.price };
+function checkRateLimit(ip: string, maxRequests: number, windowMs: number): boolean {
+  const now = Date.now();
+  const entry = rateLimitMap.get(ip);
+  if (entry && now < entry.resetAt) {
+    if (entry.count >= maxRequests) return false;
+    entry.count++;
+  } else {
+    rateLimitMap.set(ip, { count: 1, resetAt: now + windowMs });
   }
-  return VASE_SIZES[VASE_SIZES.length - 1];
+  if (rateLimitMap.size > 1000) {
+    for (const [key, val] of rateLimitMap) {
+      if (now > val.resetAt) rateLimitMap.delete(key);
+    }
+  }
+  return true;
 }
 
-const INITIAL_MESSAGE = `🌸 ברוכים הבאים לבונה הזרים החכמה!
+const GOOGLE_API_URL = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
 
-אני כאן כדי לעזור לכם ליצור את הזר המושלם, מותאם בדיוק לצרכים שלכם 💫
-
-בואו נתחיל — **למי אתם רוצים להכין את הזר הזה?**`;
-
-export interface WizardAnswers {
-  recipient?: string;
-  occasion?: string;
-  budget?: string;
-  colors?: string;
-  style?: string;
-  notes?: string;
-  wrapping?: string;
-  vaseSize?: string;
-  vasePrice?: number;
-}
-
-interface PendingBouquet {
-  recommendation: BouquetRecommendation;
-  priceDifference: number;
-}
-
-export function useBouquetWizard(shopId: string | null, mode?: string | null) {
-  const storageKey = `chat_wizard_${shopId || "default"}`;
-
-  function loadSaved() {
-    try {
-      const saved = localStorage.getItem(storageKey);
-      return saved ? JSON.parse(saved) : null;
-    } catch { return null; }
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
   }
 
-  const saved = loadSaved();
+  try {
+    const clientIP = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+                     req.headers.get("x-real-ip") || "unknown";
+    if (!checkRateLimit(clientIP, 10, 3600000)) {
+      console.warn(`[bouquet-ai] Rate limit exceeded for IP: ${clientIP}`);
+      return new Response(
+        JSON.stringify({ error: "יותר מדי בקשות. נסו שוב בעוד מספר דקות." }),
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
-  const [messages, setMessages] = useState<ChatMessage[]>(
-    saved?.messages || [{ role: "assistant", content: INITIAL_MESSAGE }]
-  );
-  const [currentStep, setCurrentStep] = useState<StepKey>(
-    saved?.currentStep || STEPS.RECIPIENT
-  );
-  const [answers, setAnswers] = useState<WizardAnswers>(saved?.answers || {});
-  const [isLoading, setIsLoading] = useState(false);
-  const [recommendation, setRecommendation] = useState<BouquetRecommendation | null>(
-    saved?.recommendation || null
-  );
-  const [pendingBouquet, setPendingBouquet] = useState<PendingBouquet | null>(null);
-  const [autoTriggered, setAutoTriggered] = useState(false);
+    const body = await req.json();
+    const { action, shopId, answers, currentBouquet, userMessage, flowerName, flowerColor } = body;
 
-  // Save to localStorage on every change
-  useEffect(() => {
-    try {
-      localStorage.setItem(storageKey, JSON.stringify({ messages, currentStep, answers, recommendation }));
-    } catch {}
-  }, [messages, currentStep, answers, recommendation]);
+    if (!action || typeof action !== "string" || !["generate", "modify", "high-stock", "promote-flower"].includes(action)) {
+      return new Response(
+        JSON.stringify({ error: "Invalid action" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
-  const { data: hasVases } = useQuery({
-    queryKey: ["shop-has-vases", shopId],
-    queryFn: async () => {
-      if (!shopId) return false;
-      const { data } = await supabase
+    if (answers) {
+      if (answers.budget && (isNaN(parseFloat(answers.budget)) || parseFloat(answers.budget) > 10000)) {
+        return new Response(JSON.stringify({ error: "Invalid budget" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      if (answers.recipient && (typeof answers.recipient !== "string" || answers.recipient.length > 100)) {
+        return new Response(JSON.stringify({ error: "Recipient name too long" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      if (answers.occasion && (typeof answers.occasion !== "string" || answers.occasion.length > 200)) {
+        return new Response(JSON.stringify({ error: "Occasion text too long" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      if (answers.style && (typeof answers.style !== "string" || answers.style.length > 100)) {
+        return new Response(JSON.stringify({ error: "Style text too long" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      if (answers.notes && (typeof answers.notes !== "string" || answers.notes.length > 500)) {
+        return new Response(JSON.stringify({ error: "Notes too long" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+    }
+
+    if (userMessage && (typeof userMessage !== "string" || userMessage.length > 500)) {
+      return new Response(JSON.stringify({ error: "Message too long" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    if (flowerName && (typeof flowerName !== "string" || flowerName.length > 50)) {
+      return new Response(JSON.stringify({ error: "Flower name too long" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    if (flowerColor && (typeof flowerColor !== "string" || flowerColor.length > 30)) {
+      return new Response(JSON.stringify({ error: "Color name too long" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    const GOOGLE_AI_KEY = Deno.env.get("GOOGLE_AI_KEY");
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+    if (!GOOGLE_AI_KEY) throw new Error("GOOGLE_AI_KEY is not configured");
+
+    console.log(`[bouquet-ai] action=${action}, shopId=${shopId}, IP=${clientIP}`);
+
+    let flowersContext = "אין פרחים זמינים במלאי.";
+    let flowersList: any[] = [];
+    let boostedFlowers: any[] = [];
+
+    if (shopId && SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
+      const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+      const { data: inventory, error } = await supabase
         .from("flowers")
-        .select("id")
+        .select("name, color, quantity, price, in_stock, boosted")
         .eq("shop_id", shopId)
-        .eq("name", "אגרטל")
-        .eq("in_stock", true)
-        .gt("quantity", 0)
-        .limit(1);
-      return (data?.length || 0) > 0;
-    },
-    enabled: !!shopId,
-  });
+        .eq("in_stock", true);
 
-  const triggerHighStock = useCallback(async () => {
-    if (autoTriggered || isLoading) return;
-    setAutoTriggered(true);
-    setMessages([{ role: "assistant", content: "🌿 מייצר המלצה לזר מהמלאי הגבוה ביותר..." }]);
-    setCurrentStep(STEPS.RECOMMEND);
-    setIsLoading(true);
+      if (error) {
+        console.error("Error fetching inventory:", error.message);
+      } else if (inventory && inventory.length > 0) {
+        flowersList = inventory;
+        boostedFlowers = inventory.filter((f: any) => f.boosted && f.quantity > 0);
+        flowersContext = inventory
+          .filter((f: any) => f.quantity > 0)
+          .map((f: any) => `- ${f.name}${f.color ? ` (${f.color})` : ""}: ${f.quantity} יח', ₪${f.price}${f.boosted ? " ⭐ מקודם" : ""}`)
+          .join("\n");
+        console.log(`Loaded ${inventory.length} flowers for shop ${shopId}, ${boostedFlowers.length} boosted`);
+      }
+    }
+
+    let prompt = "";
+
+    if (action === "generate") {
+      const budget = parseFloat(answers.budget) || 200;
+      const budgetForFlowers = budget;
+
+      const boostedInstruction = boostedFlowers.length > 0
+        ? `\n# ⭐ פרחים מקודמים (עדיפות גבוהה - בעל החנות מבקש לתעדף אותם!):\n${boostedFlowers.map((f: any) => `- ${f.name}${f.color ? ` (${f.color})` : ""}: ${f.quantity} יח', ₪${f.price}`).join("\n")}\nחובה לשלב לפחות פרח מקודם אחד בזר אם הוא מתאים לבקשה!\n`
+        : "";
+
+      const colorsRequested = answers.colors || "לא צוין";
+      const isColorful = colorsRequested === "צבעוני" || colorsRequested.includes("צבעוני");
+      const colorInstruction = isColorful
+        ? `הלקוח ביקש זר צבעוני! חובה לשלב לפחות 3-4 צבעים שונים ומגוונים (למשל: אדום, צהוב, כתום, סגול, ורוד, לבן). אל תשתמש רק בגוונים דומים!`
+        : `צבעים מועדפים: ${colorsRequested}`;
+
+      const styleRequested = answers.style || "לא צוין";
+      const styleInstruction = styleRequested !== "לא צוין"
+        ? `סגנון מועדף: ${styleRequested}. התאם את בחירת הפרחים, הכמויות והמראה הכללי לסגנון הזה.`
+        : "";
+
+      const flowerTypesRange = budgetForFlowers >= 500 ? "4-8" : budgetForFlowers >= 300 ? "3-6" : "2-4";
+      const bouquetSize = budgetForFlowers >= 500 ? "זר גדול ועשיר במיוחד" : budgetForFlowers >= 300 ? "זר בינוני-גדול" : "זר";
+      const quantityInstruction = budgetForFlowers >= 500
+        ? "השתמש בכמויות גדולות מכל פרח (5-15 יחידות מכל סוג) כדי ליצור זר עשיר ומרשים. נצל את מרבית התקציב!"
+        : budgetForFlowers >= 300
+          ? "השתמש בכמויות נדיבות (3-8 יחידות מכל סוג) כדי ליצור זר מלא ויפה."
+          : "";
+
+      prompt = `את מעצבת זרי פרחים מקצועית. בני ${bouquetSize} מגוון עם מספר סוגי פרחים שונים.
+
+# פרחים זמינים במלאי:
+${flowersContext}
+${boostedInstruction}
+# בקשת הלקוח:
+- למי: ${answers.recipient || "לא צוין"}
+- אירוע: ${answers.occasion || "לא צוין"}
+- ${colorInstruction}
+${styleInstruction ? `- ${styleInstruction}` : ""}
+- תקציב לפרחים: ₪${Math.floor(budgetForFlowers)}
+- הערות: ${answers.notes && answers.notes !== "המשך" ? answers.notes : "אין"}
+
+# הגבלות בריאות/בטיחות (קריטי!):
+${(() => {
+  const notes = (answers.notes || "").toLowerCase();
+  const restrictions: string[] = [];
+  if (notes.includes("חתול") || notes.includes("חתולה") || notes.includes("חתולים")) {
+    restrictions.push("⚠️ יש חתול בבית! **אסור בהחלט** לכלול שושן צחור (לילי) וגיבסנית בזר — גם אם יש עליהם בוסט! פרחים אלה רעילים לחתולים.");
+  }
+  if (notes.includes("אלרג")) {
+    restrictions.push("⚠️ הלקוח ציין אלרגיה! בדוק אילו פרחים הוזכרו בהערות והימנע מהם לחלוטין.");
+  }
+  return restrictions.length > 0 ? restrictions.join("\n") : "אין הגבלות מיוחדות.";
+})()}
+
+# חובה:
+1. בנה ${bouquetSize} עם ${flowerTypesRange} סוגי פרחים שונים (לא רק סוג אחד!)
+2. אל תחרוג מ-₪${Math.floor(budgetForFlowers)} - זה קריטי!
+3. השתמש רק בפרחים מהמלאי הזמין
+4. אם פרח לא זמין, הצע חלופה
+5. כל רשומה בזר = צבע אחד בלבד של הפרח
+6. ${boostedFlowers.length > 0 ? "תעדף את הפרחים המקודמים (⭐) ותן להם כמות גבוהה יותר בזר" : "בחר פרחים שמתאימים לבקשה"}
+${isColorful ? "7. **קריטי**: הזר חייב להיות צבעוני באמת — שלב פרחים מצבעים שונים לחלוטין (אדום + צהוב + סגול + כתום וכו'). לא רק ורוד ואדום!" : ""}
+${budgetForFlowers <= 200 ? "8. **חובה**: בתקציב עד ₪200, הזר חייב לכלול צמחי מילוי וירק (כמו אקליפטוס, רוסקוס, שרך, גיבסנית) כדי לתת לזר נפח ומלאות. שלב לפחות 1-2 סוגי ירק/מילוי!" : ""}
+${styleRequested !== "לא צוין" ? `9. **סגנון**: התאם את הזר לסגנון "${styleRequested}" — בחר פרחים, כמויות ומבנה שמשדרים את האסתטיקה הזו.` : ""}
+${quantityInstruction ? `10. **כמויות**: ${quantityInstruction}` : ""}
+${budgetForFlowers >= 500 ? `11. **חשוב**: עם תקציב של ₪${Math.floor(budgetForFlowers)}, הזר חייב להיות גדול, מלא ומרשים. נצל לפחות 80% מהתקציב!` : ""}
+
+# ההודעה שלך (message):
+כתוב הודעה חמה ואישית (2-3 משפטים) שמסבירה למה בחרת בפרחים האלה ואיך הם מתאימים לאירוע.
+אל תציין מספרים או יחידות של פרחים בטקסט! הלקוח רואה אותם ברשימה.
+
+# פורמט JSON בלבד:
+{"message": "הודעה אישית", "flowers": [{"name": "שם מדויק מהמלאי", "quantity": מספר, "color": "צבע"}]}`;
+    } else if (action === "modify") {
+      const budget = parseFloat(answers?.budget) || 200;
+      const budgetForFlowers = budget;
+      const currentFlowersList = (currentBouquet?.flowers || [])
+        .map((f: any) => `- ${f.quantity} ${f.color || ""} ${f.name} (₪${f.unit_price || 0} ליחידה)`)
+        .join("\n");
+
+      const boostedModifyInstruction = boostedFlowers.length > 0
+        ? `\n# ⭐ פרחים מקודמים (רקע בלבד):\n${boostedFlowers.map((f: any) => `- ${f.name}${f.color ? ` (${f.color})` : ""}`).join("\n")}\n**חשוב**: השתמש בפרחים מקודמים רק אם הלקוח לא ציין פרח ספציפי. אם הלקוח מבקש פרח מסוים — תמיד תעדיף את בקשת הלקוח!\n`
+        : "";
+
+      prompt = `את עורכת זר פרחים קיים. **המשימה שלך: להגיב באמפתיה ולבצע בדיוק את מה שהלקוח ביקש.**
+
+# הזר הנוכחי:
+${currentFlowersList}
+סה"כ: ₪${currentBouquet?.total_price || 0}
+
+# פרחים זמינים במלאי (השתמש רק בשמות המדויקים האלה!):
+${flowersContext}
+${boostedModifyInstruction}
+# תקציב מקסימלי: ₪${Math.floor(budgetForFlowers)}
+
+# הערות הלקוח: ${answers?.notes && answers.notes !== "המשך" ? answers.notes : "אין"}
+
+# הגבלות בריאות/בטיחות (קריטי!):
+${(() => {
+  const notes = (answers?.notes || "").toLowerCase();
+  const restrictions: string[] = [];
+  if (notes.includes("חתול") || notes.includes("חתולה") || notes.includes("חתולים")) {
+    restrictions.push("⚠️ יש חתול בבית! **אסור בהחלט** לכלול שושן צחור (לילי) וגיבסנית בזר!");
+  }
+  if (notes.includes("אלרג")) {
+    restrictions.push("⚠️ הלקוח ציין אלרגיה! בדוק אילו פרחים הוזכרו בהערות והימנע מהם.");
+  }
+  return restrictions.length > 0 ? restrictions.join("\n") : "אין הגבלות.";
+})()}
+
+# הלקוח ביקש:
+"${userMessage}"
+
+# חוקים קריטיים:
+- אם הלקוח מביע שמחה — הגיב בחום והחזר את אותו זר ללא שינוי
+- אם הלקוח מביע אכזבה — הגיב באמפתיה והחזר את אותו זר ללא שינוי
+- רק אם הלקוח מבקש שינוי קונקרטי — בצע את השינוי
+- השתמש רק בשמות פרחים מדויקים מהמלאי
+- החזר את הזר המלא המעודכן
+
+# פורמט JSON בלבד:
+{"message": "הודעה אמפתית + הסבר מה שינית", "flowers": [{"name": "שם מדויק מהמלאי", "quantity": מספר, "color": "צבע"}]}`;
+    } else if (action === "high-stock") {
+      const highStockFlowers = flowersList
+        .filter((f: any) => f.quantity > 0)
+        .sort((a: any, b: any) => b.quantity - a.quantity);
+
+      const topFlowers = highStockFlowers.slice(0, 10);
+      const topFlowersText = topFlowers
+        .map((f: any) => `- ${f.name}${f.color ? ` (${f.color})` : ""}: ${f.quantity} יח', ₪${f.price}`)
+        .join("\n");
+
+      prompt = `את מעצבת זרי פרחים מקצועית. בעל החנות מבקש ממך ליצור זר מיוחד שישתמש בעיקר בפרחים שיש ממנו מלאי גבוה.
+
+# פרחים עם מלאי גבוה (עדיפות גבוהה):
+${topFlowersText}
+
+# כל הפרחים הזמינים:
+${flowersContext}
+
+# הנחיות:
+1. **עדיפות עליונה**: השתמש בפרחים מהמלאי הגבוה ביותר
+2. צור זר יפה ומגוון עם 3-5 סוגי פרחים שונים
+3. שלב גם ירק/עלווה אם זמין
+4. תקציב: עד ₪250 לפרחים
+5. הודעה: כתוב הודעה שמסבירה שהזר הזה מכיל פרחים טריים שיש מהם מלאי מלא
+
+# פורמט JSON בלבד:
+{"message": "הודעה אישית", "flowers": [{"name": "שם מדויק מהמלאי", "quantity": מספר, "color": "צבע"}]}`;
+    } else if (action === "promote-flower") {
+      if (!flowerName) {
+        return new Response(
+          JSON.stringify({ error: "Missing flowerName parameter" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const colorText = flowerColor ? ` בצבע ${flowerColor}` : "";
+      console.log(`[bouquet-ai] Promoting flower: ${flowerName}${colorText}`);
+
+      prompt = `את מעצבת זרי פרחים מקצועית. בעל החנות מבקש ממך ליצור זר מיוחד שישתמש בעיקר ב**${flowerName}${colorText}**.
+
+# פרחים זמינים במלאי:
+${flowersContext}
+
+# הנחיות:
+1. **הפרח המרכזי של הזר חייב להיות ${flowerName}${colorText}**
+2. השלם עם 2-3 פרחים נוספים מהמלאי
+3. שלב ירק/עלווה אם זמין
+4. תקציב: עד ₪250 לפרחים
+
+# פורמט JSON בלבד:
+{"message": "הודעה אישית", "flowers": [{"name": "שם מדויק מהמלאי", "quantity": מספר, "color": "צבע"}]}`;
+    }
+
+    console.log(`[bouquet-ai] Sending prompt to AI, action=${action}`);
+
+    const response = await fetch(GOOGLE_API_URL, {
+      method: "POST",
+      headers: {
+        "x-goog-api-key": GOOGLE_AI_KEY,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "gemini-2.5-flash-preview-04-17",
+        messages: [
+          { role: "system", content: "אתה מחזיר תמיד JSON תקין בלבד, ללא טקסט נוסף מסביב. ענה בעברית." },
+          { role: "user", content: prompt },
+        ],
+        response_format: { type: "json_object" },
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`AI gateway error: ${response.status}`, errorText);
+      return new Response(
+        JSON.stringify({ error: "שגיאה בשירות AI" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const aiData = await response.json();
+    const content = aiData.choices?.[0]?.message?.content || "{}";
+    console.log("[bouquet-ai] Raw AI response:", content);
+
+    let parsed;
     try {
-      const { data, error } = await supabase.functions.invoke("bouquet-ai", {
-        body: { action: "high-stock", shopId },
+      parsed = JSON.parse(content);
+    } catch {
+      const match = content.match(/```(?:json)?\s*([\s\S]*?)```/);
+      if (match) {
+        parsed = JSON.parse(match[1]);
+      } else {
+        throw new Error("Could not parse AI response as JSON");
+      }
+    }
+
+    const validatedFlowers: any[] = [];
+    let totalCost = 0;
+    const budget = action === "high-stock" ? 250 : (parseFloat(answers?.budget) || 200);
+    const budgetForFlowers = budget;
+
+    const greenNames = ["אקליפטוס", "רוסקוס", "שרך", "גיבסנית"];
+    const aiFlowers = parsed.flowers || [];
+    const skipBudgetCap = action === "modify";
+
+    const normalize = (s: string) => s.replace(/[ןםךףץ]/g, (c) => {
+      const map: Record<string, string> = { "ן": "נ", "ם": "מ", "ך": "כ", "ף": "פ", "ץ": "צ" };
+      return map[c] || c;
+    }).replace(/יי/g, "י").replace(/ות$/g, "").replace(/ים$/g, "").trim();
+
+    const findFlowerInInventory = (aiFlower: any) => {
+      let match = flowersList.find((f: any) => f.name === aiFlower.name);
+      if (match) return match;
+
+      const normalizedAI = normalize(aiFlower.name);
+      match = flowersList.find((f: any) => normalize(f.name) === normalizedAI);
+      if (match) return match;
+
+      match = flowersList.find((f: any) =>
+        f.name.includes(aiFlower.name) || aiFlower.name.includes(f.name)
+      );
+      if (match) return match;
+
+      match = flowersList.find((f: any) =>
+        normalize(f.name).includes(normalizedAI) || normalizedAI.includes(normalize(f.name))
+      );
+      if (match) return match;
+
+      if (aiFlower.color) {
+        match = flowersList.find((f: any) =>
+          aiFlower.name.includes(f.name) && (!f.color || f.color === aiFlower.color)
+        );
+        if (match) return match;
+      }
+
+      return null;
+    };
+
+    const shouldPrioritizeGreens = budgetForFlowers <= 200;
+    let orderedFlowers = aiFlowers;
+    if (shouldPrioritizeGreens) {
+      const greens = aiFlowers.filter((f: any) => greenNames.includes(f.name));
+      const nonGreens = aiFlowers.filter((f: any) => !greenNames.includes(f.name));
+      orderedFlowers = [...greens, ...nonGreens];
+    }
+
+    for (const aiFlower of orderedFlowers) {
+      const realFlower = findFlowerInInventory(aiFlower);
+      if (!realFlower) {
+        console.warn(`[bouquet-ai] "${aiFlower.name}" not found in inventory, skipping`);
+        continue;
+      }
+
+      const existingIdx = validatedFlowers.findIndex((f: any) => f.name === realFlower.name && f.color === (aiFlower.color || realFlower.color || ""));
+      if (existingIdx !== -1) {
+        const existing = validatedFlowers[existingIdx];
+        const addQty = Math.min(Math.floor(aiFlower.quantity || 1), realFlower.quantity - existing.quantity);
+        if (addQty > 0) {
+          existing.quantity += addQty;
+          existing.line_total = existing.unit_price * existing.quantity;
+          totalCost += existing.unit_price * addQty;
+        }
+        continue;
+      }
+
+      let quantity = Math.floor(aiFlower.quantity || 1);
+      quantity = Math.min(quantity, realFlower.quantity);
+
+      const potentialTotal = totalCost + (realFlower.price * quantity);
+      if (!skipBudgetCap && potentialTotal > budgetForFlowers) {
+        const maxAffordable = Math.floor((budgetForFlowers - totalCost) / realFlower.price);
+        quantity = Math.min(maxAffordable, realFlower.quantity);
+      }
+
+      if (quantity <= 0) continue;
+
+      const lineTotal = realFlower.price * quantity;
+      totalCost += lineTotal;
+
+      validatedFlowers.push({
+        name: realFlower.name,
+        quantity,
+        unit_price: realFlower.price,
+        color: aiFlower.color || realFlower.color || "",
+        line_total: lineTotal,
       });
-      if (error) throw error;
-      const rec: BouquetRecommendation = {
-        flowers: data.flowers,
-        total_price: data.total_price,
-        flowers_cost: data.flowers_cost,
-        digital_design_fee: data.digital_design_fee,
-        message: data.message,
-        image_url: data.image_url || null,
-      };
-      setRecommendation(rec);
-      setMessages((prev) => [...prev, { role: "assistant", content: data.message }]);
-    } catch (err: any) {
-      console.error("High-stock generate error:", err);
-      setMessages((prev) => [...prev, { role: "assistant", content: "מצטערת, נתקלתי בבעיה טכנית. נסו שוב 😔" }]);
-    } finally {
-      setIsLoading(false);
+
+      if (!skipBudgetCap && totalCost >= budgetForFlowers * 0.98) break;
     }
-  }, [autoTriggered, isLoading, shopId]);
 
-  useEffect(() => {
-    if (mode === "high-stock") {
-      triggerHighStock();
-    }
-  }, [mode, triggerHighStock]);
+    const digitalDesignFee = 0;
+    const totalPrice = totalCost;
 
-  const handleStepAnswer = useCallback(
-    async (answer: string) => {
-      if (isLoading) return;
-      setMessages((prev) => [...prev, { role: "user", content: answer }]);
-      const newAnswers = { ...answers };
-      let nextMessage = "";
-      let nextStep = currentStep;
+    console.log(`[bouquet-ai] Final: ${validatedFlowers.length} flowers, total=₪${totalPrice}`);
 
-      if (currentStep === STEPS.RECIPIENT) {
-        newAnswers.recipient = answer;
-        nextMessage = `מעולה! 🌿 **עכשיו, לאיזה אירוע או הזדמנות הזר הזה?**`;
-        nextStep = STEPS.OCCASION;
-      } else if (currentStep === STEPS.OCCASION) {
-        newAnswers.occasion = answer;
-        const isSensitive = answer.includes("הלוויה") || answer.includes("אבל");
-        nextMessage = isSensitive
-          ? `אני מבינה ומעריכה. אצור זר יפה שמבטא כבוד וקרבה. **מה התקציב שלכם? (בשקלים)**`
-          : `יפה! 💚 **עכשיו בואו נדבר על התקציב — כמה אתם רוצים להשקיע? (בשקלים)**`;
-        nextStep = STEPS.BUDGET;
-      } else if (currentStep === STEPS.BUDGET) {
-        const budgetAmount = parseFloat(answer.replace(/[^\d.]/g, ""));
-        if (isNaN(budgetAmount) || budgetAmount <= 0) {
-          nextMessage = `מצטערת, לא הבנתי את הסכום. אפשר לכתוב מספר בשקלים? לדוגמה: 300 או ₪250`;
-          nextStep = STEPS.BUDGET;
-        } else if (budgetAmount < 70) {
-          nextMessage = `⚠️ מינימום ההזמנה הוא **₪70**. אנא הזינו סכום של ₪70 ומעלה כדי שנוכל להרכיב עבורכם זר יפה 🌸`;
-          nextStep = STEPS.BUDGET;
-        } else {
-          newAnswers.budget = String(budgetAmount);
-          nextMessage = `מצוין! אצור משהו יפה מאוד 🎨 **איזה צבעים אתם אוהבים?**`;
-          nextStep = STEPS.COLORS;
-        }
-      } else if (currentStep === STEPS.COLORS) {
-        newAnswers.colors = answer;
-        nextMessage = `יופי! 🎨 **איזה סגנון מתאים לכם?**`;
-        nextStep = STEPS.STYLE;
-      } else if (currentStep === STEPS.STYLE) {
-        newAnswers.style = answer;
-        nextMessage = `מושלם! ✨ **יש משהו נוסף שתרצו שאדע?**\n\nהאם יש אלרגיות לפרחים מסוימים / חתול בבית? 🐱\n(או לחצו "המשך")`;
-        nextStep = STEPS.NOTES;
-      } else if (currentStep === STEPS.NOTES) {
-        newAnswers.notes = answer;
-        if (hasVases) {
-          nextMessage = `כמעט סיימנו! 🎁 **איך תרצו לקבל את הזר?**\n(אגרטל בתוספת מחיר, המידה נקבעת לפי גודל הזר)`;
-          nextStep = STEPS.WRAPPING;
-        } else {
-          newAnswers.wrapping = "נייר עטיפה";
-          setAnswers(newAnswers);
-          setCurrentStep(STEPS.RECOMMEND);
-          setIsLoading(true);
-          setMessages((prev) => [...prev, { role: "assistant", content: "🪄 מעצבת את הזר המושלם עבורכם..." }]);
-          try {
-            const { data, error } = await supabase.functions.invoke("bouquet-ai", {
-              body: { action: "generate", shopId, answers: newAnswers },
-            });
-            if (error) throw error;
-            const rec: BouquetRecommendation = {
-              flowers: data.flowers,
-              total_price: data.total_price,
-              flowers_cost: data.flowers_cost,
-              digital_design_fee: data.digital_design_fee,
-              message: data.message,
-              image_url: data.image_url || null,
-            };
-            setRecommendation(rec);
-            setMessages((prev) => [...prev, { role: "assistant", content: data.message }]);
-          } catch (err: any) {
-            console.error("Generate error:", err);
-            setMessages((prev) => [...prev, { role: "assistant", content: "מצטערת, נתקלתי בבעיה טכנית. נסו שוב 😔" }]);
-            setCurrentStep(STEPS.NOTES);
-          } finally {
-            setIsLoading(false);
-          }
-          return;
-        }
-      } else if (currentStep === STEPS.WRAPPING) {
-        newAnswers.wrapping = answer;
-        if (answer === "אגרטל") {
-          const budget = parseFloat(newAnswers.budget || "0");
-          const vase = getVaseForBudget(budget);
-          newAnswers.vaseSize = vase.size;
-          newAnswers.vasePrice = vase.price;
-        }
-        setAnswers(newAnswers);
-        setCurrentStep(STEPS.RECOMMEND);
-        setIsLoading(true);
-        setMessages((prev) => [...prev, { role: "assistant", content: "🪄 מעצבת את הזר המושלם עבורכם..." }]);
-        try {
-          const { data, error } = await supabase.functions.invoke("bouquet-ai", {
-            body: { action: "generate", shopId, answers: newAnswers },
-          });
-          if (error) throw error;
-          let totalPrice = data.total_price;
-          const flowers = data.flowers;
-          if (newAnswers.wrapping === "אגרטל" && newAnswers.vaseSize && newAnswers.vasePrice) {
-            flowers.push({
-              name: "אגרטל",
-              quantity: 1,
-              unit_price: newAnswers.vasePrice,
-              color: newAnswers.vaseSize,
-              line_total: newAnswers.vasePrice,
-            });
-            totalPrice += newAnswers.vasePrice;
-          }
-          const rec: BouquetRecommendation = {
-            flowers,
-            total_price: totalPrice,
-            flowers_cost: data.flowers_cost,
-            digital_design_fee: data.digital_design_fee,
-            message: data.message + (newAnswers.wrapping === "אגרטל" ? `\n\n🏺 הזר יגיע בתוך אגרטל מידה ${newAnswers.vaseSize} (₪${newAnswers.vasePrice})` : ""),
-            image_url: data.image_url || null,
-          };
-          setRecommendation(rec);
-          setMessages((prev) => [...prev, { role: "assistant", content: rec.message }]);
-        } catch (err: any) {
-          console.error("Generate error:", err);
-          setMessages((prev) => [...prev, { role: "assistant", content: "מצטערת, נתקלתי בבעיה טכנית. נסו שוב 😔" }]);
-          setCurrentStep(STEPS.WRAPPING);
-        } finally {
-          setIsLoading(false);
-        }
-        return;
-      }
+    // Generate bouquet image using Gemini
+    let bouquetImageUrl: string | null = null;
 
-      setAnswers(newAnswers);
-      setIsLoading(true);
-      setTimeout(() => {
-        setMessages((prev) => [...prev, { role: "assistant", content: nextMessage }]);
-        setCurrentStep(nextStep);
-        setIsLoading(false);
-      }, 400);
-    },
-    [isLoading, answers, currentStep, shopId, hasVases]
-  );
-
-  const handleModify = useCallback(
-    async (userMessage: string) => {
-      if (!recommendation || isLoading) return;
-      setMessages((prev) => [...prev, { role: "user", content: userMessage }]);
-      setIsLoading(true);
+    if (validatedFlowers.length > 0) {
       try {
-        const { data, error } = await supabase.functions.invoke("bouquet-ai", {
-          body: { action: "modify", shopId, answers, currentBouquet: recommendation, userMessage },
-        });
-        if (error) throw error;
-        const newRec: BouquetRecommendation = {
-          flowers: data.flowers,
-          total_price: data.total_price,
-          flowers_cost: data.flowers_cost,
-          digital_design_fee: data.digital_design_fee,
-          message: data.message,
-          image_url: data.image_url || null,
-        };
-        const budget = parseFloat(answers.budget || "0");
-        if (newRec.total_price > budget && budget > 0) {
-          setPendingBouquet({ recommendation: newRec, priceDifference: newRec.total_price - budget });
-          setMessages((prev) => [...prev, { role: "assistant", content: data.message }]);
+        const flowerDescriptions = validatedFlowers
+          .map((f: any) => `${Math.max(1, Math.floor(f.quantity * 0.95))} ${f.color} ${f.name}`)
+          .join(", ");
+
+        const wantsVase = answers?.wrapping === "אגרטל" && answers?.vaseSize;
+        const vaseSizeLabel = wantsVase ? (answers.vaseSize === "S" ? "small" : answers.vaseSize === "L" ? "large" : "medium") : "";
+
+        const imagePrompt = wantsVase
+          ? `Generate a realistic photograph of a single beautiful florist bouquet arranged in a clear glass ${vaseSizeLabel} vase. The bouquet contains: ${flowerDescriptions}. Style: Front-facing view, professional product photography, soft studio lighting, clean white background.`
+          : `Generate a realistic photograph of a single beautiful florist bouquet wrapped in elegant kraft paper with a ribbon. The bouquet contains: ${flowerDescriptions}. Style: Front-facing view, professional product photography, soft studio lighting, clean white background.`;
+
+        console.log("[bouquet-ai] Generating bouquet image...");
+
+        const imgController = new AbortController();
+        const imgTimeout = setTimeout(() => imgController.abort(), 55000);
+
+        // Use Gemini imagen API
+        const imageResponse = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${GOOGLE_AI_KEY}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: imagePrompt }] }],
+              generationConfig: { responseModalities: ["TEXT", "IMAGE"] },
+            }),
+            signal: imgController.signal,
+          }
+        );
+        clearTimeout(imgTimeout);
+
+        if (imageResponse.ok) {
+          const imageData = await imageResponse.json();
+          const parts = imageData.candidates?.[0]?.content?.parts || [];
+          for (const part of parts) {
+            if (part.inlineData?.mimeType?.startsWith("image/")) {
+              bouquetImageUrl = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+              console.log("[bouquet-ai] Image generated successfully");
+              break;
+            }
+          }
         } else {
-          setRecommendation(newRec);
-          setMessages((prev) => [...prev, { role: "assistant", content: data.message }]);
+          const errText = await imageResponse.text();
+          console.error("[bouquet-ai] Image generation failed:", imageResponse.status, errText.substring(0, 200));
         }
-      } catch (err: any) {
-        console.error("Modify error:", err);
-        setMessages((prev) => [...prev, { role: "assistant", content: "מצטערת, נתקלתי בבעיה. נסו שוב 😔" }]);
-      } finally {
-        setIsLoading(false);
+      } catch (imgErr) {
+        console.error("[bouquet-ai] Image generation error:", imgErr);
       }
-    },
-    [recommendation, isLoading, shopId, answers]
-  );
+    }
 
-  const handleApproveBudgetIncrease = useCallback(() => {
-    if (!pendingBouquet) return;
-    setAnswers((prev) => ({ ...prev, budget: String(pendingBouquet.recommendation.total_price) }));
-    setRecommendation(pendingBouquet.recommendation);
-    setPendingBouquet(null);
-    setMessages((prev) => [...prev, { role: "assistant", content: `מעולה! 🎉 עדכנתי את התקציב ל-₪${pendingBouquet.recommendation.total_price}. הזר שלכם מוכן!` }]);
-  }, [pendingBouquet]);
+    // Save to gallery if we have an image
+    if (bouquetImageUrl && SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
+      try {
+        const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+        await supabaseAdmin.from("gallery_bouquets").insert({
+          image_url: bouquetImageUrl,
+          flowers: validatedFlowers,
+          total_price: Math.round(totalPrice),
+          shop_id: shopId || null,
+          occasion: answers?.occasion || null,
+          style: answers?.style || null,
+          message: parsed.message || null,
+        });
+        console.log("[bouquet-ai] Saved bouquet to gallery");
+      } catch (galleryErr) {
+        console.error("[bouquet-ai] Failed to save to gallery:", galleryErr);
+      }
+    }
 
-  const handleRejectBudgetIncrease = useCallback(() => {
-    setPendingBouquet(null);
-    setMessages((prev) => [...prev, { role: "assistant", content: "בסדר גמור! הזר הקודם נשמר. תוכלו לבקש שינוי אחר שמתאים לתקציב 🌿" }]);
-  }, []);
-
-  const handleModifyRequest = useCallback(() => {
-    if (!recommendation) return;
-    const currentFlowersList = recommendation.flowers
-      .map((f) => `• ${f.quantity} ${f.color || ""} ${f.name}`)
-      .join("\n");
-    setMessages((prev) => [...prev, { role: "assistant", content: `בשמחה! 🌸\n\n**הזר הנוכחי שלכם:**\n${currentFlowersList}\n**סה״כ:** ₪${recommendation.total_price}\n\n**מה תרצו לשנות?**\nכתבו בדיוק מה אתם רוצים, למשל:\n- "תחליפו את הורדים האדומים בלבנים"\n- "תוסיפו 2 חמניות צהובות"\n- "תורידו את הגרברות"` }]);
-  }, [recommendation]);
-
-  const reset = useCallback(() => {
-    localStorage.removeItem(storageKey);
-    setMessages([{ role: "assistant", content: INITIAL_MESSAGE }]);
-    setCurrentStep(STEPS.RECIPIENT);
-    setAnswers({});
-    setRecommendation(null);
-    setPendingBouquet(null);
-    setIsLoading(false);
-  }, [storageKey]);
-
-  return {
-    messages,
-    currentStep,
-    answers,
-    isLoading,
-    recommendation,
-    pendingBouquet,
-    handleStepAnswer,
-    handleModify,
-    handleModifyRequest,
-    handleApproveBudgetIncrease,
-    handleRejectBudgetIncrease,
-    reset,
-  };
-}
+    return new Response(
+      JSON.stringify({
+        message: parsed.message || "הנה הזר שלכם! 💐",
+        flowers: validatedFlowers,
+        flowers_cost: totalCost,
+        digital_design_fee: digitalDesignFee,
+        total_price: Math.round(totalPrice),
+        image_url: bouquetImageUrl,
+      }),
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  } catch (e) {
+    console.error("[bouquet-ai] error:", e);
+    return new Response(
+      JSON.stringify({ error: e instanceof Error ? e.message : "שגיאה לא ידועה" }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+});
