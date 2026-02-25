@@ -18,7 +18,6 @@ function checkRateLimit(ip: string, maxRequests: number, windowMs: number): bool
   } else {
     rateLimitMap.set(ip, { count: 1, resetAt: now + windowMs });
   }
-  // Cleanup old entries periodically
   if (rateLimitMap.size > 1000) {
     for (const [key, val] of rateLimitMap) {
       if (now > val.resetAt) rateLimitMap.delete(key);
@@ -27,13 +26,14 @@ function checkRateLimit(ip: string, maxRequests: number, windowMs: number): bool
   return true;
 }
 
+const GOOGLE_API_URL = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
 
   try {
-    // ── Rate limit: 10 requests per hour per IP ──
     const clientIP = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
                      req.headers.get("x-real-ip") || "unknown";
     if (!checkRateLimit(clientIP, 10, 3600000)) {
@@ -47,7 +47,6 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const { action, shopId, answers, currentBouquet, userMessage, flowerName, flowerColor } = body;
 
-    // ── Input Validation ──
     if (!action || typeof action !== "string" || !["generate", "modify", "high-stock", "promote-flower"].includes(action)) {
       return new Response(
         JSON.stringify({ error: "Invalid action" }),
@@ -85,15 +84,14 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: "Color name too long" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    const GOOGLE_AI_KEY = Deno.env.get("GOOGLE_AI_KEY");
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+    if (!GOOGLE_AI_KEY) throw new Error("GOOGLE_AI_KEY is not configured");
 
     console.log(`[bouquet-ai] action=${action}, shopId=${shopId}, IP=${clientIP}`);
 
-    // Fetch inventory
     let flowersContext = "אין פרחים זמינים במלאי.";
     let flowersList: any[] = [];
     let boostedFlowers: any[] = [];
@@ -169,7 +167,6 @@ ${(() => {
     restrictions.push("⚠️ יש חתול בבית! **אסור בהחלט** לכלול שושן צחור (לילי) וגיבסנית בזר — גם אם יש עליהם בוסט! פרחים אלה רעילים לחתולים.");
   }
   if (notes.includes("אלרג")) {
-    // Try to extract specific flower allergies
     restrictions.push("⚠️ הלקוח ציין אלרגיה! בדוק אילו פרחים הוזכרו בהערות והימנע מהם לחלוטין.");
   }
   return restrictions.length > 0 ? restrictions.join("\n") : "אין הגבלות מיוחדות.";
@@ -202,7 +199,7 @@ ${budgetForFlowers >= 500 ? `11. **חשוב**: עם תקציב של ₪${Math.fl
         .join("\n");
 
       const boostedModifyInstruction = boostedFlowers.length > 0
-        ? `\n# ⭐ פרחים מקודמים (רקע בלבד):\n${boostedFlowers.map((f: any) => `- ${f.name}${f.color ? ` (${f.color})` : ""}`).join("\n")}\n**חשוב**: השתמש בפרחים מקודמים רק אם הלקוח לא ציין פרח ספציפי (למשל "תוסיף עוד פרחים" בלי לציין איזה). אם הלקוח מבקש פרח מסוים — תמיד תעדיף את בקשת הלקוח!\n`
+        ? `\n# ⭐ פרחים מקודמים (רקע בלבד):\n${boostedFlowers.map((f: any) => `- ${f.name}${f.color ? ` (${f.color})` : ""}`).join("\n")}\n**חשוב**: השתמש בפרחים מקודמים רק אם הלקוח לא ציין פרח ספציפי. אם הלקוח מבקש פרח מסוים — תמיד תעדיף את בקשת הלקוח!\n`
         : "";
 
       prompt = `את עורכת זר פרחים קיים. **המשימה שלך: להגיב באמפתיה ולבצע בדיוק את מה שהלקוח ביקש.**
@@ -223,7 +220,7 @@ ${(() => {
   const notes = (answers?.notes || "").toLowerCase();
   const restrictions: string[] = [];
   if (notes.includes("חתול") || notes.includes("חתולה") || notes.includes("חתולים")) {
-    restrictions.push("⚠️ יש חתול בבית! **אסור בהחלט** לכלול שושן צחור (לילי) וגיבסנית בזר — גם אם יש עליהם בוסט!");
+    restrictions.push("⚠️ יש חתול בבית! **אסור בהחלט** לכלול שושן צחור (לילי) וגיבסנית בזר!");
   }
   if (notes.includes("אלרג")) {
     restrictions.push("⚠️ הלקוח ציין אלרגיה! בדוק אילו פרחים הוזכרו בהערות והימנע מהם.");
@@ -234,27 +231,15 @@ ${(() => {
 # הלקוח ביקש:
 "${userMessage}"
 
-# חוקים קריטיים (לפי סדר עדיפות!):
-
-## תגובות רגשיות ואמפתיה:
-- **אם הלקוח מביע שמחה או שביעות רצון** (כמו "וואו", "יפה", "מדהים", "אהבתי", "מושלם", "תודה") — הגיב בחום, שמח איתו, ו**החזר את אותו זר בדיוק ללא שינוי**.
-- **אם הלקוח מביע אכזבה או חוסר שביעות רצון** (כמו "לא אהבתי", "לא מתאים", "משעמם", "לא מספיק", "לא יפה") — הגיב באמפתיה, הבע הבנה, שאל מה בדיוק הוא רוצה לשנות (בשדה message), ו**החזר את אותו זר בדיוק ללא שינוי** כדי שהלקוח יוכל לפרט מה לשנות.
-- **רק אם הלקוח מבקש שינוי קונקרטי** (הוסף/הסר/שנה פרח/צבע/כמות) — בצע את השינוי.
-
-## חוקי שינוי:
-1. **עדיפות עליונה — בקשת הלקוח**: בצע בדיוק את מה שהלקוח ביקש. אם הוא ביקש להוסיף חמניות — תוסיף חמניות. אם ביקש להוריד ורדים — תוריד ורדים. לא להחליף לפרחים אחרים!
-2. **קריטי**: החזר את הזר המלא המעודכן — כולל כל הפרחים הקודמים + השינויים
-3. **קריטי**: השתמש בשמות פרחים מדויקים מרשימת המלאי למעלה (לא שמות חופשיים!)
-4. אם הלקוח מבקש להוסיף פרח — הוסף אותו. **כדי להישאר בתקציב**, מותר לך להפחית כמות מפרחים שיש מהם כמות גדולה בזר (למשל אם יש 8 גיבסניות, אפשר להוריד ל-5 כדי לפנות תקציב). עדיף להפחית מפרחי מילוי/ירק לפני פרחים מרכזיים.
-5. אם הלקוח מבקש להוריד פרח — הסר רק אותו מהרשימה. השאר את כל השאר!
-6. אם הלקוח מבקש לשנות צבע — שנה את שדה color של הפרח הרלוונטי (רק אם הצבע קיים במלאי)
-7. אם הלקוח מבקש לשנות כמות — עדכן את quantity בהתאם
-8. **נסה להישאר בתקציב** על ידי איזון כמויות. אם בכל זאת חייבים לחרוג — זה בסדר, אבל העדף לאזן.
-9. בהודעה (message) — תאר את השינוי שביצעת כולל מה הפחתת כדי לפנות תקציב, בלי מספרים מדויקים
-10. **אל תסיר לגמרי פרח שהלקוח לא ביקש להסיר!** אפשר להפחית כמות, אבל לא להסיר סוג שלם.
+# חוקים קריטיים:
+- אם הלקוח מביע שמחה — הגיב בחום והחזר את אותו זר ללא שינוי
+- אם הלקוח מביע אכזבה — הגיב באמפתיה והחזר את אותו זר ללא שינוי
+- רק אם הלקוח מבקש שינוי קונקרטי — בצע את השינוי
+- השתמש רק בשמות פרחים מדויקים מהמלאי
+- החזר את הזר המלא המעודכן
 
 # פורמט JSON בלבד:
-{"message": "הודעה אמפתית + הסבר מה שינית (אם שינית)", "flowers": [{"name": "שם מדויק מהמלאי", "quantity": מספר, "color": "צבע"}]}`;
+{"message": "הודעה אמפתית + הסבר מה שינית", "flowers": [{"name": "שם מדויק מהמלאי", "quantity": מספר, "color": "צבע"}]}`;
     } else if (action === "high-stock") {
       const highStockFlowers = flowersList
         .filter((f: any) => f.quantity > 0)
@@ -278,7 +263,7 @@ ${flowersContext}
 2. צור זר יפה ומגוון עם 3-5 סוגי פרחים שונים
 3. שלב גם ירק/עלווה אם זמין
 4. תקציב: עד ₪250 לפרחים
-5. הודעה: כתוב הודעה שמסבירה שהזר הזה מכיל פרחים טריים שיש מהם מלאי מלא - פרחים באיכות הכי טובה
+5. הודעה: כתוב הודעה שמסבירה שהזר הזה מכיל פרחים טריים שיש מהם מלאי מלא
 
 # פורמט JSON בלבד:
 {"message": "הודעה אישית", "flowers": [{"name": "שם מדויק מהמלאי", "quantity": מספר, "color": "צבע"}]}`;
@@ -299,11 +284,10 @@ ${flowersContext}
 ${flowersContext}
 
 # הנחיות:
-1. **הפרח המרכזי של הזר חייב להיות ${flowerName}${colorText}** - תן לו את הכמות הגבוהה ביותר בזר
-2. השלם עם 2-3 פרחים נוספים מהמלאי שמתאימים בצבעים ובסגנון
-3. שלב ירק/עלווה אם זמין (אקליפטוס, רוסקוס, שרך)
+1. **הפרח המרכזי של הזר חייב להיות ${flowerName}${colorText}**
+2. השלם עם 2-3 פרחים נוספים מהמלאי
+3. שלב ירק/עלווה אם זמין
 4. תקציב: עד ₪250 לפרחים
-5. הודעה: הסבר למה בחרת את השילוב הזה ואיך ${flowerName} נותן לזר את האופי המרכזי שלו
 
 # פורמט JSON בלבד:
 {"message": "הודעה אישית", "flowers": [{"name": "שם מדויק מהמלאי", "quantity": מספר, "color": "צבע"}]}`;
@@ -311,14 +295,14 @@ ${flowersContext}
 
     console.log(`[bouquet-ai] Sending prompt to AI, action=${action}`);
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    const response = await fetch(GOOGLE_API_URL, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "x-goog-api-key": GOOGLE_AI_KEY,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "gemini-2.5-flash-preview-04-17",
         messages: [
           { role: "system", content: "אתה מחזיר תמיד JSON תקין בלבד, ללא טקסט נוסף מסביב. ענה בעברית." },
           { role: "user", content: prompt },
@@ -352,7 +336,6 @@ ${flowersContext}
       }
     }
 
-    // Validate and adjust flowers against real inventory
     const validatedFlowers: any[] = [];
     let totalCost = 0;
     const budget = action === "high-stock" ? 250 : (parseFloat(answers?.budget) || 200);
@@ -360,37 +343,31 @@ ${flowersContext}
 
     const greenNames = ["אקליפטוס", "רוסקוס", "שרך", "גיבסנית"];
     const aiFlowers = parsed.flowers || [];
-    const skipBudgetCap = action === "modify"; // Let frontend handle budget approval for modifications
+    const skipBudgetCap = action === "modify";
 
-    // Normalize Hebrew flower names for fuzzy matching
     const normalize = (s: string) => s.replace(/[ןםךףץ]/g, (c) => {
       const map: Record<string, string> = { "ן": "נ", "ם": "מ", "ך": "כ", "ף": "פ", "ץ": "צ" };
       return map[c] || c;
     }).replace(/יי/g, "י").replace(/ות$/g, "").replace(/ים$/g, "").trim();
 
     const findFlowerInInventory = (aiFlower: any) => {
-      // 1. Exact match
       let match = flowersList.find((f: any) => f.name === aiFlower.name);
       if (match) return match;
 
-      // 2. Normalized match
       const normalizedAI = normalize(aiFlower.name);
       match = flowersList.find((f: any) => normalize(f.name) === normalizedAI);
       if (match) return match;
 
-      // 3. Contains match (either direction)
       match = flowersList.find((f: any) =>
         f.name.includes(aiFlower.name) || aiFlower.name.includes(f.name)
       );
       if (match) return match;
 
-      // 4. Normalized contains match
       match = flowersList.find((f: any) =>
         normalize(f.name).includes(normalizedAI) || normalizedAI.includes(normalize(f.name))
       );
       if (match) return match;
 
-      // 5. Color-qualified name (e.g. AI returns "ורד אדום" but inventory has "ורד")
       if (aiFlower.color) {
         match = flowersList.find((f: any) =>
           aiFlower.name.includes(f.name) && (!f.color || f.color === aiFlower.color)
@@ -412,14 +389,12 @@ ${flowersContext}
     for (const aiFlower of orderedFlowers) {
       const realFlower = findFlowerInInventory(aiFlower);
       if (!realFlower) {
-        console.warn(`[bouquet-ai] "${aiFlower.name}" not found in inventory (normalized: "${normalize(aiFlower.name)}"), skipping`);
+        console.warn(`[bouquet-ai] "${aiFlower.name}" not found in inventory, skipping`);
         continue;
       }
 
-      // Check if we already have this flower in validated list (avoid duplicates)
       const existingIdx = validatedFlowers.findIndex((f: any) => f.name === realFlower.name && f.color === (aiFlower.color || realFlower.color || ""));
       if (existingIdx !== -1) {
-        // Merge quantities
         const existing = validatedFlowers[existingIdx];
         const addQty = Math.min(Math.floor(aiFlower.quantity || 1), realFlower.quantity - existing.quantity);
         if (addQty > 0) {
@@ -445,7 +420,7 @@ ${flowersContext}
       totalCost += lineTotal;
 
       validatedFlowers.push({
-        name: realFlower.name,  // Use inventory name, not AI name
+        name: realFlower.name,
         quantity,
         unit_price: realFlower.price,
         color: aiFlower.color || realFlower.color || "",
@@ -460,12 +435,11 @@ ${flowersContext}
 
     console.log(`[bouquet-ai] Final: ${validatedFlowers.length} flowers, total=₪${totalPrice}`);
 
-    // Generate bouquet image
+    // Generate bouquet image using Gemini
     let bouquetImageUrl: string | null = null;
 
     if (validatedFlowers.length > 0) {
       try {
-        // Use reduced quantities to avoid showing MORE flowers than listed
         const flowerDescriptions = validatedFlowers
           .map((f: any) => `${Math.max(1, Math.floor(f.quantity * 0.95))} ${f.color} ${f.name}`)
           .join(", ");
@@ -474,51 +448,38 @@ ${flowersContext}
         const vaseSizeLabel = wantsVase ? (answers.vaseSize === "S" ? "small" : answers.vaseSize === "L" ? "large" : "medium") : "";
 
         const imagePrompt = wantsVase
-          ? `Generate a realistic photograph of a single beautiful florist bouquet arranged in a clear glass ${vaseSizeLabel} vase. The photo is taken from a slight angle (30-45 degrees).
-
-The bouquet contains: ${flowerDescriptions}.
-
-Style: Front-facing view, professional product photography, soft studio lighting, clean white or light background. Show exactly one bouquet in one clear glass vase with fewer flowers rather than more. Do not add flowers not listed.`
-          : `Generate a realistic photograph of a single beautiful florist bouquet, held upright as if on display in a flower shop. The bouquet is wrapped in elegant kraft paper with a ribbon.
-
-The bouquet contains: ${flowerDescriptions}.
-
-Style: Front-facing view, the bouquet is standing upright with flowers visible at the top, professional product photography, soft studio lighting, clean white or light background. Show exactly one bouquet with fewer flowers rather than more. Do not add flowers not listed.`;
-
+          ? `Generate a realistic photograph of a single beautiful florist bouquet arranged in a clear glass ${vaseSizeLabel} vase. The bouquet contains: ${flowerDescriptions}. Style: Front-facing view, professional product photography, soft studio lighting, clean white background.`
+          : `Generate a realistic photograph of a single beautiful florist bouquet wrapped in elegant kraft paper with a ribbon. The bouquet contains: ${flowerDescriptions}. Style: Front-facing view, professional product photography, soft studio lighting, clean white background.`;
 
         console.log("[bouquet-ai] Generating bouquet image...");
 
         const imgController = new AbortController();
-        const imgTimeout = setTimeout(() => imgController.abort(), 55000); // 55s timeout
+        const imgTimeout = setTimeout(() => imgController.abort(), 55000);
 
-        const imageResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${LOVABLE_API_KEY}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            model: "google/gemini-3-pro-image-preview",
-            messages: [{ role: "user", content: imagePrompt }],
-            modalities: ["image", "text"],
-          }),
-          signal: imgController.signal,
-        });
+        // Use Gemini imagen API
+        const imageResponse = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${GOOGLE_AI_KEY}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: imagePrompt }] }],
+              generationConfig: { responseModalities: ["TEXT", "IMAGE"] },
+            }),
+            signal: imgController.signal,
+          }
+        );
         clearTimeout(imgTimeout);
 
         if (imageResponse.ok) {
-          const rawText = await imageResponse.text();
-          try {
-            const imageData = JSON.parse(rawText);
-            const imageUrl = imageData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
-            if (imageUrl) {
-              bouquetImageUrl = imageUrl;
+          const imageData = await imageResponse.json();
+          const parts = imageData.candidates?.[0]?.content?.parts || [];
+          for (const part of parts) {
+            if (part.inlineData?.mimeType?.startsWith("image/")) {
+              bouquetImageUrl = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
               console.log("[bouquet-ai] Image generated successfully");
-            } else {
-              console.warn("[bouquet-ai] No image in response");
+              break;
             }
-          } catch (parseErr) {
-            console.error("[bouquet-ai] Image response parse error, length:", rawText.length);
           }
         } else {
           const errText = await imageResponse.text();
