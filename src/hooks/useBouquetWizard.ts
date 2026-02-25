@@ -1,7 +1,7 @@
-import { useState, useCallback, useEffect, useMemo } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import type { BouquetRecommendation, BouquetFlower } from "@/components/bouquet-chat/BouquetCard";
+import type { BouquetRecommendation } from "@/components/bouquet-chat/BouquetCard";
 
 export interface ChatMessage {
   role: "user" | "assistant";
@@ -80,7 +80,7 @@ function getVaseForBudget(budget: number): { size: string; price: number } {
   for (const v of VASE_SIZES) {
     if (budget <= v.max) return { size: v.size, price: v.price };
   }
-  return VASE_SIZES[VASE_SIZES.length - 1]; // L for anything above 400
+  return VASE_SIZES[VASE_SIZES.length - 1];
 }
 
 const INITIAL_MESSAGE = `🌸 ברוכים הבאים לבונה הזרים החכמה!
@@ -107,44 +107,38 @@ interface PendingBouquet {
 }
 
 export function useBouquetWizard(shopId: string | null, mode?: string | null) {
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    { role: "assistant", content: INITIAL_MESSAGE },
-  ]);
-const CHAT_STORAGE_KEY = `chat_wizard_${shopId || "default"}`;
+  const storageKey = `chat_wizard_${shopId || "default"}`;
 
-function loadChatState() {
-  try {
-    const saved = localStorage.getItem(CHAT_STORAGE_KEY);
-    if (!saved) return null;
-    return JSON.parse(saved);
-  } catch { return null; }
-}
+  function loadSaved() {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      return saved ? JSON.parse(saved) : null;
+    } catch { return null; }
+  }
 
-const savedState = loadChatState();
+  const saved = loadSaved();
 
-const [messages, setMessages] = useState<ChatMessage[]>(
-  savedState?.messages || [{ role: "assistant", content: INITIAL_MESSAGE }]
-);
-const [currentStep, setCurrentStep] = useState<StepKey>(
-  savedState?.currentStep || STEPS.RECIPIENT
-);
-const [answers, setAnswers] = useState<WizardAnswers>(savedState?.answers || {});
-const [isLoading, setIsLoading] = useState(false);
-const [recommendation, setRecommendation] = useState<BouquetRecommendation | null>(
-  savedState?.recommendation || null
-);
-const [pendingBouquet, setPendingBouquet] = useState<PendingBouquet | null>(null);
-const [autoTriggered, setAutoTriggered] = useState(false);
+  const [messages, setMessages] = useState<ChatMessage[]>(
+    saved?.messages || [{ role: "assistant", content: INITIAL_MESSAGE }]
+  );
+  const [currentStep, setCurrentStep] = useState<StepKey>(
+    saved?.currentStep || STEPS.RECIPIENT
+  );
+  const [answers, setAnswers] = useState<WizardAnswers>(saved?.answers || {});
+  const [isLoading, setIsLoading] = useState(false);
+  const [recommendation, setRecommendation] = useState<BouquetRecommendation | null>(
+    saved?.recommendation || null
+  );
+  const [pendingBouquet, setPendingBouquet] = useState<PendingBouquet | null>(null);
+  const [autoTriggered, setAutoTriggered] = useState(false);
 
-useEffect(() => {
-  try {
-    localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify({
-      messages, currentStep, answers, recommendation
-    }));
-  } catch {}
-}, [messages, currentStep, answers, recommendation]);
+  // Save to localStorage on every change
+  useEffect(() => {
+    try {
+      localStorage.setItem(storageKey, JSON.stringify({ messages, currentStep, answers, recommendation }));
+    } catch {}
+  }, [messages, currentStep, answers, recommendation]);
 
-  // Check if shop has vases in inventory
   const { data: hasVases } = useQuery({
     queryKey: ["shop-has-vases", shopId],
     queryFn: async () => {
@@ -162,21 +156,17 @@ useEffect(() => {
     enabled: !!shopId,
   });
 
-  // Auto-trigger high-stock mode
   const triggerHighStock = useCallback(async () => {
     if (autoTriggered || isLoading) return;
     setAutoTriggered(true);
-
     setMessages([{ role: "assistant", content: "🌿 מייצר המלצה לזר מהמלאי הגבוה ביותר..." }]);
     setCurrentStep(STEPS.RECOMMEND);
     setIsLoading(true);
-
     try {
       const { data, error } = await supabase.functions.invoke("bouquet-ai", {
         body: { action: "high-stock", shopId },
       });
       if (error) throw error;
-
       const rec: BouquetRecommendation = {
         flowers: data.flowers,
         total_price: data.total_price,
@@ -185,21 +175,16 @@ useEffect(() => {
         message: data.message,
         image_url: data.image_url || null,
       };
-
       setRecommendation(rec);
       setMessages((prev) => [...prev, { role: "assistant", content: data.message }]);
     } catch (err: any) {
       console.error("High-stock generate error:", err);
-      setMessages((prev) => [
-        ...prev,
-        { role: "assistant", content: "מצטערת, נתקלתי בבעיה טכנית. נסו שוב 😔" },
-      ]);
+      setMessages((prev) => [...prev, { role: "assistant", content: "מצטערת, נתקלתי בבעיה טכנית. נסו שוב 😔" }]);
     } finally {
       setIsLoading(false);
     }
   }, [autoTriggered, isLoading, shopId]);
 
-  // Auto-trigger when mode is high-stock
   useEffect(() => {
     if (mode === "high-stock") {
       triggerHighStock();
@@ -209,9 +194,7 @@ useEffect(() => {
   const handleStepAnswer = useCallback(
     async (answer: string) => {
       if (isLoading) return;
-
       setMessages((prev) => [...prev, { role: "user", content: answer }]);
-
       const newAnswers = { ...answers };
       let nextMessage = "";
       let nextStep = currentStep;
@@ -254,22 +237,16 @@ useEffect(() => {
           nextMessage = `כמעט סיימנו! 🎁 **איך תרצו לקבל את הזר?**\n(אגרטל בתוספת מחיר, המידה נקבעת לפי גודל הזר)`;
           nextStep = STEPS.WRAPPING;
         } else {
-          // No vases in shop — skip wrapping step and go straight to generate
           newAnswers.wrapping = "נייר עטיפה";
           setAnswers(newAnswers);
           setCurrentStep(STEPS.RECOMMEND);
           setIsLoading(true);
-          setMessages((prev) => [
-            ...prev,
-           { role: "assistant", content: "🪄 מעצבת את הזר המושלם עבורכם..." },
-          ]);
-
+          setMessages((prev) => [...prev, { role: "assistant", content: "🪄 מעצבת את הזר המושלם עבורכם..." }]);
           try {
             const { data, error } = await supabase.functions.invoke("bouquet-ai", {
               body: { action: "generate", shopId, answers: newAnswers },
             });
             if (error) throw error;
-
             const rec: BouquetRecommendation = {
               flowers: data.flowers,
               total_price: data.total_price,
@@ -278,15 +255,11 @@ useEffect(() => {
               message: data.message,
               image_url: data.image_url || null,
             };
-
             setRecommendation(rec);
             setMessages((prev) => [...prev, { role: "assistant", content: data.message }]);
           } catch (err: any) {
             console.error("Generate error:", err);
-            setMessages((prev) => [
-              ...prev,
-              { role: "assistant", content: "מצטערת, נתקלתי בבעיה טכנית. נסו שוב 😔" },
-            ]);
+            setMessages((prev) => [...prev, { role: "assistant", content: "מצטערת, נתקלתי בבעיה טכנית. נסו שוב 😔" }]);
             setCurrentStep(STEPS.NOTES);
           } finally {
             setIsLoading(false);
@@ -295,36 +268,23 @@ useEffect(() => {
         }
       } else if (currentStep === STEPS.WRAPPING) {
         newAnswers.wrapping = answer;
-
-        // If vase, calculate size based on budget
         if (answer === "אגרטל") {
           const budget = parseFloat(newAnswers.budget || "0");
           const vase = getVaseForBudget(budget);
           newAnswers.vaseSize = vase.size;
           newAnswers.vasePrice = vase.price;
         }
-
         setAnswers(newAnswers);
         setCurrentStep(STEPS.RECOMMEND);
-
-        // Generate bouquet
         setIsLoading(true);
-        setMessages((prev) => [
-          ...prev,
-          { role: "assistant", content: "🪄 מעצבת את הזר המושלם עבורכם..." },
-        ]);
-
+        setMessages((prev) => [...prev, { role: "assistant", content: "🪄 מעצבת את הזר המושלם עבורכם..." }]);
         try {
           const { data, error } = await supabase.functions.invoke("bouquet-ai", {
             body: { action: "generate", shopId, answers: newAnswers },
           });
-
           if (error) throw error;
-
           let totalPrice = data.total_price;
           const flowers = data.flowers;
-
-          // Add vase to flowers list if selected
           if (newAnswers.wrapping === "אגרטל" && newAnswers.vaseSize && newAnswers.vasePrice) {
             flowers.push({
               name: "אגרטל",
@@ -335,7 +295,6 @@ useEffect(() => {
             });
             totalPrice += newAnswers.vasePrice;
           }
-
           const rec: BouquetRecommendation = {
             flowers,
             total_price: totalPrice,
@@ -344,15 +303,11 @@ useEffect(() => {
             message: data.message + (newAnswers.wrapping === "אגרטל" ? `\n\n🏺 הזר יגיע בתוך אגרטל מידה ${newAnswers.vaseSize} (₪${newAnswers.vasePrice})` : ""),
             image_url: data.image_url || null,
           };
-
           setRecommendation(rec);
           setMessages((prev) => [...prev, { role: "assistant", content: rec.message }]);
         } catch (err: any) {
           console.error("Generate error:", err);
-          setMessages((prev) => [
-            ...prev,
-            { role: "assistant", content: "מצטערת, נתקלתי בבעיה טכנית. נסו שוב 😔" },
-          ]);
+          setMessages((prev) => [...prev, { role: "assistant", content: "מצטערת, נתקלתי בבעיה טכנית. נסו שוב 😔" }]);
           setCurrentStep(STEPS.WRAPPING);
         } finally {
           setIsLoading(false);
@@ -361,8 +316,6 @@ useEffect(() => {
       }
 
       setAnswers(newAnswers);
-
-      // Simulate brief delay for natural feel
       setIsLoading(true);
       setTimeout(() => {
         setMessages((prev) => [...prev, { role: "assistant", content: nextMessage }]);
@@ -376,23 +329,13 @@ useEffect(() => {
   const handleModify = useCallback(
     async (userMessage: string) => {
       if (!recommendation || isLoading) return;
-
       setMessages((prev) => [...prev, { role: "user", content: userMessage }]);
       setIsLoading(true);
-
       try {
         const { data, error } = await supabase.functions.invoke("bouquet-ai", {
-          body: {
-            action: "modify",
-            shopId,
-            answers,
-            currentBouquet: recommendation,
-            userMessage,
-          },
+          body: { action: "modify", shopId, answers, currentBouquet: recommendation, userMessage },
         });
-
         if (error) throw error;
-
         const newRec: BouquetRecommendation = {
           flowers: data.flowers,
           total_price: data.total_price,
@@ -401,15 +344,9 @@ useEffect(() => {
           message: data.message,
           image_url: data.image_url || null,
         };
-
         const budget = parseFloat(answers.budget || "0");
-
-        // Check budget
         if (newRec.total_price > budget && budget > 0) {
-          setPendingBouquet({
-            recommendation: newRec,
-            priceDifference: newRec.total_price - budget,
-          });
+          setPendingBouquet({ recommendation: newRec, priceDifference: newRec.total_price - budget });
           setMessages((prev) => [...prev, { role: "assistant", content: data.message }]);
         } else {
           setRecommendation(newRec);
@@ -417,10 +354,7 @@ useEffect(() => {
         }
       } catch (err: any) {
         console.error("Modify error:", err);
-        setMessages((prev) => [
-          ...prev,
-          { role: "assistant", content: "מצטערת, נתקלתי בבעיה. נסו שוב 😔" },
-        ]);
+        setMessages((prev) => [...prev, { role: "assistant", content: "מצטערת, נתקלתי בבעיה. נסו שוב 😔" }]);
       } finally {
         setIsLoading(false);
       }
@@ -430,30 +364,15 @@ useEffect(() => {
 
   const handleApproveBudgetIncrease = useCallback(() => {
     if (!pendingBouquet) return;
-    setAnswers((prev) => ({
-      ...prev,
-      budget: String(pendingBouquet.recommendation.total_price),
-    }));
+    setAnswers((prev) => ({ ...prev, budget: String(pendingBouquet.recommendation.total_price) }));
     setRecommendation(pendingBouquet.recommendation);
     setPendingBouquet(null);
-    setMessages((prev) => [
-      ...prev,
-      {
-        role: "assistant",
-        content: `מעולה! 🎉 עדכנתי את התקציב ל-₪${pendingBouquet.recommendation.total_price}. הזר שלכם מוכן!`,
-      },
-    ]);
+    setMessages((prev) => [...prev, { role: "assistant", content: `מעולה! 🎉 עדכנתי את התקציב ל-₪${pendingBouquet.recommendation.total_price}. הזר שלכם מוכן!` }]);
   }, [pendingBouquet]);
 
   const handleRejectBudgetIncrease = useCallback(() => {
     setPendingBouquet(null);
-    setMessages((prev) => [
-      ...prev,
-      {
-        role: "assistant",
-        content: "בסדר גמור! הזר הקודם נשמר. תוכלו לבקש שינוי אחר שמתאים לתקציב 🌿",
-      },
-    ]);
+    setMessages((prev) => [...prev, { role: "assistant", content: "בסדר גמור! הזר הקודם נשמר. תוכלו לבקש שינוי אחר שמתאים לתקציב 🌿" }]);
   }, []);
 
   const handleModifyRequest = useCallback(() => {
@@ -461,24 +380,18 @@ useEffect(() => {
     const currentFlowersList = recommendation.flowers
       .map((f) => `• ${f.quantity} ${f.color || ""} ${f.name}`)
       .join("\n");
-
-    setMessages((prev) => [
-      ...prev,
-      {
-        role: "assistant",
-        content: `בשמחה! 🌸\n\n**הזר הנוכחי שלכם:**\n${currentFlowersList}\n**סה״כ:** ₪${recommendation.total_price}\n\n**מה תרצו לשנות?**\nכתבו בדיוק מה אתם רוצים, למשל:\n- "תחליפו את הורדים האדומים בלבנים"\n- "תוסיפו 2 חמניות צהובות"\n- "תורידו את הגרברות"`,
-      },
-    ]);
+    setMessages((prev) => [...prev, { role: "assistant", content: `בשמחה! 🌸\n\n**הזר הנוכחי שלכם:**\n${currentFlowersList}\n**סה״כ:** ₪${recommendation.total_price}\n\n**מה תרצו לשנות?**\nכתבו בדיוק מה אתם רוצים, למשל:\n- "תחליפו את הורדים האדומים בלבנים"\n- "תוסיפו 2 חמניות צהובות"\n- "תורידו את הגרברות"` }]);
   }, [recommendation]);
 
   const reset = useCallback(() => {
+    localStorage.removeItem(storageKey);
     setMessages([{ role: "assistant", content: INITIAL_MESSAGE }]);
     setCurrentStep(STEPS.RECIPIENT);
     setAnswers({});
     setRecommendation(null);
     setPendingBouquet(null);
     setIsLoading(false);
-  }, []);
+  }, [storageKey]);
 
   return {
     messages,
