@@ -11,7 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import InventoryTab from "@/components/dashboard/InventoryTab";
 import OrdersTab from "@/components/dashboard/OrdersTab";
 import RestockTab from "@/components/dashboard/RestockTab";
-
+import { Package, ClipboardList, Store, ArrowRight, LogOut, ChevronDown, Truck, Shield, Settings, Globe, Save, Phone } from "lucide-react";
 type Tab = "inventory" | "orders" | "restock" | "settings";
 
 const Dashboard = () => {
@@ -24,6 +24,7 @@ const Dashboard = () => {
   const [showShopPicker, setShowShopPicker] = useState(false);
   const [newOrderCount, setNewOrderCount] = useState(0);
   const [shopWebsite, setShopWebsite] = useState("");
+  const [shopPhone, setShopPhone] = useState("");
   const [savingWebsite, setSavingWebsite] = useState(false);
   
 
@@ -44,8 +45,9 @@ const Dashboard = () => {
   useEffect(() => {
     if (!selectedShop) return;
     const loadWebsite = async () => {
-      const { data } = await supabase.from("shops").select("website").eq("id", selectedShop.id).single();
+      const { data } = await supabase.from("shops").select("website, phone").eq("id", selectedShop.id).single();
       setShopWebsite(data?.website || "");
+      setShopPhone(data?.phone || "");
     };
     loadWebsite();
   }, [selectedShop]);
@@ -53,8 +55,7 @@ const Dashboard = () => {
   const handleSaveWebsite = async () => {
     if (!selectedShop) return;
     setSavingWebsite(true);
-    const { error } = await supabase.from("shops").update({ website: shopWebsite || null }).eq("id", selectedShop.id);
-    setSavingWebsite(false);
+      const { error } = await supabase.from("shops").update({ website: shopWebsite || null, phone: shopPhone || null }).eq("id", selectedShop.id);    setSavingWebsite(false);
     if (error) {
       toast({ title: "שגיאה בשמירה", description: error.message, variant: "destructive" });
     } else {
@@ -286,5 +287,19 @@ const Dashboard = () => {
     </div>
   );
 };
-
+<div className="space-y-2">
+  <label className="text-sm font-semibold font-body text-foreground flex items-center gap-2">
+    <Phone className="w-4 h-4 text-primary" />
+    טלפון לקבלת הודעות WhatsApp
+  </label>
+  <input
+    type="tel"
+    placeholder="050-0000000"
+    value={shopPhone}
+    onChange={(e) => setShopPhone(e.target.value)}
+    className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm font-body text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-ring"
+    dir="ltr"
+  />
+  <p className="text-xs text-muted-foreground font-body">תקבל/י הודעת WhatsApp על כל הזמנה חדשה</p>
+</div>
 export default Dashboard;
