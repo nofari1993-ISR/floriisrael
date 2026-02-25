@@ -110,12 +110,39 @@ export function useBouquetWizard(shopId: string | null, mode?: string | null) {
   const [messages, setMessages] = useState<ChatMessage[]>([
     { role: "assistant", content: INITIAL_MESSAGE },
   ]);
-  const [currentStep, setCurrentStep] = useState<StepKey>(STEPS.RECIPIENT);
-  const [answers, setAnswers] = useState<WizardAnswers>({});
-  const [isLoading, setIsLoading] = useState(false);
-  const [recommendation, setRecommendation] = useState<BouquetRecommendation | null>(null);
-  const [pendingBouquet, setPendingBouquet] = useState<PendingBouquet | null>(null);
-  const [autoTriggered, setAutoTriggered] = useState(false);
+const CHAT_STORAGE_KEY = `chat_wizard_${shopId || "default"}`;
+
+function loadChatState() {
+  try {
+    const saved = localStorage.getItem(CHAT_STORAGE_KEY);
+    if (!saved) return null;
+    return JSON.parse(saved);
+  } catch { return null; }
+}
+
+const savedState = loadChatState();
+
+const [messages, setMessages] = useState<ChatMessage[]>(
+  savedState?.messages || [{ role: "assistant", content: INITIAL_MESSAGE }]
+);
+const [currentStep, setCurrentStep] = useState<StepKey>(
+  savedState?.currentStep || STEPS.RECIPIENT
+);
+const [answers, setAnswers] = useState<WizardAnswers>(savedState?.answers || {});
+const [isLoading, setIsLoading] = useState(false);
+const [recommendation, setRecommendation] = useState<BouquetRecommendation | null>(
+  savedState?.recommendation || null
+);
+const [pendingBouquet, setPendingBouquet] = useState<PendingBouquet | null>(null);
+const [autoTriggered, setAutoTriggered] = useState(false);
+
+useEffect(() => {
+  try {
+    localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify({
+      messages, currentStep, answers, recommendation
+    }));
+  } catch {}
+}, [messages, currentStep, answers, recommendation]);
 
   // Check if shop has vases in inventory
   const { data: hasVases } = useQuery({
