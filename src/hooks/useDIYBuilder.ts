@@ -1,9 +1,34 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import type { FlowerData } from "@/components/diy-builder/FlowerCard";
 import type { SelectedFlower } from "@/components/diy-builder/BouquetSummary";
 
+const STORAGE_KEY = "diy_bouquet";
+
+function loadFromStorage(): SelectedFlower[] {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    return saved ? JSON.parse(saved) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveToStorage(flowers: SelectedFlower[]) {
+  try {
+    if (flowers.length === 0) {
+      localStorage.removeItem(STORAGE_KEY);
+    } else {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(flowers));
+    }
+  } catch {}
+}
+
 export function useDIYBuilder() {
-  const [selectedFlowers, setSelectedFlowers] = useState<SelectedFlower[]>([]);
+  const [selectedFlowers, setSelectedFlowers] = useState<SelectedFlower[]>(loadFromStorage);
+
+  useEffect(() => {
+    saveToStorage(selectedFlowers);
+  }, [selectedFlowers]);
 
   const handleAddFlower = useCallback((flower: FlowerData, addCount: number = 1) => {
     setSelectedFlowers((prev) => {
@@ -50,7 +75,6 @@ export function useDIYBuilder() {
     (sum, item) => sum + item.flower.price * item.quantity,
     0
   );
-
   const totalItems = selectedFlowers.reduce((sum, item) => sum + item.quantity, 0);
 
   return {
