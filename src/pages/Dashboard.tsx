@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Package, ClipboardList, Store, ArrowRight, LogOut, ChevronDown, Truck, Shield, Settings, Globe, Save } from "lucide-react";
+import { Package, ClipboardList, Store, ArrowRight, LogOut, ChevronDown, Truck, Shield, Settings, Globe, Save, Phone } from "lucide-react";
 import Logo from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { useShopOwner, type OwnedShop } from "@/hooks/useShopOwner";
@@ -11,7 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import InventoryTab from "@/components/dashboard/InventoryTab";
 import OrdersTab from "@/components/dashboard/OrdersTab";
 import RestockTab from "@/components/dashboard/RestockTab";
-import { Package, ClipboardList, Store, ArrowRight, LogOut, ChevronDown, Truck, Shield, Settings, Globe, Save, Phone } from "lucide-react";
+
 type Tab = "inventory" | "orders" | "restock" | "settings";
 
 const Dashboard = () => {
@@ -26,7 +26,6 @@ const Dashboard = () => {
   const [shopWebsite, setShopWebsite] = useState("");
   const [shopPhone, setShopPhone] = useState("");
   const [savingWebsite, setSavingWebsite] = useState(false);
-  
 
   useEffect(() => {
     if (!loading && !user) {
@@ -34,36 +33,34 @@ const Dashboard = () => {
     }
   }, [loading, user, navigate]);
 
-  // Auto-select first shop and load website
   useEffect(() => {
     if (shops.length > 0 && !selectedShop) {
       setSelectedShop(shops[0]);
     }
   }, [shops, selectedShop]);
 
-  // Load website when shop changes
   useEffect(() => {
     if (!selectedShop) return;
-    const loadWebsite = async () => {
+    const loadSettings = async () => {
       const { data } = await supabase.from("shops").select("website, phone").eq("id", selectedShop.id).single();
       setShopWebsite(data?.website || "");
       setShopPhone(data?.phone || "");
     };
-    loadWebsite();
+    loadSettings();
   }, [selectedShop]);
 
-  const handleSaveWebsite = async () => {
+  const handleSaveSettings = async () => {
     if (!selectedShop) return;
     setSavingWebsite(true);
-      const { error } = await supabase.from("shops").update({ website: shopWebsite || null, phone: shopPhone || null }).eq("id", selectedShop.id);    setSavingWebsite(false);
+    const { error } = await supabase.from("shops").update({ website: shopWebsite || null, phone: shopPhone || null }).eq("id", selectedShop.id);
+    setSavingWebsite(false);
     if (error) {
       toast({ title: "שגיאה בשמירה", description: error.message, variant: "destructive" });
     } else {
-      toast({ title: "אתר החנות עודכן בהצלחה ✅" });
+      toast({ title: "הגדרות החנות עודכנו בהצלחה ✅" });
     }
   };
 
-  // Real-time subscription for new orders
   useEffect(() => {
     if (!selectedShop) return;
 
@@ -80,14 +77,10 @@ const Dashboard = () => {
         (payload) => {
           const newOrder = payload.new as any;
           console.log("New order received:", newOrder.id);
-
-          // Show toast notification
           toast({
             title: "🌸 הזמנה חדשה!",
             description: `${newOrder.customer_name} הזמין/ה זר ל${newOrder.recipient_name}`,
           });
-
-          // Increment badge if not on orders tab
           if (activeTab !== "orders") {
             setNewOrderCount((prev) => prev + 1);
           }
@@ -138,7 +131,6 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Top Bar */}
       <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-xl border-b border-border/50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -151,7 +143,6 @@ const Dashboard = () => {
             </button>
             <div className="h-5 w-px bg-border/50" />
 
-            {/* Shop Selector */}
             <div className="relative">
               <button
                 onClick={() => shops.length > 1 && setShowShopPicker(!showShopPicker)}
@@ -208,7 +199,6 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Tab Navigation */}
       <div className="container mx-auto px-4 pt-6">
         <div className="flex gap-2 border-b border-border/50 pb-0">
           {tabs.map((tab) => (
@@ -226,7 +216,6 @@ const Dashboard = () => {
             >
               {tab.icon}
               {tab.label}
-              {/* New order badge */}
               {tab.key === "orders" && newOrderCount > 0 && (
                 <span className="absolute -top-1 -left-1 min-w-[20px] h-5 px-1.5 rounded-full bg-destructive text-destructive-foreground text-xs font-bold flex items-center justify-center animate-pulse">
                   {newOrderCount}
@@ -237,7 +226,6 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Tab Content */}
       <div className="container mx-auto px-4 py-8">
         <motion.div
           key={`${activeTab}-${selectedShop?.id}`}
@@ -267,12 +255,27 @@ const Dashboard = () => {
                   />
                   <p className="text-xs text-muted-foreground font-body">הקישור יופיע בכרטיסיית החנות ללקוחות</p>
                 </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold font-body text-foreground flex items-center gap-2">
+                    <Phone className="w-4 h-4 text-primary" />
+                    טלפון לקבלת הודעות WhatsApp
+                  </label>
+                  <input
+                    type="tel"
+                    placeholder="050-0000000"
+                    value={shopPhone}
+                    onChange={(e) => setShopPhone(e.target.value)}
+                    className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm font-body text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-ring"
+                    dir="ltr"
+                  />
+                  <p className="text-xs text-muted-foreground font-body">תקבל/י הודעת WhatsApp על כל הזמנה חדשה</p>
+                </div>
                 <div className="flex justify-end">
                   <Button
                     variant="hero"
                     size="sm"
                     className="rounded-xl gap-2"
-                    onClick={handleSaveWebsite}
+                    onClick={handleSaveSettings}
                     disabled={savingWebsite}
                   >
                     <Save className="w-4 h-4" />
@@ -287,19 +290,5 @@ const Dashboard = () => {
     </div>
   );
 };
-<div className="space-y-2">
-  <label className="text-sm font-semibold font-body text-foreground flex items-center gap-2">
-    <Phone className="w-4 h-4 text-primary" />
-    טלפון לקבלת הודעות WhatsApp
-  </label>
-  <input
-    type="tel"
-    placeholder="050-0000000"
-    value={shopPhone}
-    onChange={(e) => setShopPhone(e.target.value)}
-    className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm font-body text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-ring"
-    dir="ltr"
-  />
-  <p className="text-xs text-muted-foreground font-body">תקבל/י הודעת WhatsApp על כל הזמנה חדשה</p>
-</div>
+
 export default Dashboard;
