@@ -302,7 +302,7 @@ ${flowersContext}
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "gemini-2.5-flash-preview-04-17",
+        model: "gemini-2.0-flash",
         messages: [
           { role: "system", content: "אתה מחזיר תמיד JSON תקין בלבד, ללא טקסט נוסף מסביב. ענה בעברית." },
           { role: "user", content: prompt },
