@@ -298,7 +298,7 @@ ${flowersContext}
     const response = await fetch(GOOGLE_API_URL, {
       method: "POST",
       headers: {
-        "x-goog-api-key": GOOGLE_AI_KEY,
+        "Authorization": `Bearer ${GOOGLE_AI_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
