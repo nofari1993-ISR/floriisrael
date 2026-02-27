@@ -403,7 +403,9 @@ ${flowersContext}
       const existingIdx = validatedFlowers.findIndex((f: any) => f.name === realFlower.name && f.color === (aiFlower.color || realFlower.color || ""));
       if (existingIdx !== -1) {
         const existing = validatedFlowers[existingIdx];
-        const addQty = Math.min(Math.floor(aiFlower.quantity || 1), realFlower.quantity - existing.quantity);
+        // If quantity is 0/untracked treat as unlimited — don't cap by stock level
+        const stockLeft = realFlower.quantity > 0 ? realFlower.quantity - existing.quantity : Infinity;
+        const addQty = Math.min(Math.floor(aiFlower.quantity || 1), stockLeft);
         if (addQty > 0) {
           existing.quantity += addQty;
           existing.line_total = existing.unit_price * existing.quantity;
@@ -421,7 +423,10 @@ ${flowersContext}
       const potentialTotal = totalCost + (realFlower.price * quantity);
       if (!skipBudgetCap && potentialTotal > budgetForFlowers) {
         const maxAffordable = Math.floor((budgetForFlowers - totalCost) / realFlower.price);
-        quantity = Math.min(maxAffordable, realFlower.quantity);
+        // If quantity is 0/untracked, treat as unlimited — only cap by budget
+        quantity = realFlower.quantity > 0
+          ? Math.min(maxAffordable, realFlower.quantity)
+          : maxAffordable;
       }
 
       if (quantity <= 0) continue;
