@@ -302,7 +302,7 @@ ${flowersContext}
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "gemini-2.5-flash-preview-04-17",
+        model: "gemini-3.1-pro-preview",
         messages: [
           { role: "system", content: "אתה מחזיר תמיד JSON תקין בלבד, ללא טקסט נוסף מסביב. ענה בעברית." },
           { role: "user", content: prompt },
@@ -458,7 +458,7 @@ ${flowersContext}
 
         // Use Gemini imagen API
         const imageResponse = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${GOOGLE_AI_KEY}`,
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-pro-preview:generateContent?key=${GOOGLE_AI_KEY}`,
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
