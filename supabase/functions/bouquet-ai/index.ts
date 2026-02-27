@@ -295,6 +295,9 @@ ${flowersContext}
 
     console.log(`[bouquet-ai] Sending prompt to AI, action=${action}`);
 
+    const textController = new AbortController();
+    const textTimeout = setTimeout(() => textController.abort(), 30000);
+
     const response = await fetch(GOOGLE_API_URL, {
       method: "POST",
       headers: {
@@ -302,14 +305,16 @@ ${flowersContext}
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "gemini-1.5-flash",
+        model: "gemini-2.0-flash",
         messages: [
           { role: "system", content: "אתה מחזיר תמיד JSON תקין בלבד, ללא טקסט נוסף מסביב. ענה בעברית." },
           { role: "user", content: prompt },
         ],
         response_format: { type: "json_object" },
       }),
+      signal: textController.signal,
     });
+    clearTimeout(textTimeout);
 
     if (!response.ok) {
       const errorText = await response.text();
