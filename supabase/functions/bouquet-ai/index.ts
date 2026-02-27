@@ -109,11 +109,16 @@ Deno.serve(async (req) => {
       } else if (inventory && inventory.length > 0) {
         flowersList = inventory;
         boostedFlowers = inventory.filter((f: any) => f.boosted && f.quantity > 0);
-        flowersContext = inventory
-          .filter((f: any) => f.quantity > 0)
-          .map((f: any) => `- ${f.name}${f.color ? ` (${f.color})` : ""}: ${f.quantity} יח', ₪${f.price}${f.boosted ? " ⭐ מקודם" : ""}`)
+
+        // Use flowers with quantity > 0; fall back to all in_stock flowers if none have quantity set
+        const flowersWithQty = inventory.filter((f: any) => f.quantity > 0);
+        const flowersToShow = flowersWithQty.length > 0 ? flowersWithQty : inventory;
+        flowersContext = flowersToShow
+          .map((f: any) => `- ${f.name}${f.color ? ` (${f.color})` : ""}: ₪${f.price}${f.boosted ? " ⭐ מקודם" : ""}`)
           .join("\n");
-        console.log(`Loaded ${inventory.length} flowers for shop ${shopId}, ${boostedFlowers.length} boosted`);
+
+        console.log(`Loaded ${inventory.length} flowers (${flowersWithQty.length} with qty>0) for shop ${shopId}`);
+        console.log(`[bouquet-ai] flowersContext sample: ${flowersContext.substring(0, 300)}`);
       }
     }
 
@@ -408,7 +413,10 @@ ${flowersContext}
       }
 
       let quantity = Math.floor(aiFlower.quantity || 1);
-      quantity = Math.min(quantity, realFlower.quantity);
+      // If inventory quantity is 0 or untracked, treat as unlimited (use AI suggestion as-is)
+      if (realFlower.quantity > 0) {
+        quantity = Math.min(quantity, realFlower.quantity);
+      }
 
       const potentialTotal = totalCost + (realFlower.price * quantity);
       if (!skipBudgetCap && potentialTotal > budgetForFlowers) {
