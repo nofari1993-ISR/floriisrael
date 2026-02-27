@@ -118,7 +118,12 @@ const FlowerCard = ({
         <div className="flex items-center justify-between gap-1 min-w-0">
           <span className="text-base md:text-xl font-display font-bold text-primary shrink-0">
             {hasColors ? (
-              <><span className="text-xs md:text-sm font-body font-normal">החל מ-</span>₪{Math.min(...colorVariants.map(v => v.price))}</>
+              <>
+                {flower.name === "אגרטל" && (
+                  <span className="text-xs md:text-sm font-body font-normal">החל מ-</span>
+                )}
+                ₪{Math.min(...colorVariants.map(v => v.price))}
+              </>
             ) : (
               <>₪{flower.price}</>
             )}
