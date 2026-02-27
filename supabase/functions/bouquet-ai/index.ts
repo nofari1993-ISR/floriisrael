@@ -26,7 +26,7 @@ function checkRateLimit(ip: string, maxRequests: number, windowMs: number): bool
   return true;
 }
 
-const GOOGLE_API_URL = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
+const GOOGLE_TEXT_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -298,19 +298,16 @@ ${flowersContext}
     const textController = new AbortController();
     const textTimeout = setTimeout(() => textController.abort(), 30000);
 
-    const response = await fetch(GOOGLE_API_URL, {
+    const response = await fetch(`${GOOGLE_TEXT_API_URL}?key=${GOOGLE_AI_KEY}`, {
       method: "POST",
-      headers: {
-        "Authorization": `Bearer ${GOOGLE_AI_KEY}`,
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "gemini-2.5-flash",
-        messages: [
-          { role: "system", content: "אתה מחזיר תמיד JSON תקין בלבד, ללא טקסט נוסף מסביב. ענה בעברית." },
-          { role: "user", content: prompt },
-        ],
-        response_format: { type: "json_object" },
+        systemInstruction: { parts: [{ text: "אתה מחזיר תמיד JSON תקין בלבד, ללא טקסט נוסף מסביב. ענה בעברית." }] },
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: {
+          responseMimeType: "application/json",
+          thinkingConfig: { thinkingBudget: 0 },
+        },
       }),
       signal: textController.signal,
     });
@@ -326,7 +323,7 @@ ${flowersContext}
     }
 
     const aiData = await response.json();
-    const content = aiData.choices?.[0]?.message?.content || "{}";
+    const content = aiData.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
     console.log("[bouquet-ai] Raw AI response:", content);
 
     let parsed;
