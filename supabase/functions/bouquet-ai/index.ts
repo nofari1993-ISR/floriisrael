@@ -450,16 +450,45 @@ ${flowersContext}
 
     if (validatedFlowers.length > 0) {
       try {
-        const flowerDescriptions = validatedFlowers
-          .map((f: any) => `${Math.max(1, Math.floor(f.quantity * 0.95))} ${f.color} ${f.name}`)
-          .join(", ");
+        const totalFlowers = validatedFlowers.reduce((sum: number, f: any) => sum + f.quantity, 0);
+        const flowerLines = validatedFlowers
+          .map((f: any) => `• exactly ${f.quantity} ${f.color ? f.color + " " : ""}${f.name}`)
+          .join("\n");
 
         const wantsVase = answers?.wrapping === "אגרטל" && answers?.vaseSize;
         const vaseSizeLabel = wantsVase ? (answers.vaseSize === "S" ? "small" : answers.vaseSize === "L" ? "large" : "medium") : "";
 
         const imagePrompt = wantsVase
-          ? `Generate a realistic photograph of a single beautiful florist bouquet arranged in a clear glass ${vaseSizeLabel} vase. The bouquet contains: ${flowerDescriptions}. Style: Front-facing view, professional product photography, soft studio lighting, clean white background.`
-          : `Generate a realistic photograph of a single beautiful florist bouquet wrapped in elegant kraft paper with a ribbon. The bouquet contains: ${flowerDescriptions}. Style: Front-facing view, professional product photography, soft studio lighting, clean white background.`;
+          ? `Create a realistic photograph of ONE single elegant florist bouquet arranged in a clear glass ${vaseSizeLabel} vase on a clean white surface.
+
+The bouquet must contain EXACTLY these flowers (no more, no less):
+${flowerLines}
+
+Total flower count: exactly ${totalFlowers} flowers.
+
+CRITICAL RULES:
+- Every flower type listed above MUST be clearly visible in the image.
+- The quantity of each flower type MUST match the exact numbers above.
+- Show ONE single bouquet in ONE vase only.
+- Do NOT add any extra flowers not listed above.
+- Each flower type must be distinguishable by color and shape.
+
+Style: Professional product photography, soft studio lighting, clean white background.`
+          : `Create a realistic photograph of ONE single elegant florist bouquet wrapped in kraft paper with a ribbon, on a clean white surface.
+
+The bouquet must contain EXACTLY these flowers (no more, no less):
+${flowerLines}
+
+Total flower count: exactly ${totalFlowers} flowers.
+
+CRITICAL RULES:
+- Every flower type listed above MUST be clearly visible in the image.
+- The quantity of each flower type MUST match the exact numbers above.
+- Show ONE single bouquet only.
+- Do NOT add any extra flowers not listed above.
+- Each flower type must be distinguishable by color and shape.
+
+Style: Professional product photography, soft studio lighting, clean white background.`;
 
         console.log("[bouquet-ai] Generating bouquet image...");
 
