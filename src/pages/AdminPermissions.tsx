@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight, Shield, Store, UserPlus, UserMinus, Loader2, Search, Mail, Trash2 } from "lucide-react";
+import { ArrowRight, Shield, Store, UserPlus, UserMinus, Loader2, Search, Mail, Trash2, Phone, Pencil, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Logo from "@/components/Logo";
@@ -16,6 +16,7 @@ interface ShopWithOwner {
   location: string;
   owner_id: string | null;
   owner_email: string | null;
+  phone: string | null;
 }
 
 const AdminPermissions = () => {
@@ -26,6 +27,8 @@ const AdminPermissions = () => {
   const [loading, setLoading] = useState(true);
   const [assigningShopId, setAssigningShopId] = useState<string | null>(null);
   const [emailInput, setEmailInput] = useState("");
+  const [editingPhoneShopId, setEditingPhoneShopId] = useState<string | null>(null);
+  const [phoneInput, setPhoneInput] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -112,6 +115,27 @@ const AdminPermissions = () => {
       if (success) fetchShops();
     } catch (err: any) {
       toast({ title: "שגיאה", description: err.message || "לא ניתן למחוק", variant: "destructive" });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleUpdatePhone = async (shopId: string) => {
+    setSubmitting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("manage-shop-owners", {
+        body: { action: "updatePhone", shopId, phone: phoneInput.trim() || null },
+      });
+      if (error) throw error;
+      if (data.error) throw new Error(data.error);
+
+      const display = phoneInput.trim() || "הוסר";
+      toast({ title: "עודכן ✅", description: `מספר טלפון: ${display}` });
+      setEditingPhoneShopId(null);
+      setPhoneInput("");
+      fetchShops();
+    } catch (err: any) {
+      toast({ title: "שגיאה", description: err.message || "לא ניתן לעדכן", variant: "destructive" });
     } finally {
       setSubmitting(false);
     }
@@ -285,6 +309,49 @@ const AdminPermissions = () => {
                       <UserPlus className="w-3.5 h-3.5" />
                       {shop.owner_id ? "שנה בעל/ת חנות" : "שייך בעל/ת חנות"}
                     </Button>
+                  )}
+
+                  {/* Phone number */}
+                  {editingPhoneShopId === shop.id ? (
+                    <div className="flex gap-2">
+                      <Input
+                        type="tel"
+                        value={phoneInput}
+                        onChange={(e) => setPhoneInput(e.target.value)}
+                        placeholder="05XXXXXXXX"
+                        className="rounded-xl text-sm"
+                        dir="ltr"
+                        autoFocus
+                      />
+                      <Button
+                        variant="hero"
+                        size="sm"
+                        className="rounded-xl shrink-0"
+                        onClick={() => handleUpdatePhone(shop.id)}
+                        disabled={submitting}
+                      >
+                        {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="rounded-xl shrink-0"
+                        onClick={() => { setEditingPhoneShopId(null); setPhoneInput(""); }}
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <button
+                      className="w-full flex items-center gap-2 bg-muted/20 hover:bg-muted/40 rounded-xl px-4 py-2.5 transition-colors text-right"
+                      onClick={() => { setEditingPhoneShopId(shop.id); setPhoneInput(shop.phone || ""); }}
+                    >
+                      <Phone className="w-4 h-4 text-primary/60 shrink-0" />
+                      <span className="text-sm font-body text-foreground flex-1" dir="ltr">
+                        {shop.phone || "אין טלפון"}
+                      </span>
+                      <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
+                    </button>
                   )}
 
                   {/* Delete shop */}

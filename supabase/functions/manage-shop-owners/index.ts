@@ -53,10 +53,19 @@ Deno.serve(async (req) => {
       );
     }
 
-    const body = await req.json();
+    let body: any;
+    try {
+      const bodyText = await req.text();
+      body = JSON.parse(bodyText);
+    } catch (e) {
+      return new Response(
+        JSON.stringify({ error: "Invalid request body" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
     const { action } = body;
 
-    if (!action || !["list", "assign", "remove"].includes(action)) {
+    if (!action || !["list", "assign", "remove", "updatePhone"].includes(action)) {
       return new Response(
         JSON.stringify({ error: "Invalid action" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -67,7 +76,7 @@ Deno.serve(async (req) => {
     if (action === "list") {
       const { data: shops, error: shopsError } = await serviceClient
         .from("shops")
-        .select("id, name, location, owner_id")
+        .select("id, name, location, owner_id, phone")
         .order("name");
 
       if (shopsError) throw shopsError;
@@ -92,6 +101,7 @@ Deno.serve(async (req) => {
         location: shop.location,
         owner_id: shop.owner_id,
         owner_email: shop.owner_id ? ownerEmails[shop.owner_id] || "לא ידוע" : null,
+        phone: shop.phone || null,
       }));
 
       console.log(`[manage-shop-owners] Listed ${result?.length} shops`);
@@ -173,6 +183,40 @@ Deno.serve(async (req) => {
 
       return new Response(
         JSON.stringify({ success: true }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // ── UPDATE PHONE: Set or clear shop phone for WhatsApp notifications ──
+    if (action === "updatePhone") {
+      const { shopId, phone } = body;
+
+      if (!shopId) {
+        return new Response(
+          JSON.stringify({ error: "חסר shopId" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const cleanPhone = phone ? String(phone).replace(/[^\d]/g, "") : null;
+      if (cleanPhone && (cleanPhone.length < 9 || cleanPhone.length > 15)) {
+        return new Response(
+          JSON.stringify({ error: "מספר טלפון לא תקין" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const { error: updateError } = await serviceClient
+        .from("shops")
+        .update({ phone: cleanPhone })
+        .eq("id", shopId);
+
+      if (updateError) throw updateError;
+
+      console.log(`[manage-shop-owners] Updated phone for shop ${shopId}: ${cleanPhone}`);
+
+      return new Response(
+        JSON.stringify({ success: true, phone: cleanPhone }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
