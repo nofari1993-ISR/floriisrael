@@ -98,6 +98,7 @@ const Checkout = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderSuccess, setOrderSuccess] = useState<OrderSuccess | null>(null);
   const [showPayment, setShowPayment] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<"paypal" | "cash">("paypal");
 
   const calculateTotal = () => {
     const deliveryFee = deliveryMethod === "delivery" ? DELIVERY_FEE : 0;
@@ -141,7 +142,7 @@ const Checkout = () => {
     setShowPayment(true);
   };
 
-  const createOrder = async (paypalOrderId: string) => {
+  const createOrder = async (paymentRef: string) => {
     setIsSubmitting(true);
 
     try {
@@ -150,10 +151,10 @@ const Checkout = () => {
       const selectedSlot = TIME_SLOTS.find(s => s.id === timeSlot);
       const timeSlotNote = selectedSlot ? `שעות ${isPickup ? "איסוף" : "משלוח"}: ${selectedSlot.hours}` : "";
       const diyNote = isDIY ? "זר מעוצב אישית (DIY)" : "";
-      const paypalNote = `PayPal: ${paypalOrderId}`;
+      const paymentNote = paymentRef === "cash" ? "תשלום: מזומן" : `PayPal: ${paymentRef}`;
       const deliveryNotesText = formData.deliveryNotes?.trim() ? `הערות לשליח: ${formData.deliveryNotes.trim()}` : "";
       const recipientPhoneNote = formData.recipientPhone?.trim() ? `טלפון מקבל/ת: ${formData.recipientPhone.trim()}` : "";
-      const noteParts = [diyNote, timeSlotNote, recipientPhoneNote, deliveryNotesText, paypalNote].filter(Boolean).join(" | ");
+      const noteParts = [diyNote, timeSlotNote, recipientPhoneNote, deliveryNotesText, paymentNote].filter(Boolean).join(" | ");
 
       const deliveryDateStr = format(deliveryDate!, "yyyy-MM-dd");
       const orderPayload = {
@@ -247,6 +248,10 @@ const Checkout = () => {
 
   const handlePayPalApprove = useCallback((paypalOrderId: string, _details: any) => {
     createOrder(paypalOrderId);
+  }, [formData, deliveryDate, timeSlot, deliveryMethod, shopId, isDIY, diyItems, diyTotalPrice]);
+
+  const handleCashPayment = useCallback(() => {
+    createOrder("cash");
   }, [formData, deliveryDate, timeSlot, deliveryMethod, shopId, isDIY, diyItems, diyTotalPrice]);
 
   const handlePayPalError = useCallback((error: any) => {
@@ -636,16 +641,70 @@ const Checkout = () => {
             <div className="space-y-4">
               <div className="flex items-center gap-2 text-sm font-medium text-foreground font-body">
                 <CreditCard className="w-4 h-4 text-primary/60" />
-                תשלום מאובטח
+                בחרו אמצעי תשלום
               </div>
-              <div className="bg-muted/20 rounded-xl p-4 border border-border/30">
-                <PayPalButton
-                  amount={calculateTotal()}
-                  onApprove={handlePayPalApprove}
-                  onError={handlePayPalError}
-                  disabled={isSubmitting}
-                />
+
+              {/* Payment method toggle */}
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setPaymentMethod("paypal")}
+                  className={cn(
+                    "flex flex-col items-center gap-2 py-3 px-3 rounded-xl border-2 transition-all font-body text-sm",
+                    paymentMethod === "paypal"
+                      ? "border-primary bg-primary/5 text-foreground shadow-sm"
+                      : "border-border text-muted-foreground hover:border-primary/30"
+                  )}
+                >
+                  <CreditCard className="w-5 h-5" />
+                  <span className="font-medium">PayPal</span>
+                  <span className="text-xs text-muted-foreground">תשלום מקוון</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPaymentMethod("cash")}
+                  className={cn(
+                    "flex flex-col items-center gap-2 py-3 px-3 rounded-xl border-2 transition-all font-body text-sm",
+                    paymentMethod === "cash"
+                      ? "border-primary bg-primary/5 text-foreground shadow-sm"
+                      : "border-border text-muted-foreground hover:border-primary/30"
+                  )}
+                >
+                  <span className="text-xl">💵</span>
+                  <span className="font-medium">מזומן</span>
+                  <span className="text-xs text-muted-foreground">תשלום בקבלה</span>
+                </button>
               </div>
+
+              {paymentMethod === "paypal" ? (
+                <div className="bg-muted/20 rounded-xl p-4 border border-border/30">
+                  <PayPalButton
+                    amount={calculateTotal()}
+                    onApprove={handlePayPalApprove}
+                    onError={handlePayPalError}
+                    disabled={isSubmitting}
+                  />
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div className="bg-muted/20 rounded-xl p-4 border border-border/30 text-center">
+                    <p className="text-sm font-body text-muted-foreground mb-1">סכום לתשלום במזומן</p>
+                    <p className="text-2xl font-display font-bold text-primary">₪{calculateTotal()}</p>
+                    <p className="text-xs text-muted-foreground mt-1">התשלום יתבצע בעת קבלת הזר</p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="hero"
+                    size="lg"
+                    className="w-full rounded-xl gap-2"
+                    onClick={handleCashPayment}
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? "שולח הזמנה..." : "✅ אישור הזמנה במזומן"}
+                  </Button>
+                </div>
+              )}
+
               <Button
                 type="button"
                 variant="outline"
