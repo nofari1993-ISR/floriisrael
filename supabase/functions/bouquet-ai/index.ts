@@ -26,7 +26,7 @@ function checkRateLimit(ip: string, maxRequests: number, windowMs: number): bool
   return true;
 }
 
-const GOOGLE_API_URL = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
+const GOOGLE_TEXT_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -109,11 +109,16 @@ Deno.serve(async (req) => {
       } else if (inventory && inventory.length > 0) {
         flowersList = inventory;
         boostedFlowers = inventory.filter((f: any) => f.boosted && f.quantity > 0);
-        flowersContext = inventory
-          .filter((f: any) => f.quantity > 0)
-          .map((f: any) => `- ${f.name}${f.color ? ` (${f.color})` : ""}: ${f.quantity} יח', ₪${f.price}${f.boosted ? " ⭐ מקודם" : ""}`)
+
+        // Use flowers with quantity > 0; fall back to all in_stock flowers if none have quantity set
+        const flowersWithQty = inventory.filter((f: any) => f.quantity > 0);
+        const flowersToShow = flowersWithQty.length > 0 ? flowersWithQty : inventory;
+        flowersContext = flowersToShow
+          .map((f: any) => `- ${f.name}${f.color ? ` (${f.color})` : ""}: ₪${f.price}${f.boosted ? " ⭐ מקודם" : ""}`)
           .join("\n");
-        console.log(`Loaded ${inventory.length} flowers for shop ${shopId}, ${boostedFlowers.length} boosted`);
+
+        console.log(`Loaded ${inventory.length} flowers (${flowersWithQty.length} with qty>0) for shop ${shopId}`);
+        console.log(`[bouquet-ai] flowersContext sample: ${flowersContext.substring(0, 300)}`);
       }
     }
 
@@ -295,21 +300,23 @@ ${flowersContext}
 
     console.log(`[bouquet-ai] Sending prompt to AI, action=${action}`);
 
-    const response = await fetch(GOOGLE_API_URL, {
+    const textController = new AbortController();
+    const textTimeout = setTimeout(() => textController.abort(), 30000);
+
+    const response = await fetch(`${GOOGLE_TEXT_API_URL}?key=${GOOGLE_AI_KEY}`, {
       method: "POST",
-      headers: {
-        "Authorization": `Bearer ${GOOGLE_AI_KEY}`,
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "gemini-3.1-pro-preview",
-        messages: [
-          { role: "system", content: "אתה מחזיר תמיד JSON תקין בלבד, ללא טקסט נוסף מסביב. ענה בעברית." },
-          { role: "user", content: prompt },
-        ],
-        response_format: { type: "json_object" },
+        systemInstruction: { parts: [{ text: "אתה מחזיר תמיד JSON תקין בלבד, ללא טקסט נוסף מסביב. ענה בעברית." }] },
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: {
+          responseMimeType: "application/json",
+          thinkingConfig: { thinkingBudget: 0 },
+        },
       }),
+      signal: textController.signal,
     });
+    clearTimeout(textTimeout);
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -321,7 +328,7 @@ ${flowersContext}
     }
 
     const aiData = await response.json();
-    const content = aiData.choices?.[0]?.message?.content || "{}";
+    const content = aiData.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
     console.log("[bouquet-ai] Raw AI response:", content);
 
     let parsed;
@@ -396,7 +403,9 @@ ${flowersContext}
       const existingIdx = validatedFlowers.findIndex((f: any) => f.name === realFlower.name && f.color === (aiFlower.color || realFlower.color || ""));
       if (existingIdx !== -1) {
         const existing = validatedFlowers[existingIdx];
-        const addQty = Math.min(Math.floor(aiFlower.quantity || 1), realFlower.quantity - existing.quantity);
+        // If quantity is 0/untracked treat as unlimited — don't cap by stock level
+        const stockLeft = realFlower.quantity > 0 ? realFlower.quantity - existing.quantity : Infinity;
+        const addQty = Math.min(Math.floor(aiFlower.quantity || 1), stockLeft);
         if (addQty > 0) {
           existing.quantity += addQty;
           existing.line_total = existing.unit_price * existing.quantity;
@@ -406,12 +415,18 @@ ${flowersContext}
       }
 
       let quantity = Math.floor(aiFlower.quantity || 1);
-      quantity = Math.min(quantity, realFlower.quantity);
+      // If inventory quantity is 0 or untracked, treat as unlimited (use AI suggestion as-is)
+      if (realFlower.quantity > 0) {
+        quantity = Math.min(quantity, realFlower.quantity);
+      }
 
       const potentialTotal = totalCost + (realFlower.price * quantity);
       if (!skipBudgetCap && potentialTotal > budgetForFlowers) {
         const maxAffordable = Math.floor((budgetForFlowers - totalCost) / realFlower.price);
-        quantity = Math.min(maxAffordable, realFlower.quantity);
+        // If quantity is 0/untracked, treat as unlimited — only cap by budget
+        quantity = realFlower.quantity > 0
+          ? Math.min(maxAffordable, realFlower.quantity)
+          : maxAffordable;
       }
 
       if (quantity <= 0) continue;
@@ -440,16 +455,45 @@ ${flowersContext}
 
     if (validatedFlowers.length > 0) {
       try {
-        const flowerDescriptions = validatedFlowers
-          .map((f: any) => `${Math.max(1, Math.floor(f.quantity * 0.95))} ${f.color} ${f.name}`)
-          .join(", ");
+        const totalFlowers = validatedFlowers.reduce((sum: number, f: any) => sum + f.quantity, 0);
+        const flowerLines = validatedFlowers
+          .map((f: any) => `• exactly ${f.quantity} ${f.color ? f.color + " " : ""}${f.name}`)
+          .join("\n");
 
         const wantsVase = answers?.wrapping === "אגרטל" && answers?.vaseSize;
         const vaseSizeLabel = wantsVase ? (answers.vaseSize === "S" ? "small" : answers.vaseSize === "L" ? "large" : "medium") : "";
 
         const imagePrompt = wantsVase
-          ? `Generate a realistic photograph of a single beautiful florist bouquet arranged in a clear glass ${vaseSizeLabel} vase. The bouquet contains: ${flowerDescriptions}. Style: Front-facing view, professional product photography, soft studio lighting, clean white background.`
-          : `Generate a realistic photograph of a single beautiful florist bouquet wrapped in elegant kraft paper with a ribbon. The bouquet contains: ${flowerDescriptions}. Style: Front-facing view, professional product photography, soft studio lighting, clean white background.`;
+          ? `Create a realistic photograph of ONE single elegant florist bouquet arranged in a clear glass ${vaseSizeLabel} vase on a clean white surface.
+
+The bouquet must contain EXACTLY these flowers (no more, no less):
+${flowerLines}
+
+Total flower count: exactly ${totalFlowers} flowers.
+
+CRITICAL RULES:
+- Every flower type listed above MUST be clearly visible in the image.
+- The quantity of each flower type MUST match the exact numbers above.
+- Show ONE single bouquet in ONE vase only.
+- Do NOT add any extra flowers not listed above.
+- Each flower type must be distinguishable by color and shape.
+
+Style: Professional product photography, soft studio lighting, clean white background.`
+          : `Create a realistic photograph of ONE single elegant florist bouquet wrapped in kraft paper with a ribbon, on a clean white surface.
+
+The bouquet must contain EXACTLY these flowers (no more, no less):
+${flowerLines}
+
+Total flower count: exactly ${totalFlowers} flowers.
+
+CRITICAL RULES:
+- Every flower type listed above MUST be clearly visible in the image.
+- The quantity of each flower type MUST match the exact numbers above.
+- Show ONE single bouquet only.
+- Do NOT add any extra flowers not listed above.
+- Each flower type must be distinguishable by color and shape.
+
+Style: Professional product photography, soft studio lighting, clean white background.`;
 
         console.log("[bouquet-ai] Generating bouquet image...");
 
@@ -458,7 +502,7 @@ ${flowersContext}
 
         // Use Gemini imagen API
         const imageResponse = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-pro-preview:generateContent?key=${GOOGLE_AI_KEY}`,
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${GOOGLE_AI_KEY}`,
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },

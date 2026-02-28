@@ -76,8 +76,7 @@ const DIYBuilderPage = () => {
       let query = supabase
         .from("flowers")
         .select("id, name, color, price, quantity, image, in_stock")
-        .eq("in_stock", true)
-        .gt("quantity", 0);
+        .eq("in_stock", true);
 
       if (shopId) {
         query = query.eq("shop_id", shopId);
