@@ -151,7 +151,7 @@ const Checkout = () => {
       const selectedSlot = TIME_SLOTS.find(s => s.id === timeSlot);
       const timeSlotNote = selectedSlot ? `שעות ${isPickup ? "איסוף" : "משלוח"}: ${selectedSlot.hours}` : "";
       const diyNote = isDIY ? "זר מעוצב אישית (DIY)" : "";
-      const paymentNote = paymentMethod === "cash" ? "תשלום: מזומן" : `PayPal: ${paymentRef}`;
+      const paymentNote = paymentRef === "cash" ? "תשלום: מזומן" : `PayPal: ${paymentRef}`;
       const deliveryNotesText = formData.deliveryNotes?.trim() ? `הערות לשליח: ${formData.deliveryNotes.trim()}` : "";
       const recipientPhoneNote = formData.recipientPhone?.trim() ? `טלפון מקבל/ת: ${formData.recipientPhone.trim()}` : "";
       const noteParts = [diyNote, timeSlotNote, recipientPhoneNote, deliveryNotesText, paymentNote].filter(Boolean).join(" | ");
@@ -641,16 +641,16 @@ const Checkout = () => {
             <div className="space-y-4">
               <div className="flex items-center gap-2 text-sm font-medium text-foreground font-body">
                 <CreditCard className="w-4 h-4 text-primary/60" />
-                שיטת תשלום
+                בחרו אמצעי תשלום
               </div>
 
-              {/* Payment method selector */}
+              {/* Payment method toggle */}
               <div className="grid grid-cols-2 gap-3">
                 <button
                   type="button"
                   onClick={() => setPaymentMethod("paypal")}
                   className={cn(
-                    "flex flex-col items-center gap-2 py-4 px-3 rounded-xl border-2 transition-all font-body text-sm",
+                    "flex flex-col items-center gap-2 py-3 px-3 rounded-xl border-2 transition-all font-body text-sm",
                     paymentMethod === "paypal"
                       ? "border-primary bg-primary/5 text-foreground shadow-sm"
                       : "border-border text-muted-foreground hover:border-primary/30"
@@ -664,7 +664,7 @@ const Checkout = () => {
                   type="button"
                   onClick={() => setPaymentMethod("cash")}
                   className={cn(
-                    "flex flex-col items-center gap-2 py-4 px-3 rounded-xl border-2 transition-all font-body text-sm",
+                    "flex flex-col items-center gap-2 py-3 px-3 rounded-xl border-2 transition-all font-body text-sm",
                     paymentMethod === "cash"
                       ? "border-primary bg-primary/5 text-foreground shadow-sm"
                       : "border-border text-muted-foreground hover:border-primary/30"
@@ -672,12 +672,11 @@ const Checkout = () => {
                 >
                   <span className="text-xl">💵</span>
                   <span className="font-medium">מזומן</span>
-                  <span className="text-xs text-muted-foreground">תשלום בעת קבלה</span>
+                  <span className="text-xs text-muted-foreground">תשלום בקבלה</span>
                 </button>
               </div>
 
-              {/* PayPal */}
-              {paymentMethod === "paypal" && (
+              {paymentMethod === "paypal" ? (
                 <div className="bg-muted/20 rounded-xl p-4 border border-border/30">
                   <PayPalButton
                     amount={calculateTotal()}
@@ -686,18 +685,12 @@ const Checkout = () => {
                     disabled={isSubmitting}
                   />
                 </div>
-              )}
-
-              {/* Cash */}
-              {paymentMethod === "cash" && (
+              ) : (
                 <div className="space-y-3">
                   <div className="bg-muted/20 rounded-xl p-4 border border-border/30 text-center">
-                    <p className="text-sm font-body text-muted-foreground">
-                      💵 התשלום יתבצע במזומן בעת {deliveryMethod === "pickup" ? "האיסוף" : "קבלת המשלוח"}
-                    </p>
-                    <p className="text-lg font-display font-bold text-primary mt-2">
-                      סה״כ לתשלום: ₪{calculateTotal()}
-                    </p>
+                    <p className="text-sm font-body text-muted-foreground mb-1">סכום לתשלום במזומן</p>
+                    <p className="text-2xl font-display font-bold text-primary">₪{calculateTotal()}</p>
+                    <p className="text-xs text-muted-foreground mt-1">התשלום יתבצע בעת קבלת הזר</p>
                   </div>
                   <Button
                     type="button"
@@ -707,12 +700,7 @@ const Checkout = () => {
                     onClick={handleCashPayment}
                     disabled={isSubmitting}
                   >
-                    {isSubmitting ? "שולח הזמנה..." : (
-                      <>
-                        <Send className="w-4 h-4" />
-                        אישור הזמנה במזומן
-                      </>
-                    )}
+                    {isSubmitting ? "שולח הזמנה..." : "✅ אישור הזמנה במזומן"}
                   </Button>
                 </div>
               )}
