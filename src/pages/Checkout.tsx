@@ -179,46 +179,23 @@ const Checkout = () => {
       let shopName = "החנות";
       let shopPhone: string | null = null;
 
-      if (isDIY && diyItems.length > 0) {
-        const { data: fnData, error: fnError } = await supabase.functions.invoke("create-order", {
-          body: orderPayload,
-        });
+      // Always use the edge function so WhatsApp notification is sent for all orders
+      const { data: fnData, error: fnError } = await supabase.functions.invoke("create-order", {
+        body: orderPayload,
+      });
 
-        if (fnError) throw fnError;
-        if (!fnData?.success) throw new Error(fnData?.error || "שגיאה ביצירת ההזמנה");
-
-        orderId = fnData.order_id;
-        shopName = fnData.shop_name || shopName;
-        shopPhone = fnData.shop_phone || null;
-      } else {
-        const { data: order, error: orderError } = await supabase
-          .from("orders")
-          .insert({
-            shop_id: shopId!,
-            customer_name: formData.customerName,
-            customer_phone: formData.customerPhone || null,
-            recipient_name: formData.recipientName,
-            delivery_address: isPickup ? "איסוף עצמי" : formData.address,
-            delivery_date: deliveryDateStr,
-            greeting: formData.greeting || null,
-            notes: noteParts || null,
-            total_price: deliveryFee,
-          })
-          .select("id")
-          .single();
-
-        if (orderError) throw orderError;
-        orderId = order.id;
-
-        const { data: shop } = await supabase
-          .from("shops")
-          .select("name, phone")
-          .eq("id", shopId!)
-          .single();
-
-        shopName = shop?.name || shopName;
-        shopPhone = shop?.phone || null;
+      if (fnError) {
+        console.error("Edge function error:", fnError);
+        throw new Error(fnError.message || "שגיאה ביצירת ההזמנה");
       }
+      if (!fnData?.success) {
+        console.error("Order creation failed:", fnData);
+        throw new Error(fnData?.error || "שגיאה ביצירת ההזמנה");
+      }
+
+      orderId = fnData.order_id;
+      shopName = fnData.shop_name || shopName;
+      shopPhone = fnData.shop_phone || null;
 
       setOrderSuccess({
         orderId,
@@ -250,9 +227,6 @@ const Checkout = () => {
     createOrder(paypalOrderId);
   }, [formData, deliveryDate, timeSlot, deliveryMethod, shopId, isDIY, diyItems, diyTotalPrice]);
 
-  const handleCashPayment = useCallback(() => {
-    createOrder("cash");
-  }, [formData, deliveryDate, timeSlot, deliveryMethod, shopId, isDIY, diyItems, diyTotalPrice]);
 
   const handlePayPalError = useCallback((error: any) => {
     console.error("PayPal payment error:", error);
@@ -697,7 +671,7 @@ const Checkout = () => {
                     variant="hero"
                     size="lg"
                     className="w-full rounded-xl gap-2"
-                    onClick={handleCashPayment}
+                    onClick={() => createOrder("cash")}
                     disabled={isSubmitting}
                   >
                     {isSubmitting ? "שולח הזמנה..." : "✅ אישור הזמנה במזומן"}

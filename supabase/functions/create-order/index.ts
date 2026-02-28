@@ -56,6 +56,7 @@ Deno.serve(async (req) => {
       delivery_address,
       delivery_date,
       greeting,
+      notes,
       items,
       total_price,
     } = body;
@@ -73,6 +74,7 @@ Deno.serve(async (req) => {
     if (typeof recipient_name === "string" && recipient_name.length > 100) errors.push("recipient_name too long (max 100)");
     if (typeof delivery_address === "string" && delivery_address.length > 300) errors.push("delivery_address too long (max 300)");
     if (typeof greeting === "string" && greeting.length > 500) errors.push("greeting too long (max 500)");
+    if (typeof notes === "string" && notes.length > 1000) errors.push("notes too long (max 1000)");
 
     if (customer_email && typeof customer_email === "string" && customer_email.length > 0) {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -131,6 +133,7 @@ Deno.serve(async (req) => {
         delivery_address,
         delivery_date,
         greeting: greeting || null,
+        notes: notes || null,
         total_price: total_price || 0,
       })
       .select("id")
