@@ -44,8 +44,18 @@ Deno.serve(async (req) => {
       );
     }
 
-    const body = await req.json();
-    console.log(`[create-order] Received order request, IP: ${clientIP}`);
+    let body: any;
+    try {
+      const bodyText = await req.text();
+      console.log(`[create-order] Received order request, IP: ${clientIP}, body length: ${bodyText.length}`);
+      body = JSON.parse(bodyText);
+    } catch (e) {
+      console.error("[create-order] Body parse error:", e);
+      return new Response(
+        JSON.stringify({ error: "Invalid request body" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     const {
       shop_id,
