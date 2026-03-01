@@ -44,8 +44,8 @@ Deno.serve(async (req) => {
     const rawBody = await req.text();
     const { flowers, vase } = JSON.parse(rawBody);
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+    const GOOGLE_API_KEY = Deno.env.get("GOOGLE_AI_KEY");
+    if (!GOOGLE_API_KEY) throw new Error("GOOGLE_AI_KEY is not configured");
 
     // ── Input Validation ──
     if (!Array.isArray(flowers) || flowers.length === 0) {
@@ -131,38 +131,39 @@ CRITICAL RULES:
 
 Style: Professional flat-lay product photography, camera pointing straight down, soft natural light, clean white background.`;
 
-    console.log(`[generate-bouquet-image] Generating image for ${totalFlowers} flowers, IP: ${clientIP}`);
+    console.log(`[generate-bouquet-image] Generating image for ${totalFlowers} flowers via Google Gemini, IP: ${clientIP}`);
 
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.0-flash-preview-image-generation",
-        messages: [
-          { role: "user", content: prompt },
-        ],
-        modalities: ["image", "text"],
-      }),
-    });
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-preview-image-generation:generateContent?key=${GOOGLE_API_KEY}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { responseModalities: ["IMAGE", "TEXT"] },
+        }),
+      }
+    );
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(`AI gateway error: ${response.status}`, errorText);
+      console.error(`[generate-bouquet-image] Gemini API error: ${response.status}`, errorText);
       throw new Error("Failed to generate image");
     }
 
     const data = await response.json();
-    const imageUrl = data.choices?.[0]?.message?.images?.[0]?.image_url?.url;
 
-    if (!imageUrl) {
-      console.error("[generate-bouquet-image] No image in response:", JSON.stringify(data).slice(0, 200));
+    // Gemini returns image as base64 inlineData
+    const imagePart = data.candidates?.[0]?.content?.parts?.find((p: any) => p.inlineData);
+    if (!imagePart?.inlineData?.data) {
+      console.error("[generate-bouquet-image] No image in response:", JSON.stringify(data).slice(0, 300));
       throw new Error("No image generated");
     }
 
-    console.log("[generate-bouquet-image] Image generated successfully");
+    const mimeType = imagePart.inlineData.mimeType || "image/png";
+    const imageUrl = `data:${mimeType};base64,${imagePart.inlineData.data}`;
+
+    console.log("[generate-bouquet-image] Image generated successfully via Google Gemini");
 
     return new Response(
       JSON.stringify({ image_url: imageUrl }),
