@@ -44,7 +44,8 @@ Deno.serve(async (req) => {
     const rawBody = await req.text();
     const { flowers, vase } = JSON.parse(rawBody);
 
-    // No API key needed — using Pollinations.ai (free, FLUX model)
+    const GOOGLE_AI_KEY = Deno.env.get("GOOGLE_AI_KEY");
+    if (!GOOGLE_AI_KEY) throw new Error("GOOGLE_AI_KEY is not configured");
 
     // ── Input Validation ──
     if (!Array.isArray(flowers) || flowers.length === 0) {
@@ -130,29 +131,42 @@ CRITICAL RULES:
 
 Style: Professional flat-lay product photography, camera pointing straight down, soft natural light, clean white background.`;
 
-    console.log(`[generate-bouquet-image] Generating image for ${totalFlowers} flowers via Google Gemini, IP: ${clientIP}`);
+    console.log(`[generate-bouquet-image] Generating image for ${totalFlowers} flowers via gemini-2.5-flash-image, IP: ${clientIP}`);
 
-    const encodedPrompt = encodeURIComponent(prompt);
-    const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&model=flux&nologo=true&seed=${Date.now()}`;
+    const imageResponse = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${GOOGLE_AI_KEY}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { responseModalities: ["TEXT", "IMAGE"] },
+        }),
+      }
+    );
 
-    const response = await fetch(pollinationsUrl, { method: "GET" });
-
-    if (!response.ok) {
-      console.error(`[generate-bouquet-image] Pollinations error: ${response.status}`);
+    if (!imageResponse.ok) {
+      const errText = await imageResponse.text();
+      console.error(`[generate-bouquet-image] Gemini error: ${imageResponse.status}`, errText);
       throw new Error("Failed to generate image");
     }
 
-    // Convert binary image to base64 data URL
-    const imageBuffer = await response.arrayBuffer();
-    const uint8Array = new Uint8Array(imageBuffer);
-    let binary = "";
-    for (let i = 0; i < uint8Array.byteLength; i++) {
-      binary += String.fromCharCode(uint8Array[i]);
+    const imageData = await imageResponse.json();
+    const parts = imageData.candidates?.[0]?.content?.parts || [];
+    let imageUrl: string | null = null;
+    for (const part of parts) {
+      if (part.inlineData?.mimeType?.startsWith("image/")) {
+        imageUrl = `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+        break;
+      }
     }
-    const base64 = btoa(binary);
-    const imageUrl = `data:image/jpeg;base64,${base64}`;
 
-    console.log("[generate-bouquet-image] Image generated successfully via Google Gemini");
+    if (!imageUrl) {
+      console.error("[generate-bouquet-image] No image in response:", JSON.stringify(imageData).slice(0, 300));
+      throw new Error("No image generated");
+    }
+
+    console.log("[generate-bouquet-image] Image generated successfully via gemini-2.5-flash-image");
 
     return new Response(
       JSON.stringify({ image_url: imageUrl }),

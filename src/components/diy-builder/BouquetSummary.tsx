@@ -49,28 +49,22 @@ const BouquetSummary = ({ selectedFlowers, onRemove, onClearAll, onCheckout, onS
         }));
 
       const hasVase = selectedFlowers.some((item) => ACCESSORY_NAMES.has(item.flower.name));
-      const vaseItem = hasVase ? selectedFlowers.find((item) => ACCESSORY_NAMES.has(item.flower.name)) : null;
-      const vaseSize = vaseItem?.flower.color || "M";
-      const vaseSizeLabel = vaseSize === "S" ? "small" : vaseSize === "L" ? "large" : "medium";
+      const vaseSize = hasVase
+        ? selectedFlowers.find((item) => ACCESSORY_NAMES.has(item.flower.name))?.flower.color || "M"
+        : null;
 
-      const flowerList = flowers.map((f) => `${f.quantity} ${f.color} ${f.name}`.trim()).join(", ");
-
-      const prompt = hasVase
-        ? `Realistic photo of a beautiful flower bouquet in a clear glass ${vaseSizeLabel} vase on white background: ${flowerList}. Professional product photography, soft natural light.`
-        : `Realistic top-down photo of a beautiful flower bouquet wrapped in kraft paper on white background: ${flowerList}. Professional flat-lay photography, camera pointing straight down, soft natural light.`;
-
-      const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=1024&model=flux&nologo=true&seed=${Date.now()}`;
-
-      // Pre-load via Image element (no CORS restrictions)
-      await new Promise<void>((resolve, reject) => {
-        const img = new Image();
-        img.onload = () => resolve();
-        img.onerror = () => reject(new Error("Image failed to load"));
-        img.src = imageUrl;
+      const { data, error } = await supabase.functions.invoke("generate-bouquet-image", {
+        body: { flowers, vase: hasVase ? { size: vaseSize } : null },
       });
 
-      setGeneratedImageUrl(imageUrl);
-      toast({ title: "התמונה נוצרה בהצלחה! 🎨" });
+      if (error) throw error;
+
+      if (data?.image_url) {
+        setGeneratedImageUrl(data.image_url);
+        toast({ title: "התמונה נוצרה בהצלחה! 🎨" });
+      } else {
+        throw new Error("No image returned");
+      }
     } catch (err: any) {
       console.error("Image generation error:", err);
       toast({
