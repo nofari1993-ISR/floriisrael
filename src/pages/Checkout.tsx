@@ -205,6 +205,14 @@ const Checkout = () => {
         deliveryDate: format(deliveryDate!, "dd/MM/yyyy"),
       });
 
+      // Reset form so a new order can be placed
+      setFormData({ recipientName: "", recipientPhone: "", address: "", deliveryNotes: "", greeting: "", customerName: "", customerPhone: "" });
+      setDeliveryDate(undefined);
+      setTimeSlot(undefined);
+      setDeliveryMethod("delivery");
+      setShowPayment(false);
+      setPaymentMethod("paypal");
+
       toast({
         title: "ההזמנה נשלחה בהצלחה! 🎉",
         description: isPickup
@@ -292,7 +300,7 @@ const Checkout = () => {
             <Button
               variant="hero-outline"
               className="w-full rounded-xl"
-              onClick={() => navigate("/")}
+              onClick={() => navigate("/", { replace: true })}
             >
               חזרה לדף הבית
             </Button>
