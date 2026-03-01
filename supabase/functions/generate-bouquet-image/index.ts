@@ -44,8 +44,7 @@ Deno.serve(async (req) => {
     const rawBody = await req.text();
     const { flowers, vase } = JSON.parse(rawBody);
 
-    const GOOGLE_API_KEY = Deno.env.get("GOOGLE_AI_KEY");
-    if (!GOOGLE_API_KEY) throw new Error("GOOGLE_AI_KEY is not configured");
+    // No API key needed — using Pollinations.ai (free, FLUX model)
 
     // ── Input Validation ──
     if (!Array.isArray(flowers) || flowers.length === 0) {
@@ -133,35 +132,25 @@ Style: Professional flat-lay product photography, camera pointing straight down,
 
     console.log(`[generate-bouquet-image] Generating image for ${totalFlowers} flowers via Google Gemini, IP: ${clientIP}`);
 
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${GOOGLE_API_KEY}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          instances: [{ prompt }],
-          parameters: { sampleCount: 1, aspectRatio: "1:1" },
-        }),
-      }
-    );
+    const encodedPrompt = encodeURIComponent(prompt);
+    const pollinationsUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&model=flux&nologo=true&seed=${Date.now()}`;
+
+    const response = await fetch(pollinationsUrl, { method: "GET" });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`[generate-bouquet-image] Imagen API error: ${response.status}`, errorText);
+      console.error(`[generate-bouquet-image] Pollinations error: ${response.status}`);
       throw new Error("Failed to generate image");
     }
 
-    const data = await response.json();
-
-    // Imagen 3 returns image as base64 in predictions
-    const prediction = data.predictions?.[0];
-    if (!prediction?.bytesBase64Encoded) {
-      console.error("[generate-bouquet-image] No image in response:", JSON.stringify(data).slice(0, 300));
-      throw new Error("No image generated");
+    // Convert binary image to base64 data URL
+    const imageBuffer = await response.arrayBuffer();
+    const uint8Array = new Uint8Array(imageBuffer);
+    let binary = "";
+    for (let i = 0; i < uint8Array.byteLength; i++) {
+      binary += String.fromCharCode(uint8Array[i]);
     }
-
-    const mimeType = prediction.mimeType || "image/png";
-    const imageUrl = `data:${mimeType};base64,${prediction.bytesBase64Encoded}`;
+    const base64 = btoa(binary);
+    const imageUrl = `data:image/jpeg;base64,${base64}`;
 
     console.log("[generate-bouquet-image] Image generated successfully via Google Gemini");
 
