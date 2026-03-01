@@ -41,7 +41,8 @@ Deno.serve(async (req) => {
       );
     }
 
-    const { flowers, vase } = await req.json();
+    const rawBody = await req.text();
+    const { flowers, vase } = JSON.parse(rawBody);
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
