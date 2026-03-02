@@ -147,13 +147,38 @@ Deno.serve(async (req) => {
     console.log("Order created:", order.id);
 
     if (items && Array.isArray(items) && items.length > 0) {
-      const orderItems = items.map((item: any) => ({
-        order_id: order.id,
-        flower_name: item.flower_name || item.name,
-        flower_id: item.flower_id || null,
-        quantity: item.quantity || 1,
-        unit_price: item.unit_price || item.price || 0,
-      }));
+      // ── Batch-fetch flower data (color + quantity) for all items ──
+      const flowerIds = (items as any[])
+        .map((i: any) => i.flower_id)
+        .filter(Boolean) as string[];
+
+      const flowerDataMap: Record<string, { color: string | null; quantity: number }> = {};
+      if (flowerIds.length > 0) {
+        const { data: flowerRows } = await supabase
+          .from("flowers")
+          .select("id, color, quantity")
+          .in("id", flowerIds);
+        for (const f of (flowerRows || [])) {
+          flowerDataMap[f.id] = { color: f.color ?? null, quantity: f.quantity ?? 0 };
+        }
+      }
+
+      // Build order items — append color to flower_name if not already present
+      const orderItems = (items as any[]).map((item: any) => {
+        const baseName: string = item.flower_name || item.name || "";
+        const flowerId: string | null = item.flower_id || null;
+        const color: string | null =
+          item.color || (flowerId ? (flowerDataMap[flowerId]?.color ?? null) : null);
+        const flower_name =
+          color && !baseName.includes(" - ") ? `${baseName} - ${color}` : baseName;
+        return {
+          order_id: order.id,
+          flower_name,
+          flower_id: flowerId,
+          quantity: item.quantity || 1,
+          unit_price: item.unit_price || item.price || 0,
+        };
+      });
 
       const { error: itemsError } = await supabase
         .from("order_items")
@@ -165,22 +190,15 @@ Deno.serve(async (req) => {
         console.log(`Inserted ${orderItems.length} order items`);
       }
 
+      // ── Deduct inventory (reuse batch data) ──
       for (const item of orderItems) {
         if (item.flower_id) {
-          const { data: flower } = await supabase
-            .from("flowers")
-            .select("quantity")
-            .eq("id", item.flower_id)
-            .single();
-
-          if (flower) {
-            const newQuantity = Math.max(0, (flower.quantity || 0) - (item.quantity || 1));
+          const current = flowerDataMap[item.flower_id];
+          if (current) {
+            const newQuantity = Math.max(0, current.quantity - (item.quantity || 1));
             const { error: updateError } = await supabase
               .from("flowers")
-              .update({
-                quantity: newQuantity,
-                in_stock: newQuantity > 0,
-              })
+              .update({ quantity: newQuantity, in_stock: newQuantity > 0 })
               .eq("id", item.flower_id);
 
             if (updateError) {
