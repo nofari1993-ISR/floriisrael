@@ -167,7 +167,7 @@ const Checkout = () => {
         total_price: isDIY ? diyTotalPrice + deliveryFee : deliveryFee,
         notes: noteParts || null,
         items: isDIY ? diyItems.map((item) => ({
-          flower_name: item.flower_name,
+          flower_name: item.color ? `${item.flower_name} - ${item.color}` : item.flower_name,
           flower_id: item.flower_id || null,
           quantity: item.quantity,
           unit_price: item.unit_price,
@@ -226,6 +226,26 @@ const Checkout = () => {
         recipientName: formData.recipientName,
         deliveryDate: format(deliveryDate!, "dd/MM/yyyy"),
       });
+
+      // Reset the form so a new order can be placed
+      setFormData({
+        recipientName: "",
+        recipientPhone: "",
+        address: "",
+        deliveryNotes: "",
+        greeting: "",
+        customerName: "",
+        customerPhone: "",
+      });
+      setDeliveryDate(undefined);
+      setTimeSlot(undefined);
+      setDeliveryMethod("delivery");
+      setShowPayment(false);
+
+      // Clear the DIY bouquet — both localStorage and a sessionStorage signal
+      // so the builder resets reliably even when restored from browser cache
+      localStorage.removeItem("diy_bouquet");
+      sessionStorage.setItem("clearDIYCart", "1");
 
       toast({
         title: "ההזמנה נשלחה בהצלחה! 🎉",
@@ -313,7 +333,7 @@ const Checkout = () => {
             <Button
               variant="hero-outline"
               className="w-full rounded-xl"
-              onClick={() => navigate("/")}
+              onClick={() => navigate("/", { replace: true })}
             >
               חזרה לדף הבית
             </Button>

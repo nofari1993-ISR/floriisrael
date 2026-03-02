@@ -20,3 +20,9 @@ verify_jwt = false
 
 [functions.manage-shop-owners]
 verify_jwt = false
+
+[functions.telegram-bot]
+verify_jwt = false
+
+[functions.telegram-notify]
+verify_jwt = false

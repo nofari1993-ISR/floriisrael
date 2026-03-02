@@ -6,6 +6,12 @@ const STORAGE_KEY = "diy_bouquet";
 
 function loadFromStorage(): SelectedFlower[] {
   try {
+    // If a successful order was just placed, clear the cart
+    if (sessionStorage.getItem("clearDIYCart") === "1") {
+      sessionStorage.removeItem("clearDIYCart");
+      localStorage.removeItem(STORAGE_KEY);
+      return [];
+    }
     const saved = localStorage.getItem(STORAGE_KEY);
     return saved ? JSON.parse(saved) : [];
   } catch {
@@ -29,6 +35,18 @@ export function useDIYBuilder() {
   useEffect(() => {
     saveToStorage(selectedFlowers);
   }, [selectedFlowers]);
+
+  // Handle browser back/forward cache (bfcache) — reload from localStorage
+  // so a cleared cart is reflected even when page is restored from cache
+  useEffect(() => {
+    const handlePageShow = (e: PageTransitionEvent) => {
+      if (e.persisted) {
+        setSelectedFlowers(loadFromStorage());
+      }
+    };
+    window.addEventListener("pageshow", handlePageShow);
+    return () => window.removeEventListener("pageshow", handlePageShow);
+  }, []);
 
   const handleAddFlower = useCallback((flower: FlowerData, addCount: number = 1) => {
     setSelectedFlowers((prev) => {

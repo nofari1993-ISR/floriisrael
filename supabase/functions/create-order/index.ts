@@ -199,50 +199,49 @@ Deno.serve(async (req) => {
       .eq("id", shop_id)
       .single();
 
-    // ── Send WhatsApp notification to shop owner ──
+    // ── Send WhatsApp notification via Whapi.cloud ──
     try {
-      const waToken = Deno.env.get("WHATSAPP_ACCESS_TOKEN");
-      const waPhoneId = Deno.env.get("WHATSAPP_PHONE_NUMBER_ID");
+      const whapiToken = Deno.env.get("WHAPI_TOKEN");
       const shopPhone = shop?.phone;
+      const rawShopPhone = shopPhone ? shopPhone.replace(/[^0-9]/g, "") : "";
+      const wapiRecipient = rawShopPhone
+        ? (rawShopPhone.startsWith("0") ? `972${rawShopPhone.slice(1)}` : rawShopPhone) + "@s.whatsapp.net"
+        : null;
 
-      if (waToken && waPhoneId && shopPhone) {
-        // Format phone for WhatsApp API (Israel: 05x -> 9725x)
-        const rawPhone = shopPhone.replace(/[^0-9]/g, "");
-        const waRecipient = rawPhone.startsWith("0") ? `972${rawPhone.slice(1)}` : rawPhone;
+      console.log(`[create-order] Whapi check: token=${whapiToken ? "SET" : "MISSING"}, recipient=${wapiRecipient || "MISSING (no shop phone)"}`);
 
+      if (whapiToken && wapiRecipient) {
         const itemsSummary = items && Array.isArray(items) && items.length > 0
-          ? items.map((i: any) => `${i.flower_name || i.name} x${i.quantity || 1}`).join(", ")
+          ? items.map((i: any) => `• ${i.flower_name || i.name} x${i.quantity || 1}`).join("\n")
           : "ללא פירוט";
 
-        const waBody = JSON.stringify({
-          messaging_product: "whatsapp",
-          to: waRecipient,
-          type: "text",
-          text: {
-            body: `🌸 הזמנה חדשה התקבלה!\n\nלקוח: ${customer_name}\nנמען: ${recipient_name}\nתאריך משלוח: ${delivery_date}\nכתובת: ${delivery_address}\nסה״כ: ₪${total_price || 0}\n\nפריטים: ${itemsSummary}\n\nמספר הזמנה: ${order.id.slice(0, 8)}`
-          }
+        const messageBody =
+          `🌸 *הזמנה חדשה התקבלה מ-Flori!*\n\n` +
+          `👤 *שם הלקוח:* ${customer_name}\n` +
+          `💐 *נמען:* ${recipient_name}\n` +
+          `📅 *תאריך משלוח:* ${delivery_date}\n` +
+          `📍 *כתובת:* ${delivery_address}\n\n` +
+          `🛒 *פריטים:*\n${itemsSummary}\n\n` +
+          `💰 *סה״כ לתשלום:* ₪${total_price || 0}\n` +
+          `🔖 *מספר הזמנה:* ${order.id.slice(0, 8)}`;
+
+        const waRes = await fetch("https://gate.whapi.cloud/messages/text", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${whapiToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ to: wapiRecipient, body: messageBody }),
         });
 
-        const waRes = await fetch(
-          `https://graph.facebook.com/v21.0/${waPhoneId}/messages`,
-          {
-            method: "POST",
-            headers: {
-              "Authorization": `Bearer ${waToken}`,
-              "Content-Type": "application/json",
-            },
-            body: waBody,
-          }
-        );
-
+        const waResText = await waRes.text();
         if (!waRes.ok) {
-          const waErr = await waRes.text();
-          console.error(`[create-order] WhatsApp send failed [${waRes.status}]:`, waErr);
+          console.error(`[create-order] Whapi send failed [${waRes.status}]:`, waResText);
         } else {
-          console.log("[create-order] WhatsApp notification sent to shop owner");
+          console.log(`[create-order] WhatsApp notification sent to shop owner (${wapiRecipient})`);
         }
       } else {
-        console.log("[create-order] WhatsApp not configured or shop has no phone, skipping notification");
+        console.log(`[create-order] Whapi notification skipped: token=${whapiToken ? "SET" : "MISSING"}, shopPhone=${shopPhone || "MISSING"}`);
       }
     } catch (waError) {
       // Don't fail the order if WhatsApp fails

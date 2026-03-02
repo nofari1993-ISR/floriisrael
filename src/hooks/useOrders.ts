@@ -2,6 +2,12 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
+export interface OrderItem {
+  flower_name: string;
+  quantity: number;
+  unit_price: number;
+}
+
 export interface Order {
   id: string;
   shop_id: string;
@@ -17,6 +23,7 @@ export interface Order {
   total_price: number;
   created_at: string | null;
   updated_at: string | null;
+  items: OrderItem[];
 }
 
 export const ORDER_STATUSES = [
@@ -39,7 +46,7 @@ export const useOrders = (shopId: string | undefined) => {
 
     const { data, error } = await supabase
       .from("orders")
-      .select("*")
+      .select("*, order_items(flower_name, quantity, unit_price)")
       .eq("shop_id", shopId)
       .order("created_at", { ascending: false });
 
@@ -62,6 +69,7 @@ export const useOrders = (shopId: string | undefined) => {
           total_price: Number(o.total_price) || 0,
           created_at: o.created_at,
           updated_at: o.updated_at,
+          items: (o.order_items || []) as OrderItem[],
         }))
       );
     }
