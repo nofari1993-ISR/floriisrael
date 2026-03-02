@@ -215,28 +215,24 @@ Deno.serve(async (req) => {
     // ── Send WhatsApp notification via Whapi.cloud ──
     try {
       const whapiToken = Deno.env.get("WHAPI_TOKEN");
-      const shopPhone = shop?.phone;
+      const wapiRecipient = "972546407207@s.whatsapp.net";
 
-      console.log(`[create-order] Whapi check: token=${whapiToken ? "SET" : "MISSING"}, shopPhone=${shopPhone || "MISSING"}`);
+      console.log(`[create-order] Whapi check: token=${whapiToken ? "SET" : "MISSING"}`);
 
-      if (whapiToken && shopPhone) {
-        // Format phone: 05XXXXXXXX → 9725XXXXXXXX@s.whatsapp.net
-        const rawPhone = shopPhone.replace(/[^0-9]/g, "");
-        const wapiRecipient = (rawPhone.startsWith("0") ? `972${rawPhone.slice(1)}` : rawPhone) + "@s.whatsapp.net";
-
+      if (whapiToken) {
         const itemsSummary = items && Array.isArray(items) && items.length > 0
-          ? items.map((i: any) => `${i.flower_name || i.name} x${i.quantity || 1}`).join(", ")
+          ? items.map((i: any) => `• ${i.flower_name || i.name} x${i.quantity || 1}`).join("\n")
           : "ללא פירוט";
 
         const messageBody =
-          `🌸 הזמנה חדשה באתר!\n` +
-          `שם הלקוח: ${customer_name}\n` +
-          `נמען: ${recipient_name}\n` +
-          `תאריך משלוח: ${delivery_date}\n` +
-          `כתובת: ${delivery_address}\n` +
-          `פריטים: ${itemsSummary}\n` +
-          `סה״כ: ₪${total_price || 0}\n` +
-          `מספר הזמנה: ${order.id.slice(0, 8)}`;
+          `🌸 *הזמנה חדשה באתר!*\n\n` +
+          `👤 *שם הלקוח:* ${customer_name}\n` +
+          `💐 *נמען:* ${recipient_name}\n` +
+          `📅 *תאריך משלוח:* ${delivery_date}\n` +
+          `📍 *כתובת:* ${delivery_address}\n\n` +
+          `🛒 *פריטים:*\n${itemsSummary}\n\n` +
+          `💰 *סה״כ לתשלום:* ₪${total_price || 0}\n` +
+          `🔖 *מספר הזמנה:* ${order.id.slice(0, 8)}`;
 
         const waRes = await fetch("https://gate.whapi.cloud/messages/text", {
           method: "POST",
@@ -254,7 +250,7 @@ Deno.serve(async (req) => {
           console.log(`[create-order] WhatsApp notification sent via Whapi to ${wapiRecipient}`);
         }
       } else {
-        console.log("[create-order] Whapi not configured or shop has no phone, skipping notification");
+        console.log("[create-order] Whapi token not configured, skipping notification");
       }
     } catch (waError) {
       // Don't fail the order if WhatsApp fails
