@@ -10,7 +10,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { useOrders, ORDER_STATUSES } from "@/hooks/useOrders";
+import { useOrders, ORDER_STATUSES, type OrderItem } from "@/hooks/useOrders";
 import { format } from "date-fns";
 import { he } from "date-fns/locale";
 
@@ -187,6 +187,27 @@ const OrdersTab = ({ shopId }: OrdersTabProps) => {
                         </div>
                       </div>
                     </div>
+
+                    {/* Order Items */}
+                    {order.items && order.items.length > 0 && (
+                      <div className="space-y-2">
+                        <h4 className="font-display font-semibold text-sm text-foreground flex items-center gap-2">
+                          <Package className="w-4 h-4 text-primary/60" />
+                          פריטי הזר
+                        </h4>
+                        <div className="bg-muted/30 rounded-xl p-3 space-y-1.5">
+                          {order.items.map((item: OrderItem, i: number) => (
+                            <div key={i} className="flex items-center justify-between text-sm font-body">
+                              <span className="text-foreground font-medium">💐 {item.flower_name}</span>
+                              <div className="flex items-center gap-3 text-muted-foreground">
+                                <span>× {item.quantity}</span>
+                                <span>₪{(item.unit_price * item.quantity).toFixed(0)}</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
 
                     {/* Greeting */}
                     {order.greeting && (

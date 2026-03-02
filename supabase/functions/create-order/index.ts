@@ -44,18 +44,8 @@ Deno.serve(async (req) => {
       );
     }
 
-    let body: any;
-    try {
-      const bodyText = await req.text();
-      console.log(`[create-order] Received order request, IP: ${clientIP}, body length: ${bodyText.length}`);
-      body = JSON.parse(bodyText);
-    } catch (e) {
-      console.error("[create-order] Body parse error:", e);
-      return new Response(
-        JSON.stringify({ error: "Invalid request body" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    const body = await req.json();
+    console.log(`[create-order] Received order request, IP: ${clientIP}`);
 
     const {
       shop_id,
@@ -66,7 +56,6 @@ Deno.serve(async (req) => {
       delivery_address,
       delivery_date,
       greeting,
-      notes,
       items,
       total_price,
     } = body;
@@ -84,7 +73,6 @@ Deno.serve(async (req) => {
     if (typeof recipient_name === "string" && recipient_name.length > 100) errors.push("recipient_name too long (max 100)");
     if (typeof delivery_address === "string" && delivery_address.length > 300) errors.push("delivery_address too long (max 300)");
     if (typeof greeting === "string" && greeting.length > 500) errors.push("greeting too long (max 500)");
-    if (typeof notes === "string" && notes.length > 1000) errors.push("notes too long (max 1000)");
 
     if (customer_email && typeof customer_email === "string" && customer_email.length > 0) {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -143,7 +131,6 @@ Deno.serve(async (req) => {
         delivery_address,
         delivery_date,
         greeting: greeting || null,
-        notes: notes || null,
         total_price: total_price || 0,
       })
       .select("id")
@@ -215,17 +202,21 @@ Deno.serve(async (req) => {
     // ── Send WhatsApp notification via Whapi.cloud ──
     try {
       const whapiToken = Deno.env.get("WHAPI_TOKEN");
-      const wapiRecipient = "972546407207@s.whatsapp.net";
+      const shopPhone = shop?.phone;
+      const rawShopPhone = shopPhone ? shopPhone.replace(/[^0-9]/g, "") : "";
+      const wapiRecipient = rawShopPhone
+        ? (rawShopPhone.startsWith("0") ? `972${rawShopPhone.slice(1)}` : rawShopPhone) + "@s.whatsapp.net"
+        : null;
 
-      console.log(`[create-order] Whapi check: token=${whapiToken ? "SET" : "MISSING"}`);
+      console.log(`[create-order] Whapi check: token=${whapiToken ? "SET" : "MISSING"}, recipient=${wapiRecipient || "MISSING (no shop phone)"}`);
 
-      if (whapiToken) {
+      if (whapiToken && wapiRecipient) {
         const itemsSummary = items && Array.isArray(items) && items.length > 0
           ? items.map((i: any) => `• ${i.flower_name || i.name} x${i.quantity || 1}`).join("\n")
           : "ללא פירוט";
 
         const messageBody =
-          `🌸 *הזמנה חדשה באתר!*\n\n` +
+          `🌸 *הזמנה חדשה התקבלה מ-Flori!*\n\n` +
           `👤 *שם הלקוח:* ${customer_name}\n` +
           `💐 *נמען:* ${recipient_name}\n` +
           `📅 *תאריך משלוח:* ${delivery_date}\n` +
@@ -247,10 +238,10 @@ Deno.serve(async (req) => {
         if (!waRes.ok) {
           console.error(`[create-order] Whapi send failed [${waRes.status}]:`, waResText);
         } else {
-          console.log(`[create-order] WhatsApp notification sent via Whapi to ${wapiRecipient}`);
+          console.log(`[create-order] WhatsApp notification sent to shop owner (${wapiRecipient})`);
         }
       } else {
-        console.log("[create-order] Whapi token not configured, skipping notification");
+        console.log(`[create-order] Whapi notification skipped: token=${whapiToken ? "SET" : "MISSING"}, shopPhone=${shopPhone || "MISSING"}`);
       }
     } catch (waError) {
       // Don't fail the order if WhatsApp fails

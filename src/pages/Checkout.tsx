@@ -98,7 +98,6 @@ const Checkout = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderSuccess, setOrderSuccess] = useState<OrderSuccess | null>(null);
   const [showPayment, setShowPayment] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<"paypal" | "cash">("paypal");
 
   const calculateTotal = () => {
     const deliveryFee = deliveryMethod === "delivery" ? DELIVERY_FEE : 0;
@@ -142,7 +141,7 @@ const Checkout = () => {
     setShowPayment(true);
   };
 
-  const createOrder = async (paymentRef: string) => {
+  const createOrder = async (paypalOrderId: string) => {
     setIsSubmitting(true);
 
     try {
@@ -151,10 +150,10 @@ const Checkout = () => {
       const selectedSlot = TIME_SLOTS.find(s => s.id === timeSlot);
       const timeSlotNote = selectedSlot ? `שעות ${isPickup ? "איסוף" : "משלוח"}: ${selectedSlot.hours}` : "";
       const diyNote = isDIY ? "זר מעוצב אישית (DIY)" : "";
-      const paymentNote = paymentRef === "cash" ? "תשלום: מזומן" : `PayPal: ${paymentRef}`;
+      const paypalNote = `PayPal: ${paypalOrderId}`;
       const deliveryNotesText = formData.deliveryNotes?.trim() ? `הערות לשליח: ${formData.deliveryNotes.trim()}` : "";
       const recipientPhoneNote = formData.recipientPhone?.trim() ? `טלפון מקבל/ת: ${formData.recipientPhone.trim()}` : "";
-      const noteParts = [diyNote, timeSlotNote, recipientPhoneNote, deliveryNotesText, paymentNote].filter(Boolean).join(" | ");
+      const noteParts = [diyNote, timeSlotNote, recipientPhoneNote, deliveryNotesText, paypalNote].filter(Boolean).join(" | ");
 
       const deliveryDateStr = format(deliveryDate!, "yyyy-MM-dd");
       const orderPayload = {
@@ -168,7 +167,7 @@ const Checkout = () => {
         total_price: isDIY ? diyTotalPrice + deliveryFee : deliveryFee,
         notes: noteParts || null,
         items: isDIY ? diyItems.map((item) => ({
-          flower_name: item.flower_name,
+          flower_name: item.color ? `${item.flower_name} - ${item.color}` : item.flower_name,
           flower_id: item.flower_id || null,
           quantity: item.quantity,
           unit_price: item.unit_price,
@@ -179,23 +178,46 @@ const Checkout = () => {
       let shopName = "החנות";
       let shopPhone: string | null = null;
 
-      // Always use the edge function so WhatsApp notification is sent for all orders
-      const { data: fnData, error: fnError } = await supabase.functions.invoke("create-order", {
-        body: orderPayload,
-      });
+      if (isDIY && diyItems.length > 0) {
+        const { data: fnData, error: fnError } = await supabase.functions.invoke("create-order", {
+          body: orderPayload,
+        });
 
-      if (fnError) {
-        console.error("Edge function error:", fnError);
-        throw new Error(fnError.message || "שגיאה ביצירת ההזמנה");
-      }
-      if (!fnData?.success) {
-        console.error("Order creation failed:", fnData);
-        throw new Error(fnData?.error || "שגיאה ביצירת ההזמנה");
-      }
+        if (fnError) throw fnError;
+        if (!fnData?.success) throw new Error(fnData?.error || "שגיאה ביצירת ההזמנה");
 
-      orderId = fnData.order_id;
-      shopName = fnData.shop_name || shopName;
-      shopPhone = fnData.shop_phone || null;
+        orderId = fnData.order_id;
+        shopName = fnData.shop_name || shopName;
+        shopPhone = fnData.shop_phone || null;
+      } else {
+        const { data: order, error: orderError } = await supabase
+          .from("orders")
+          .insert({
+            shop_id: shopId!,
+            customer_name: formData.customerName,
+            customer_phone: formData.customerPhone || null,
+            recipient_name: formData.recipientName,
+            delivery_address: isPickup ? "איסוף עצמי" : formData.address,
+            delivery_date: deliveryDateStr,
+            greeting: formData.greeting || null,
+            notes: noteParts || null,
+            total_price: deliveryFee,
+          })
+          .select("id")
+          .single();
+
+        if (orderError) throw orderError;
+        orderId = order.id;
+
+        const { data: shop } = await supabase
+          .from("shops")
+          .select("name, phone")
+          .eq("id", shopId!)
+          .single();
+
+        shopName = shop?.name || shopName;
+        shopPhone = shop?.phone || null;
+      }
 
       setOrderSuccess({
         orderId,
@@ -205,13 +227,25 @@ const Checkout = () => {
         deliveryDate: format(deliveryDate!, "dd/MM/yyyy"),
       });
 
-      // Reset form so a new order can be placed
-      setFormData({ recipientName: "", recipientPhone: "", address: "", deliveryNotes: "", greeting: "", customerName: "", customerPhone: "" });
+      // Reset the form so a new order can be placed
+      setFormData({
+        recipientName: "",
+        recipientPhone: "",
+        address: "",
+        deliveryNotes: "",
+        greeting: "",
+        customerName: "",
+        customerPhone: "",
+      });
       setDeliveryDate(undefined);
       setTimeSlot(undefined);
       setDeliveryMethod("delivery");
       setShowPayment(false);
-      setPaymentMethod("paypal");
+
+      // Clear the DIY bouquet — both localStorage and a sessionStorage signal
+      // so the builder resets reliably even when restored from browser cache
+      localStorage.removeItem("diy_bouquet");
+      sessionStorage.setItem("clearDIYCart", "1");
 
       toast({
         title: "ההזמנה נשלחה בהצלחה! 🎉",
@@ -234,7 +268,6 @@ const Checkout = () => {
   const handlePayPalApprove = useCallback((paypalOrderId: string, _details: any) => {
     createOrder(paypalOrderId);
   }, [formData, deliveryDate, timeSlot, deliveryMethod, shopId, isDIY, diyItems, diyTotalPrice]);
-
 
   const handlePayPalError = useCallback((error: any) => {
     console.error("PayPal payment error:", error);
@@ -623,70 +656,16 @@ const Checkout = () => {
             <div className="space-y-4">
               <div className="flex items-center gap-2 text-sm font-medium text-foreground font-body">
                 <CreditCard className="w-4 h-4 text-primary/60" />
-                בחרו אמצעי תשלום
+                תשלום מאובטח
               </div>
-
-              {/* Payment method toggle */}
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  onClick={() => setPaymentMethod("paypal")}
-                  className={cn(
-                    "flex flex-col items-center gap-2 py-3 px-3 rounded-xl border-2 transition-all font-body text-sm",
-                    paymentMethod === "paypal"
-                      ? "border-primary bg-primary/5 text-foreground shadow-sm"
-                      : "border-border text-muted-foreground hover:border-primary/30"
-                  )}
-                >
-                  <CreditCard className="w-5 h-5" />
-                  <span className="font-medium">PayPal</span>
-                  <span className="text-xs text-muted-foreground">תשלום מקוון</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPaymentMethod("cash")}
-                  className={cn(
-                    "flex flex-col items-center gap-2 py-3 px-3 rounded-xl border-2 transition-all font-body text-sm",
-                    paymentMethod === "cash"
-                      ? "border-primary bg-primary/5 text-foreground shadow-sm"
-                      : "border-border text-muted-foreground hover:border-primary/30"
-                  )}
-                >
-                  <span className="text-xl">💵</span>
-                  <span className="font-medium">מזומן</span>
-                  <span className="text-xs text-muted-foreground">תשלום בקבלה</span>
-                </button>
+              <div className="bg-muted/20 rounded-xl p-4 border border-border/30">
+                <PayPalButton
+                  amount={calculateTotal()}
+                  onApprove={handlePayPalApprove}
+                  onError={handlePayPalError}
+                  disabled={isSubmitting}
+                />
               </div>
-
-              {paymentMethod === "paypal" ? (
-                <div className="bg-muted/20 rounded-xl p-4 border border-border/30">
-                  <PayPalButton
-                    amount={calculateTotal()}
-                    onApprove={handlePayPalApprove}
-                    onError={handlePayPalError}
-                    disabled={isSubmitting}
-                  />
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  <div className="bg-muted/20 rounded-xl p-4 border border-border/30 text-center">
-                    <p className="text-sm font-body text-muted-foreground mb-1">סכום לתשלום במזומן</p>
-                    <p className="text-2xl font-display font-bold text-primary">₪{calculateTotal()}</p>
-                    <p className="text-xs text-muted-foreground mt-1">התשלום יתבצע בעת קבלת הזר</p>
-                  </div>
-                  <Button
-                    type="button"
-                    variant="hero"
-                    size="lg"
-                    className="w-full rounded-xl gap-2"
-                    onClick={() => createOrder("cash")}
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? "שולח הזמנה..." : "✅ אישור הזמנה במזומן"}
-                  </Button>
-                </div>
-              )}
-
               <Button
                 type="button"
                 variant="outline"
