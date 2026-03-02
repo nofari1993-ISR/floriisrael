@@ -25,6 +25,7 @@ const Dashboard = () => {
   const [newOrderCount, setNewOrderCount] = useState(0);
   const [shopWebsite, setShopWebsite] = useState("");
   const [shopPhone, setShopPhone] = useState("");
+  const [shopEmail, setShopEmail] = useState("");
   const [shopTelegramChatId, setShopTelegramChatId] = useState("");
   const [savingWebsite, setSavingWebsite] = useState(false);
 
@@ -43,9 +44,10 @@ const Dashboard = () => {
   useEffect(() => {
     if (!selectedShop) return;
     const loadSettings = async () => {
-      const { data } = await supabase.from("shops").select("website, phone, telegram_chat_id").eq("id", selectedShop.id).single();
+      const { data } = await supabase.from("shops").select("website, phone, email, telegram_chat_id").eq("id", selectedShop.id).single();
       setShopWebsite(data?.website || "");
       setShopPhone(data?.phone || "");
+      setShopEmail((data as any)?.email || "");
       setShopTelegramChatId((data as any)?.telegram_chat_id || "");
     };
     loadSettings();
@@ -54,7 +56,7 @@ const Dashboard = () => {
   const handleSaveSettings = async () => {
     if (!selectedShop) return;
     setSavingWebsite(true);
-    const { error } = await supabase.from("shops").update({ website: shopWebsite || null, phone: shopPhone || null, telegram_chat_id: shopTelegramChatId || null } as any).eq("id", selectedShop.id);
+    const { error } = await supabase.from("shops").update({ website: shopWebsite || null, phone: shopPhone || null, email: shopEmail || null, telegram_chat_id: shopTelegramChatId || null } as any).eq("id", selectedShop.id);
     setSavingWebsite(false);
     if (error) {
       toast({ title: "שגיאה בשמירה", description: error.message, variant: "destructive" });
@@ -271,6 +273,21 @@ const Dashboard = () => {
                     dir="ltr"
                   />
                   <p className="text-xs text-muted-foreground font-body">תקבל/י הודעת WhatsApp על כל הזמנה חדשה</p>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold font-body text-foreground flex items-center gap-2">
+                    <span className="text-base">📧</span>
+                    מייל לקבלת הזמנות
+                  </label>
+                  <input
+                    type="email"
+                    placeholder="shop@example.com"
+                    value={shopEmail}
+                    onChange={(e) => setShopEmail(e.target.value)}
+                    className="w-full bg-background border border-border rounded-xl px-4 py-3 text-sm font-body text-foreground placeholder:text-muted-foreground outline-none focus:ring-2 focus:ring-ring"
+                    dir="ltr"
+                  />
+                  <p className="text-xs text-muted-foreground font-body">תקבל/י מייל על כל הזמנה חדשה</p>
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-semibold font-body text-foreground flex items-center gap-2">

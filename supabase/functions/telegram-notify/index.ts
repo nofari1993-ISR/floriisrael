@@ -26,14 +26,15 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // ── Fetch shop phone ──
+    // ── Fetch shop details ──
     const { data: shop } = await supabase
       .from("shops")
-      .select("name, phone")
+      .select("name, phone, email")
       .eq("id", record.shop_id)
       .single();
 
     const shopPhone = shop?.phone || "";
+    const shopEmail = (shop as any)?.email || "";
     const rawPhone = shopPhone.replace(/[^0-9]/g, "");
     const phone972 = rawPhone.startsWith("0") ? `972${rawPhone.slice(1)}` : rawPhone;
     const phone0 = rawPhone.startsWith("972") ? `0${rawPhone.slice(3)}` : rawPhone;
@@ -110,6 +111,7 @@ Deno.serve(async (req) => {
       try {
         const resendKey = Deno.env.get("RESEND_API_KEY");
         if (!resendKey) return { ok: false, error: "No Resend API key" };
+        if (!shopEmail) return { ok: false, error: "No shop email configured" };
 
         const html = `
 <!DOCTYPE html>
@@ -186,7 +188,7 @@ Deno.serve(async (req) => {
           },
           body: JSON.stringify({
             from: "Flori <onboarding@resend.dev>",
-            to: ["nofari1993@gmail.com"],
+            to: [shopEmail],
             subject: `🌸 הזמנה חדשה #${shortId} — ${record.customer_name || "לקוח"}`,
             html,
           }),
