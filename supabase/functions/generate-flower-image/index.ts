@@ -29,7 +29,7 @@ Deno.serve(async (req) => {
     if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) throw new Error("Supabase env vars missing");
 
     const colorDesc = color ? `${color} ` : "";
-    const prompt = `Create a beautiful, realistic close-up product photograph of a single ${colorDesc}${name} flower on a clean white background. Professional product photography style, soft natural light, sharp focus on the flower petals and details, centered composition, no vase, no bouquet — just the single flower with some green stem/leaves visible.`;
+    const prompt = `Create a beautiful, realistic close-up product photograph of a single ${colorDesc}${name} flower. CRITICAL: The background MUST be pure white (#FFFFFF), completely solid white with no shadows, gradients, or textures. The flower should be centered, sharp, and detailed. Professional product photography style, soft natural light, just the flower with a short green stem visible. Pure white background is mandatory.`;
 
     console.log(`[generate-flower-image] Generating image for: ${colorDesc}${name} (id: ${flowerId})`);
 
