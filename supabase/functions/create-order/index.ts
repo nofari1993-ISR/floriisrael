@@ -217,49 +217,77 @@ Deno.serve(async (req) => {
       .eq("id", shop_id)
       .single();
 
-    // ── Send WhatsApp notification via Whapi.cloud ──
+    // ── Send WhatsApp notification via Meta API ──
     try {
-      const whapiToken = Deno.env.get("WHAPI_TOKEN");
+      const accessToken = Deno.env.get("WHATSAPP_ACCESS_TOKEN");
+      const phoneNumberId = Deno.env.get("WHATSAPP_PHONE_NUMBER_ID");
       const shopPhone = shop?.phone;
       const rawShopPhone = shopPhone ? shopPhone.replace(/[^0-9]/g, "") : "";
-      const wapiRecipient = rawShopPhone
-        ? (rawShopPhone.startsWith("0") ? `972${rawShopPhone.slice(1)}` : rawShopPhone) + "@s.whatsapp.net"
+      const recipientPhone = rawShopPhone
+        ? (rawShopPhone.startsWith("0") ? `972${rawShopPhone.slice(1)}` : rawShopPhone)
         : null;
 
-      console.log(`[create-order] Whapi check: token=${whapiToken ? "SET" : "MISSING"}, recipient=${wapiRecipient || "MISSING (no shop phone)"}`);
+      console.log(`[create-order] Meta WA check: token=${accessToken ? "SET" : "MISSING"}, phoneId=${phoneNumberId ? "SET" : "MISSING"}, recipient=${recipientPhone || "MISSING (no shop phone)"}`);
 
-      if (whapiToken && wapiRecipient) {
+      if (accessToken && phoneNumberId && recipientPhone) {
         const itemsSummary = items && Array.isArray(items) && items.length > 0
           ? items.map((i: any) => `• ${i.flower_name || i.name} x${i.quantity || 1}`).join("\n")
           : "ללא פירוט";
 
-        const messageBody =
-          `🌸 *הזמנה חדשה התקבלה מ-Flori!*\n\n` +
-          `👤 *שם הלקוח:* ${customer_name}\n` +
-          `💐 *נמען:* ${recipient_name}\n` +
-          `📅 *תאריך משלוח:* ${delivery_date}\n` +
-          `📍 *כתובת:* ${delivery_address}\n\n` +
-          `🛒 *פריטים:*\n${itemsSummary}\n\n` +
-          `💰 *סה״כ לתשלום:* ₪${total_price || 0}\n` +
-          `🔖 *מספר הזמנה:* ${order.id.slice(0, 8)}`;
+        const deliveryDetails = `תאריך משלוח: ${delivery_date}, כתובת: ${delivery_address}`;
+        const shortOrderId = order.id.slice(0, 8);
 
-        const waRes = await fetch("https://gate.whapi.cloud/messages/text", {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${whapiToken}`,
-            "Content-Type": "application/json",
+        const messageBody = {
+          messaging_product: "whatsapp",
+          to: recipientPhone,
+          type: "template",
+          template: {
+            name: "order_ready1",
+            language: { code: "en" },
+            components: [
+              {
+                type: "body",
+                parameters: [
+                  { type: "text", parameter_name: "customer_name", text: customer_name },
+                  { type: "text", parameter_name: "recipient_name", text: recipient_name },
+                  { type: "text", parameter_name: "delivery_details", text: deliveryDetails },
+                  { type: "text", parameter_name: "order_items", text: itemsSummary },
+                  { type: "text", parameter_name: "total_price", text: String(total_price || 0) },
+                  { type: "text", parameter_name: "order_id", text: shortOrderId },
+                ],
+              },
+              {
+                type: "button",
+                sub_type: "quick_reply",
+                index: "0",
+                parameters: [
+                  { type: "payload", payload: `ORDER_READY_${order.id}` },
+                ],
+              },
+            ],
           },
-          body: JSON.stringify({ to: wapiRecipient, body: messageBody }),
-        });
+        };
+
+        const waRes = await fetch(
+          `https://graph.facebook.com/v20.0/${phoneNumberId}/messages`,
+          {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${accessToken}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(messageBody),
+          }
+        );
 
         const waResText = await waRes.text();
         if (!waRes.ok) {
-          console.error(`[create-order] Whapi send failed [${waRes.status}]:`, waResText);
+          console.error(`[create-order] Meta WA send failed [${waRes.status}]:`, waResText);
         } else {
-          console.log(`[create-order] WhatsApp notification sent to shop owner (${wapiRecipient})`);
+          console.log(`[create-order] WhatsApp notification sent to shop owner (${recipientPhone})`);
         }
       } else {
-        console.log(`[create-order] Whapi notification skipped: token=${whapiToken ? "SET" : "MISSING"}, shopPhone=${shopPhone || "MISSING"}`);
+        console.log(`[create-order] Meta WA notification skipped: token=${accessToken ? "SET" : "MISSING"}, phoneId=${phoneNumberId ? "SET" : "MISSING"}, shopPhone=${shopPhone || "MISSING"}`);
       }
     } catch (waError) {
       // Don't fail the order if WhatsApp fails

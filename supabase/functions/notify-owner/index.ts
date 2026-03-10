@@ -15,8 +15,8 @@ Deno.serve(async (req) => {
 
   const ACCESS_TOKEN    = Deno.env.get("WHATSAPP_ACCESS_TOKEN");
   const PHONE_NUMBER_ID = Deno.env.get("WHATSAPP_PHONE_NUMBER_ID");
-  const TEMPLATE_NAME   = Deno.env.get("WHATSAPP_TEMPLATE_NAME") ?? "order_notification";
-  const TEMPLATE_LANG   = Deno.env.get("WHATSAPP_TEMPLATE_LANG") ?? "he";
+  const TEMPLATE_NAME   = Deno.env.get("WHATSAPP_TEMPLATE_NAME") ?? "order_ready1";
+  const TEMPLATE_LANG   = Deno.env.get("WHATSAPP_TEMPLATE_LANG") ?? "en";
 
   if (!ACCESS_TOKEN || !PHONE_NUMBER_ID) {
     return new Response(
@@ -35,9 +35,9 @@ Deno.serve(async (req) => {
     );
   }
 
-  const { phone, customerName, orderId, items, total } = payload;
+  const { phone, customerName, recipientName, deliveryDetails, orderId, items, total } = payload;
 
-  if (!phone || !customerName || !orderId || !items || !total) {
+  if (!phone || !customerName || !recipientName || !deliveryDetails || !orderId || !items || !total) {
     return new Response(
       JSON.stringify({ error: "Missing required fields" }),
       { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
@@ -55,10 +55,20 @@ Deno.serve(async (req) => {
         {
           type: "body",
           parameters: [
-            { type: "text", text: customerName },
-            { type: "text", text: orderId },
-            { type: "text", text: items },
-            { type: "text", text: total },
+            { type: "text", parameter_name: "customer_name", text: customerName },
+            { type: "text", parameter_name: "recipient_name", text: recipientName },
+            { type: "text", parameter_name: "delivery_details", text: deliveryDetails },
+            { type: "text", parameter_name: "order_items", text: items },
+            { type: "text", parameter_name: "total_price", text: String(total) },
+            { type: "text", parameter_name: "order_id", text: orderId },
+          ],
+        },
+        {
+          type: "button",
+          sub_type: "quick_reply",
+          index: "0",
+          parameters: [
+            { type: "payload", payload: `ORDER_READY_${orderId}` },
           ],
         },
       ],
