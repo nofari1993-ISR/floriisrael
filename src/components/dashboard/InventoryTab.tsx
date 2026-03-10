@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Trash2, Edit2, Package, Flower2, Check, X, Sparkles, Search } from "lucide-react";
+import { Plus, Trash2, Edit2, Package, Flower2, Check, X, Sparkles, Search, ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -222,6 +222,21 @@ const InventoryTab = ({ shopId }: InventoryTabProps) => {
                       disabled={togglingIds.has(flower.id)}
                       className="shrink-0"
                     />
+
+                    {/* Flower Image */}
+                    <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0 bg-muted border border-border/30">
+                      {flower.image ? (
+                        <img
+                          src={flower.image}
+                          alt={flower.name}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center animate-pulse">
+                          <ImageIcon className="w-5 h-5 text-muted-foreground/30" />
+                        </div>
+                      )}
+                    </div>
 
                     {/* Info */}
                     <div className="flex-1 min-w-0">

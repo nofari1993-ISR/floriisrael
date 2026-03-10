@@ -64,6 +64,32 @@ export const useInventory = (shopId: string | undefined) => {
     fetchFlowers();
   }, [fetchFlowers]);
 
+  // ── Realtime: refresh card automatically when image is generated ──
+  useEffect(() => {
+    if (!shopId) return;
+    const channel = supabase
+      .channel(`flowers-realtime-${shopId}`)
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "flowers", filter: `shop_id=eq.${shopId}` },
+        () => { fetchFlowers(); }
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [shopId, fetchFlowers]);
+
+  // ── Generate flower image via edge function (fire-and-forget) ──
+  const generateFlowerImage = async (flowerId: string, name: string, color?: string) => {
+    try {
+      const { error } = await supabase.functions.invoke("generate-flower-image", {
+        body: { flowerId, name, color },
+      });
+      if (error) console.error("[generateFlowerImage] error:", error);
+    } catch (e) {
+      console.error("[generateFlowerImage] error:", e);
+    }
+  };
+
   const addFlower = async (flowerData: {
     name: string;
     color?: string;
@@ -74,27 +100,37 @@ export const useInventory = (shopId: string | undefined) => {
   }) => {
     if (!shopId) return false;
 
-    const { error } = await supabase.from("flowers").insert({
-      shop_id: shopId,
-      name: flowerData.name,
-      color: flowerData.color || null,
-      price: flowerData.price,
-      quantity: flowerData.quantity,
-      image: flowerData.image || null,
-      in_stock: true,
-      is_available: true,
-      is_boosted: false,
-      shelf_life_days: flowerData.shelf_life_days ?? 7,
-      last_restocked_at: new Date().toISOString(),
-    });
+    const { data, error } = await supabase
+      .from("flowers")
+      .insert({
+        shop_id: shopId,
+        name: flowerData.name,
+        color: flowerData.color || null,
+        price: flowerData.price,
+        quantity: flowerData.quantity,
+        image: flowerData.image || null,
+        in_stock: true,
+        is_available: true,
+        is_boosted: false,
+        shelf_life_days: flowerData.shelf_life_days ?? 7,
+        last_restocked_at: new Date().toISOString(),
+      })
+      .select("id")
+      .single();
 
     if (error) {
       toast({ title: "שגיאה בהוספת פרח", description: error.message, variant: "destructive" });
       return false;
     }
 
-    toast({ title: "פרח נוסף בהצלחה! 🌸" });
+    toast({ title: "פרח נוסף! 🌸 מייצר תמונה..." });
     await fetchFlowers();
+
+    // Generate image in background — Realtime will update the card when done
+    if (data?.id) {
+      generateFlowerImage(data.id, flowerData.name, flowerData.color);
+    }
+
     return true;
   };
 
