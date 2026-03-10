@@ -131,16 +131,16 @@ CRITICAL RULES:
 
 Style: Professional flat-lay product photography, camera pointing straight down, soft natural light, clean white background.`;
 
-    console.log(`[generate-bouquet-image] Generating image for ${totalFlowers} flowers via gemini-2.5-flash-image, IP: ${clientIP}`);
+    console.log(`[generate-bouquet-image] Generating image for ${totalFlowers} flowers via gemini-3.1-flash-image-preview, IP: ${clientIP}`);
 
     const imageResponse = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${GOOGLE_AI_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image-preview:generateContent?key=${GOOGLE_AI_KEY}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { responseModalities: ["TEXT", "IMAGE"] },
+          generationConfig: { responseModalities: ["IMAGE"] },
         }),
       }
     );
@@ -148,11 +148,13 @@ Style: Professional flat-lay product photography, camera pointing straight down,
     if (!imageResponse.ok) {
       const errText = await imageResponse.text();
       console.error(`[generate-bouquet-image] Gemini error: ${imageResponse.status}`, errText);
-      throw new Error("Failed to generate image");
+      throw new Error(`Gemini API error ${imageResponse.status}: ${errText.slice(0, 200)}`);
     }
 
     const imageData = await imageResponse.json();
     const parts = imageData.candidates?.[0]?.content?.parts || [];
+    console.log(`[generate-bouquet-image] Response parts count: ${parts.length}, types: ${parts.map((p: any) => Object.keys(p).join(",")).join(" | ")}`);
+
     let imageUrl: string | null = null;
     for (const part of parts) {
       if (part.inlineData?.mimeType?.startsWith("image/")) {
@@ -162,11 +164,11 @@ Style: Professional flat-lay product photography, camera pointing straight down,
     }
 
     if (!imageUrl) {
-      console.error("[generate-bouquet-image] No image in response:", JSON.stringify(imageData).slice(0, 300));
+      console.error("[generate-bouquet-image] No image in response:", JSON.stringify(imageData).slice(0, 500));
       throw new Error("No image generated");
     }
 
-    console.log("[generate-bouquet-image] Image generated successfully via gemini-2.5-flash-image");
+    console.log("[generate-bouquet-image] Image generated successfully via gemini-3.1-flash-image-preview");
 
     return new Response(
       JSON.stringify({ image_url: imageUrl }),
