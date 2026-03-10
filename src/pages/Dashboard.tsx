@@ -129,7 +129,7 @@ const Dashboard = () => {
   const tabs: { key: Tab; label: string; icon: React.ReactNode }[] = [
     { key: "orders", label: "הזמנות", icon: <ClipboardList className="w-4 h-4" /> },
     { key: "inventory", label: "מלאי", icon: <Package className="w-4 h-4" /> },
-    { key: "restock", label: "הזמנה מספק", icon: <Truck className="w-4 h-4" /> },
+    // { key: "restock", label: "הזמנה מספק", icon: <Truck className="w-4 h-4" /> },
     { key: "settings", label: "הגדרות", icon: <Settings className="w-4 h-4" /> },
   ];
 
@@ -239,7 +239,7 @@ const Dashboard = () => {
         >
           {activeTab === "inventory" && selectedShop && <InventoryTab shopId={selectedShop.id} />}
           {activeTab === "orders" && selectedShop && <OrdersTab shopId={selectedShop.id} />}
-          {activeTab === "restock" && selectedShop && <RestockTab shopId={selectedShop.id} />}
+          {/* {activeTab === "restock" && selectedShop && <RestockTab shopId={selectedShop.id} />} */}
           {activeTab === "settings" && selectedShop && (
             <div className="max-w-xl space-y-6" dir="rtl">
               <h2 className="font-display text-2xl font-bold text-foreground">הגדרות חנות</h2>

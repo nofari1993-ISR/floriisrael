@@ -181,12 +181,27 @@ const InventoryTab = ({ shopId }: InventoryTabProps) => {
                 {editingId === flower.id ? (
                   /* ── Edit Mode ── */
                   <div className="space-y-3">
-                    <div className="grid grid-cols-2 gap-2">
-                      <Input value={editData.name} onChange={(e) => setEditData((p) => ({ ...p, name: e.target.value }))} className="rounded-lg h-8 text-sm col-span-2" placeholder="שם" />
-                      <Input value={editData.color} onChange={(e) => setEditData((p) => ({ ...p, color: e.target.value }))} className="rounded-lg h-8 text-sm" placeholder="צבע" />
-                      <Input type="number" value={editData.price} onChange={(e) => setEditData((p) => ({ ...p, price: e.target.value }))} className="rounded-lg h-8 text-sm" placeholder="מחיר" min="0" />
-                      <Input type="number" value={editData.quantity} onChange={(e) => setEditData((p) => ({ ...p, quantity: e.target.value }))} className="rounded-lg h-8 text-sm" placeholder="כמות" min="0" />
-                      <Input type="number" value={editData.shelf_life_days} onChange={(e) => setEditData((p) => ({ ...p, shelf_life_days: e.target.value }))} className="rounded-lg h-8 text-sm" placeholder="ימי מדף" min="1" />
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground font-body w-16 shrink-0 text-right">שם:</span>
+                        <Input value={editData.name} onChange={(e) => setEditData((p) => ({ ...p, name: e.target.value }))} className="rounded-lg h-8 text-sm flex-1" placeholder="שם" />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground font-body w-16 shrink-0 text-right">צבע:</span>
+                        <Input value={editData.color} onChange={(e) => setEditData((p) => ({ ...p, color: e.target.value }))} className="rounded-lg h-8 text-sm flex-1" placeholder="צבע" />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground font-body w-16 shrink-0 text-right">מחיר ₪:</span>
+                        <Input type="number" value={editData.price} onChange={(e) => setEditData((p) => ({ ...p, price: e.target.value }))} className="rounded-lg h-8 text-sm flex-1" placeholder="מחיר" min="0" />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground font-body w-16 shrink-0 text-right">כמות:</span>
+                        <Input type="number" value={editData.quantity} onChange={(e) => setEditData((p) => ({ ...p, quantity: e.target.value }))} className="rounded-lg h-8 text-sm flex-1" placeholder="כמות" min="0" />
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground font-body w-16 shrink-0 text-right">ימי מדף:</span>
+                        <Input type="number" value={editData.shelf_life_days} onChange={(e) => setEditData((p) => ({ ...p, shelf_life_days: e.target.value }))} className="rounded-lg h-8 text-sm flex-1" placeholder="ימי מדף" min="1" />
+                      </div>
                     </div>
                     <div className="flex gap-2">
                       <Button size="sm" variant="hero" onClick={handleEdit} className="flex-1 h-8 rounded-lg gap-1">
