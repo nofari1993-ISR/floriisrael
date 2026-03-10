@@ -69,14 +69,14 @@ const DIYBuilderPage = () => {
     enabled: !!shopId,
   });
 
-  // Fetch only in-stock flowers from database
+  // Fetch only available flowers from database
   const { data: flowers = [], isLoading } = useQuery({
     queryKey: ["diy-flowers", shopId],
     queryFn: async () => {
       let query = supabase
         .from("flowers")
-        .select("id, name, color, price, quantity, image, in_stock")
-        .eq("in_stock", true);
+        .select("id, name, color, price, quantity, image, in_stock, is_available")
+        .eq("is_available", true);
 
       if (shopId) {
         query = query.eq("shop_id", shopId);

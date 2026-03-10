@@ -11,6 +11,8 @@ export interface Flower {
   quantity: number;
   image: string | null;
   in_stock: boolean;
+  is_available: boolean;
+  is_boosted: boolean;
   created_at: string | null;
   shelf_life_days: number;
   last_restocked_at: string | null;
@@ -46,6 +48,8 @@ export const useInventory = (shopId: string | undefined) => {
           quantity: f.quantity ?? 0,
           image: f.image,
           in_stock: f.in_stock ?? true,
+          is_available: f.is_available ?? true,
+          is_boosted: f.is_boosted ?? false,
           created_at: f.created_at,
           shelf_life_days: f.shelf_life_days ?? 7,
           last_restocked_at: f.last_restocked_at,
@@ -77,7 +81,9 @@ export const useInventory = (shopId: string | undefined) => {
       price: flowerData.price,
       quantity: flowerData.quantity,
       image: flowerData.image || null,
-      in_stock: flowerData.quantity > 0,
+      in_stock: true,
+      is_available: true,
+      is_boosted: false,
       shelf_life_days: flowerData.shelf_life_days ?? 7,
       last_restocked_at: new Date().toISOString(),
     });
@@ -114,6 +120,45 @@ export const useInventory = (shopId: string | undefined) => {
     return true;
   };
 
+  // Toggle is_available (binary on/off). Turning off also removes boost.
+  const toggleAvailability = async (flower: Flower) => {
+    const newAvailable = !flower.is_available;
+    const updatePayload: any = { is_available: newAvailable };
+    if (!newAvailable) {
+      updatePayload.is_boosted = false;
+      updatePayload.boosted = false;
+      updatePayload.boosted_at = null;
+    }
+    const { error } = await supabase.from("flowers").update(updatePayload).eq("id", flower.id);
+    if (error) {
+      toast({ title: "שגיאה בעדכון זמינות", description: error.message, variant: "destructive" });
+      return false;
+    }
+    await fetchFlowers();
+    return true;
+  };
+
+  // Toggle is_boosted — only allowed when flower is available
+  const toggleBoost = async (flower: Flower) => {
+    if (!flower.is_available) return false;
+    const newBoosted = !flower.is_boosted;
+    const updatePayload: any = {
+      is_boosted: newBoosted,
+      boosted: newBoosted,
+      boosted_at: newBoosted ? new Date().toISOString() : null,
+    };
+    const { error } = await supabase.from("flowers").update(updatePayload).eq("id", flower.id);
+    if (error) {
+      toast({ title: "שגיאה בעדכון קידום", description: error.message, variant: "destructive" });
+      return false;
+    }
+    toast({
+      title: newBoosted ? `✨ ${flower.name} מקודם! ה-AI יתעדף אותו` : `${flower.name} הוסר מקידום`,
+    });
+    await fetchFlowers();
+    return true;
+  };
+
   const removeFlower = async (id: string) => {
     const { error } = await supabase.from("flowers").delete().eq("id", id);
 
@@ -127,5 +172,5 @@ export const useInventory = (shopId: string | undefined) => {
     return true;
   };
 
-  return { flowers, loading, addFlower, updateFlower, removeFlower, refetch: fetchFlowers };
+  return { flowers, loading, addFlower, updateFlower, toggleAvailability, toggleBoost, removeFlower, refetch: fetchFlowers };
 };

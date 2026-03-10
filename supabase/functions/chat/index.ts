@@ -99,28 +99,28 @@ Deno.serve(async (req) => {
       const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
       const { data: inventory, error } = await supabase
         .from("flowers")
-        .select("name, color, quantity, price, in_stock, boosted")
+        .select("name, color, price, is_available, is_boosted")
         .eq("shop_id", shopId)
-        .eq("in_stock", true);
+        .eq("is_available", true);
 
       if (error) {
         console.error("Error fetching inventory:", error.message);
       } else if (inventory && inventory.length > 0) {
-        const boosted = inventory.filter((item: any) => item.boosted && item.quantity > 0);
+        const boosted = inventory.filter((item: any) => item.is_boosted);
         const boostedSection = boosted.length > 0
-          ? `\n\n⭐ פרחים מקודמים (תעדף אותם בהמלצות!):\n${boosted.map((item: any) => `- ${item.name}${item.color ? ` (${item.color})` : ""}: ${item.quantity} יחידות, מחיר: ${item.price}₪`).join("\n")}`
+          ? `\n\n⭐ פרחים מקודמים (תעדף אותם בהמלצות!):\n${boosted.map((item: any) => `- ${item.name}${item.color ? ` (${item.color})` : ""}: ${item.price}₪`).join("\n")}`
           : "";
 
         inventoryList = inventory
           .map(
             (item: any) =>
-              `- ${item.name}${item.color ? ` (${item.color})` : ""}: ${item.quantity} יחידות, מחיר: ${item.price}₪${item.boosted ? " ⭐" : ""}`
+              `- ${item.name}${item.color ? ` (${item.color})` : ""}: ${item.price}₪${item.is_boosted ? " ⭐" : ""}`
           )
           .join("\n") + boostedSection;
-        console.log(`Loaded ${inventory.length} flowers for shop ${shopId}, ${boosted.length} boosted`);
+        console.log(`Loaded ${inventory.length} available flowers for shop ${shopId}, ${boosted.length} boosted`);
       } else {
         inventoryList = "אין כרגע פרחים זמינים במלאי.";
-        console.log("No flowers found for shop", shopId);
+        console.log("No available flowers found for shop", shopId);
       }
     }
 
@@ -139,7 +139,7 @@ ${inventoryList}
 - תהיה חם, ידידותי ומקצועי
 - כשמתאים, הצע שילובי צבעים ופרחים מהמלאי
 - ציין זמינות עונתית כשרלוונטי
-- אם הלקוח מבקש פרח שלא קיים במלאי, הצע חלופות מהמלאי הזמין
+- אם הלקוח מבקש פרח שלא מופיע ברשימה (לא זמין), הצע חלופות - תעדף פרחים מסומנים ב-⭐
 - פרחים מסומנים ב-⭐ הם פרחים מקודמים - תעדף אותם בהמלצות שלך ותשלב אותם בזרים כשזה מתאים`;
 
     const response = await fetch(
