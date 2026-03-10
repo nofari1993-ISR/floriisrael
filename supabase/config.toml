@@ -1,4 +1,4 @@
-project_id = "nbwwpadqmhmyvazxyjsb"
+project_id = "ihtebbqazdiweojpgwyg"
 
 [functions.chat]
 verify_jwt = false
@@ -16,6 +16,9 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.generate-bouquet-image]
+verify_jwt = false
+
+[functions.generate-flower-image]
 verify_jwt = false
 
 [functions.manage-shop-owners]
