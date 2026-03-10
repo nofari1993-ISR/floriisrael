@@ -76,7 +76,7 @@ Deno.serve(async (req) => {
   };
 
   const metaRes = await fetch(
-    `https://graph.facebook.com/v20.0/${PHONE_NUMBER_ID}/messages`,
+    `https://graph.facebook.com/v22.0/${PHONE_NUMBER_ID}/messages`,
     {
       method: "POST",
       headers: {
