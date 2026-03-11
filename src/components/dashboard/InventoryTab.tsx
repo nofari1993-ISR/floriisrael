@@ -359,29 +359,29 @@ const InventoryTab = ({ shopId }: InventoryTabProps) => {
                               className="shrink-0"
                             />
 
-                            {/* Image thumbnail */}
-                            <div className="w-10 h-10 rounded-lg overflow-hidden shrink-0 bg-muted border border-border/30 relative group/img">
-                              {flower.image ? (
+                            {/* Image thumbnail / generate button */}
+                            {flower.image ? (
+                              <div className="w-10 h-10 rounded-lg overflow-hidden shrink-0 bg-muted border border-border/30">
                                 <img
                                   src={flower.image}
                                   alt={`${flower.name} ${flower.color ?? ""}`}
                                   className="w-full h-full object-cover"
                                 />
-                              ) : generatingImageIds.has(flower.id) ? (
-                                <div className="w-full h-full flex items-center justify-center bg-primary/5">
-                                  <Loader2 className="w-4 h-4 text-primary animate-spin" />
-                                </div>
-                              ) : (
-                                <button
-                                  onClick={() => handleGenerateImage(flower)}
-                                  title="ייצר תמונה"
-                                  className="w-full h-full flex flex-col items-center justify-center gap-0.5 hover:bg-primary/10 transition-colors"
-                                >
-                                  <Sparkles className="w-3.5 h-3.5 text-primary/60" />
-                                  <span className="text-[8px] text-primary/60 font-body leading-none">ייצר</span>
-                                </button>
-                              )}
-                            </div>
+                              </div>
+                            ) : generatingImageIds.has(flower.id) ? (
+                              <div className="w-10 h-10 rounded-lg shrink-0 bg-primary/5 border border-primary/20 flex items-center justify-center">
+                                <Loader2 className="w-4 h-4 text-primary animate-spin" />
+                              </div>
+                            ) : (
+                              <button
+                                onClick={() => handleGenerateImage(flower)}
+                                title="ייצר תמונה עם AI"
+                                className="shrink-0 flex items-center gap-1 px-2 py-1 rounded-lg bg-primary/10 hover:bg-primary/20 border border-primary/20 transition-colors"
+                              >
+                                <Sparkles className="w-3 h-3 text-primary" />
+                                <span className="text-[10px] text-primary font-body font-medium">ייצר תמונה</span>
+                              </button>
+                            )}
 
                             {/* Color name + price */}
                             <div className="flex-1 min-w-0">
