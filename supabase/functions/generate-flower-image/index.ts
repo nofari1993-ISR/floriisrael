@@ -29,7 +29,19 @@ Deno.serve(async (req) => {
     if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) throw new Error("Supabase env vars missing");
 
     const colorDesc = color ? `${color} ` : "";
-    const prompt = `Create a beautiful, realistic close-up product photograph of a single ${colorDesc}${name} flower. CRITICAL: The background MUST be pure white (#FFFFFF), completely solid white with no shadows, gradients, or textures. The flower should be centered, sharp, and detailed. Professional product photography style, soft natural light, just the flower with a short green stem visible. Pure white background is mandatory.`;
+    const prompt = `Professional product photograph of EXACTLY ONE (1) single ${colorDesc}${name} flower stem.
+
+QUANTITY RULES — follow strictly:
+- Show EXACTLY 1 flower head. Not 2, not 3. ONE flower only.
+- ONE short green stem visible below the flower head.
+- Do NOT show a bouquet, bunch, arrangement, or multiple flowers.
+- Do NOT show any other flowers in the background or foreground.
+
+BACKGROUND: Pure solid white (#FFFFFF). No shadows, no gradients, no textures whatsoever.
+
+STYLE: Close-up product photography, centered composition, soft natural light, sharp focus on petals and details.
+
+Count check before rendering: there must be exactly 1 flower in the image.`;
 
     console.log(`[generate-flower-image] Generating image for: ${colorDesc}${name} (id: ${flowerId})`);
 
