@@ -109,6 +109,10 @@
     @apply border-border;
   }
 
+  html {
+    direction: ltr; /* keep native scrollbar on the RIGHT */
+  }
+
   body {
     @apply bg-background text-foreground;
     font-family: var(--font-body);
