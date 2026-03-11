@@ -81,38 +81,25 @@ Count check before rendering: there must be exactly 1 flower in the image.`;
       throw new Error("No image generated");
     }
 
-    // Upload to Supabase Storage
+    // Save data URL directly to the flowers table (no Storage bucket needed)
+    const dataUrl = `data:${mimeType};base64,${base64Data}`;
+
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-    const fileExt = mimeType === "image/jpeg" ? "jpg" : "png";
-    const filePath = `flowers/${flowerId}.${fileExt}`;
 
-    const imageBuffer = Uint8Array.from(atob(base64Data), (c) => c.charCodeAt(0));
-
-    const { error: uploadError } = await supabase.storage
-      .from("flower-images")
-      .upload(filePath, imageBuffer, { contentType: mimeType, upsert: true });
-
-    if (uploadError) {
-      console.error("[generate-flower-image] Storage upload error:", uploadError.message);
-      throw new Error(`Storage upload error: ${uploadError.message}`);
-    }
-
-    const { data: { publicUrl } } = supabase.storage.from("flower-images").getPublicUrl(filePath);
-
-    // Update flower record with image URL
     const { error: updateError } = await supabase
       .from("flowers")
-      .update({ image: publicUrl })
+      .update({ image: dataUrl })
       .eq("id", flowerId);
 
     if (updateError) {
       console.error("[generate-flower-image] DB update error:", updateError.message);
+      throw new Error(`DB update error: ${updateError.message}`);
     }
 
-    console.log(`[generate-flower-image] Done — publicUrl: ${publicUrl}`);
+    console.log(`[generate-flower-image] Done — image saved as data URL for flower ${flowerId}`);
 
     return new Response(
-      JSON.stringify({ image_url: publicUrl }),
+      JSON.stringify({ image_url: dataUrl.slice(0, 50) + "..." }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (e) {
