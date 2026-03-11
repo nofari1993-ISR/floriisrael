@@ -50,15 +50,17 @@ export function useDIYBuilder() {
 
   const handleAddFlower = useCallback((flower: FlowerData, addCount: number = 1) => {
     setSelectedFlowers((prev) => {
+      // quantity=0 means binary inventory (unlimited stock) — use Infinity as max
+      const maxStock = flower.quantity > 0 ? flower.quantity : Infinity;
       const existing = prev.find((f) => f.flower.id === flower.id);
       if (existing) {
-        const newQty = Math.min(existing.quantity + addCount, flower.quantity);
+        const newQty = Math.min(existing.quantity + addCount, maxStock);
         if (newQty === existing.quantity) return prev;
         return prev.map((f) =>
           f.flower.id === flower.id ? { ...f, quantity: newQty } : f
         );
       }
-      return [...prev, { flower, quantity: Math.min(addCount, flower.quantity) }];
+      return [...prev, { flower, quantity: Math.min(addCount, maxStock) }];
     });
   }, []);
 
