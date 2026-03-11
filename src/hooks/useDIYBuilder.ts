@@ -49,18 +49,22 @@ export function useDIYBuilder() {
   }, []);
 
   const handleAddFlower = useCallback((flower: FlowerData, addCount: number = 1) => {
+    console.log("[DIY] handleAddFlower called:", { flowerId: flower.id, flowerQty: flower.quantity, addCount });
     setSelectedFlowers((prev) => {
       // quantity=0 means binary inventory (unlimited stock) — use Infinity as max
       const maxStock = flower.quantity > 0 ? flower.quantity : Infinity;
       const existing = prev.find((f) => f.flower.id === flower.id);
       if (existing) {
         const newQty = Math.min(existing.quantity + addCount, maxStock);
+        console.log("[DIY] existing found, newQty:", newQty, "existing.qty:", existing.quantity);
         if (newQty === existing.quantity) return prev;
         return prev.map((f) =>
           f.flower.id === flower.id ? { ...f, quantity: newQty } : f
         );
       }
-      return [...prev, { flower, quantity: Math.min(addCount, maxStock) }];
+      const finalQty = Math.min(addCount, maxStock);
+      console.log("[DIY] new entry, finalQty:", finalQty);
+      return [...prev, { flower, quantity: finalQty }];
     });
   }, []);
 

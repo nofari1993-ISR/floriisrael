@@ -65,6 +65,7 @@ const ColorSelector = ({ flowerName, variants, isOpen, onClose, onConfirm }: Col
           quantity,
         };
       });
+    console.log("[ColorSelector] confirming selections:", JSON.stringify(selections));
     onConfirm(selections);
     setColorQuantities({});
     onClose();

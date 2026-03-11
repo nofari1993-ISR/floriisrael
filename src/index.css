@@ -109,14 +109,14 @@
     @apply border-border;
   }
 
-  html {
-    direction: ltr; /* keep native scrollbar on the RIGHT */
-  }
-
   body {
     @apply bg-background text-foreground;
     font-family: var(--font-body);
-    direction: rtl;
+    direction: ltr; /* LTR on body = single scrollbar on the RIGHT */
+  }
+
+  #root {
+    direction: rtl; /* all React content is RTL */
   }
 
   h1, h2, h3, h4, h5, h6 {
