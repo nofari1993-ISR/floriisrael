@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Trash2, Edit2, Package, Flower2, Check, X, Sparkles, Search, ImageIcon } from "lucide-react";
+import { Plus, Trash2, Edit2, Package, Flower2, Check, X, Sparkles, Search, ImageIcon, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,9 +12,10 @@ interface InventoryTabProps {
 }
 
 const InventoryTab = ({ shopId }: InventoryTabProps) => {
-  const { flowers, loading, addFlower, updateFlower, toggleAvailability, toggleBoost, removeFlower } = useInventory(shopId);
+  const { flowers, loading, addFlower, updateFlower, toggleAvailability, toggleBoost, removeFlower, generateFlowerImage } = useInventory(shopId);
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [generatingImageIds, setGeneratingImageIds] = useState<Set<string>>(new Set());
   const [searchQuery, setSearchQuery] = useState("");
   const [togglingIds, setTogglingIds] = useState<Set<string>>(new Set());
   const [colorInput, setColorInput] = useState("");
@@ -79,6 +80,12 @@ const InventoryTab = ({ shopId }: InventoryTabProps) => {
     setTogglingIds((prev) => new Set(prev).add(flower.id + "_boost"));
     await toggleBoost(flower);
     setTogglingIds((prev) => { const n = new Set(prev); n.delete(flower.id + "_boost"); return n; });
+  };
+
+  const handleGenerateImage = async (flower: Flower) => {
+    setGeneratingImageIds((prev) => new Set(prev).add(flower.id));
+    await generateFlowerImage(flower.id, flower.name, flower.color ?? undefined);
+    setGeneratingImageIds((prev) => { const n = new Set(prev); n.delete(flower.id); return n; });
   };
 
   const handleAdd = async () => {
@@ -353,17 +360,26 @@ const InventoryTab = ({ shopId }: InventoryTabProps) => {
                             />
 
                             {/* Image thumbnail */}
-                            <div className="w-10 h-10 rounded-lg overflow-hidden shrink-0 bg-muted border border-border/30">
+                            <div className="w-10 h-10 rounded-lg overflow-hidden shrink-0 bg-muted border border-border/30 relative group/img">
                               {flower.image ? (
                                 <img
                                   src={flower.image}
                                   alt={`${flower.name} ${flower.color ?? ""}`}
                                   className="w-full h-full object-cover"
                                 />
-                              ) : (
-                                <div className="w-full h-full flex items-center justify-center animate-pulse">
-                                  <ImageIcon className="w-4 h-4 text-muted-foreground/30" />
+                              ) : generatingImageIds.has(flower.id) ? (
+                                <div className="w-full h-full flex items-center justify-center bg-primary/5">
+                                  <Loader2 className="w-4 h-4 text-primary animate-spin" />
                                 </div>
+                              ) : (
+                                <button
+                                  onClick={() => handleGenerateImage(flower)}
+                                  title="ייצר תמונה"
+                                  className="w-full h-full flex flex-col items-center justify-center gap-0.5 hover:bg-primary/10 transition-colors"
+                                >
+                                  <Sparkles className="w-3.5 h-3.5 text-primary/60" />
+                                  <span className="text-[8px] text-primary/60 font-body leading-none">ייצר</span>
+                                </button>
                               )}
                             </div>
 

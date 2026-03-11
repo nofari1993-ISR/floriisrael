@@ -208,5 +208,5 @@ export const useInventory = (shopId: string | undefined) => {
     return true;
   };
 
-  return { flowers, loading, addFlower, updateFlower, toggleAvailability, toggleBoost, removeFlower, refetch: fetchFlowers };
+  return { flowers, loading, addFlower, updateFlower, toggleAvailability, toggleBoost, removeFlower, generateFlowerImage, refetch: fetchFlowers };
 };
