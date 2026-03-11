@@ -43,7 +43,8 @@ const ColorSelector = ({ flowerName, variants, isOpen, onClose, onConfirm }: Col
     setColorQuantities((prev) => {
       const current = prev[variantId] || 0;
       const variant = variants.find((v) => v.id === variantId);
-      const maxStock = variant?.quantity || 0;
+      // quantity=0 means binary inventory (unlimited) — use Infinity as max
+      const maxStock = variant && variant.quantity > 0 ? variant.quantity : Infinity;
       const newValue = Math.max(0, Math.min(current + delta, maxStock));
       if (newValue === 0) {
         const { [variantId]: _, ...rest } = prev;
@@ -145,7 +146,7 @@ const ColorSelector = ({ flowerName, variants, isOpen, onClose, onConfirm }: Col
                       size="icon"
                       className="h-7 w-7 rounded-full"
                       onClick={() => handleQuantityChange(variant.id, 1)}
-                      disabled={quantity >= variant.quantity}
+                      disabled={variant.quantity > 0 && quantity >= variant.quantity}
                     >
                       <Plus className="w-3 h-3" />
                     </Button>
