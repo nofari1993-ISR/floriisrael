@@ -109,14 +109,22 @@
     @apply border-border;
   }
 
+  html {
+    height: 100%;
+    overflow: hidden; /* html must NOT scroll — prevents left scrollbar */
+  }
+
   body {
     @apply bg-background text-foreground;
     font-family: var(--font-body);
-    direction: ltr; /* LTR on body = single scrollbar on the RIGHT */
+    direction: ltr;  /* LTR = scrollbar stays on the RIGHT */
+    height: 100%;
+    overflow-y: auto; /* body is the ONE and ONLY scroll container */
   }
 
   #root {
     direction: rtl; /* all React content is RTL */
+    min-height: 100%;
   }
 
   h1, h2, h3, h4, h5, h6 {
