@@ -39,7 +39,8 @@ const FlowerCard = ({
 }: FlowerCardProps) => {
   const [isColorSelectorOpen, setIsColorSelectorOpen] = useState(false);
 
-  const reachedMax = selectedQuantity >= flower.quantity;
+  // quantity=0 means binary inventory (no numeric limit) — treat as unlimited
+  const reachedMax = flower.quantity > 0 && selectedQuantity >= flower.quantity;
   const hasColors = colorVariants && colorVariants.length > 1;
 
   const handleAdd = () => {
